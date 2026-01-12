@@ -1,0 +1,26 @@
+{
+    "name": "The Beginning",
+    "speedGoal": 5,
+    "doors": {
+        "top": {
+            "locked": 0,
+            "active": 1
+        },
+        "bottom": {
+            "locked": 0,
+            "active": 1
+        },
+        "left": {
+            "locked": 0,
+            "active": 1
+        },
+        "right": {
+            "locked": 0,
+            "active": 1
+        }
+    },
+    "allDoorsUnlocked": 1,
+    "enemyCount": 0,
+    "width": 800,
+    "height": 600
+}

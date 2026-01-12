@@ -1,0 +1,28 @@
+{
+    "name": "Room 6",
+    "speedGoal": 5,
+    "doors": {
+        "top": {
+            "locked": 0,
+            "active": 1,
+            "x": 250
+        },
+        "bottom": {
+            "locked": 0,
+            "active": 0,
+            "x": 250
+        },
+        "left": {
+            "locked": 0,
+            "active": 1,
+            "y": 250
+        },
+        "right": {
+            "locked": 0,
+            "active": 1,
+            "y": 250
+        }
+    },
+    "width": 500,
+    "height": 500
+}

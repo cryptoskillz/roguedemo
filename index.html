@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>JS Dungeon Crawler</title>
+    <style>
+        body {
+            background: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        canvas {
+            background: #3d2f26;
+            border: 4px solid #000;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-shadow: 2px 2px #000;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        #stats-panel {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 15px;
+            border: 2px solid #5dade2;
+            border-radius: 5px;
+        }
+
+        #minimapCanvas {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #888;
+            border-radius: 4px;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 100;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        #overlay h1 {
+            font-size: 3rem;
+            margin: 0;
+            color: #e74c3c;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        #overlay p {
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+
+        #restartBtn,
+        #menuBtn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            margin: 10px;
+            width: 220px;
+        }
+
+        #restartBtn {
+            background: #5dade2;
+        }
+
+        #restartBtn:hover {
+            background: #3498db;
+            transform: scale(1.05);
+        }
+
+        #menuBtn {
+            background: #555;
+        }
+
+        #menuBtn:hover {
+            background: #777;
+            transform: scale(1.05);
+        }
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #welcome {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 200;
+        }
+
+        #welcome h1 {
+            font-size: 4rem;
+            margin: 0;
+            color: #5dade2;
+            text-shadow: 4px 4px #222;
+            letter-spacing: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        #welcome p {
+            margin-top: 40px;
+            font-size: 1.2rem;
+            color: #888;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        #perfect {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            color: #f1c40f;
+            text-shadow: 4px 4px 0 #000;
+            display: none;
+            z-index: 20;
+            font-weight: bold;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), float 2s infinite ease-in-out 0.3s;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) translateY(0);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) translateY(-15px);
+            }
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0;
+            }
+
+            70% {
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ... body content ... -->
+    <div id="ui" style="display:none;">
+        <div id="stats-panel">
+            HP: <span id="hp">3</span> |
+            Keys: <span id="keys">0</span><br>
+            Room: [<span id="roomName">...</span>]<br>
+            Coords: <span id="room">0,0</span>
+
+        </div>
+        <canvas id="minimapCanvas" width="100" height="100"></canvas>
+        <br><span id="player">.</span>
+    </div>
+    <div id="welcome">
+        <h1>rouge demo</h1>
+        <p>press any key to start</p>
+    </div>
+    <div id="perfect">Perfect!</div>
+    <div id="overlay">
+        <h1>Game Over</h1>
+        <p id="stats">Rooms Cleared: 0</p>
+        <div class="btn-container">
+            <button id="restartBtn" onclick="restartGame()">Restart Exploration</button>
+            <button id="menuBtn" onclick="goToWelcome()">Main Menu</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <script src="assets/js/logic.js"></script>
+    <script>
+
+        //}; // End window.onlosaad
+    </script>
+</body>
+
+</html>

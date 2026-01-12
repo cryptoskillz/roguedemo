@@ -1,0 +1,28 @@
+{
+    "name": "Room 3",
+    "speedGoal": 5,
+    "doors": {
+        "top": {
+            "locked": 0,
+            "active": 1,
+            "x": 200
+        },
+        "bottom": {
+            "locked": 0,
+            "active": 1,
+            "x": 200
+        },
+        "left": {
+            "locked": 0,
+            "active": 0,
+            "y": 300
+        },
+        "right": {
+            "locked": 0,
+            "active": 1,
+            "y": 300
+        }
+    },
+    "width": 400,
+    "height": 600
+}
