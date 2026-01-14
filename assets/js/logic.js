@@ -48,36 +48,39 @@ let roomData = {
 let roomManifest = { rooms: [] };
 let roomStartTime = Date.now();
 let goldenPath = [];
+let roomTemplates = {};
+let levelMap = {}; // Pre-generated level structure
 let bossCoord = "";
 let bossIntroEndTime = 0;
 
-function updateUI() {
+async function updateUI() {
     hpEl.innerText = player.hp;
     keysEl.innerText = player.inventory.keys;
     roomEl.innerText = `${player.roomX},${player.roomY}`;
     roomNameEl.innerText = roomData.name || "Unknown Room";
-    console.log(DEBUG_PLAYER);
+    // console.log(player);
     if (DEBUG_PLAYER) {
         const playerDup = structuredClone(player);
-
         playerEl.innerText = `Player: ${JSON.stringify(playerDup, null, 2)}`;
     }
 }
 
 // --- Level Generation Logic ---
-function generateGoldenPath(length) {
+// --- Level Generation Logic ---
+function generateLevel(length) {
     let path = ["0,0"];
     let cx = 0, cy = 0;
     const dirs = [
-        { dx: 0, dy: -1 }, // Top
-        { dx: 0, dy: 1 },  // Bottom
-        { dx: -1, dy: 0 }, // Left
-        { dx: 1, dy: 0 }   // Right
+        { dx: 0, dy: -1, name: "top", opposite: "bottom" },
+        { dx: 0, dy: 1, name: "bottom", opposite: "top" },
+        { dx: -1, dy: 0, name: "left", opposite: "right" },
+        { dx: 1, dy: 0, name: "right", opposite: "left" }
     ];
 
+    // 1. Generate Golden Path
     for (let i = 0; i < length; i++) {
         let possible = dirs.filter(d => !path.includes(`${cx + d.dx},${cy + d.dy}`));
-        if (possible.length === 0) break; // Trapped, rare
+        if (possible.length === 0) break;
         let move = possible[Math.floor(Math.random() * possible.length)];
         cx += move.dx;
         cy += move.dy;
@@ -85,7 +88,93 @@ function generateGoldenPath(length) {
     }
     goldenPath = path;
     bossCoord = path[path.length - 1];
-    console.log("Golden Path Generated:", goldenPath);
+
+    // 2. Add Side Rooms
+    let fullMapCoords = [...path];
+    path.forEach(coord => {
+        if (coord === bossCoord || coord === "0,0") return;
+        if (Math.random() > 0.5) { // 50% chance to try adding a side room from a golden path room
+            const [rx, ry] = coord.split(',').map(Number);
+            let d = dirs[Math.floor(Math.random() * dirs.length)];
+            let sideCoord = `${rx + d.dx},${ry + d.dy}`;
+            if (!fullMapCoords.includes(sideCoord)) {
+                fullMapCoords.push(sideCoord);
+            }
+        }
+    });
+
+    // 3. Initialize levelMap with room data
+    levelMap = {};
+    fullMapCoords.forEach(coord => {
+        let template;
+        if (coord === "0,0") {
+            template = roomTemplates["start"];
+        } else if (coord === bossCoord) {
+            template = roomTemplates["boss"];
+        } else {
+            const keys = Object.keys(roomTemplates).filter(k => k !== "start" && k !== "boss");
+            if (keys.length > 0) {
+                const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                template = roomTemplates[randomKey];
+            } else {
+                template = roomTemplates["start"];
+            }
+        }
+
+        // Deep copy template
+        const roomInstance = JSON.parse(JSON.stringify(template));
+        levelMap[coord] = {
+            roomData: roomInstance,
+            cleared: coord === "0,0" // Start room is pre-cleared
+        };
+    });
+
+    // 4. Pre-stitch doors between all adjacent rooms
+    for (let coord in levelMap) {
+        const [rx, ry] = coord.split(',').map(Number);
+        const data = levelMap[coord].roomData;
+        if (!data.doors) data.doors = {};
+
+        dirs.forEach(d => {
+            const neighborCoord = `${rx + d.dx},${ry + d.dy}`;
+            if (levelMap[neighborCoord]) {
+                // If neighbor exists, ensure door is active and unlocked
+                if (!data.doors[d.name]) data.doors[d.name] = { active: 1, locked: 0 };
+                data.doors[d.name].active = 1;
+                // Keep locked status if template specifically had it, otherwise 0
+                if (data.doors[d.name].locked === undefined) data.doors[d.name].locked = 0;
+
+                // Sync door coordinates if missing
+                if (d.name === "top" || d.name === "bottom") {
+                    if (data.doors[d.name].x === undefined) data.doors[d.name].x = (data.width || 800) / 2;
+                } else {
+                    if (data.doors[d.name].y === undefined) data.doors[d.name].y = (data.height || 600) / 2;
+                }
+            } else {
+                // If no neighbor, ensure door is inactive (unless it's a boss room entry which we handle)
+                if (data.doors[d.name]) data.doors[d.name].active = 0;
+            }
+        });
+
+        // Boss room logic - ensure only entry is open
+        if (data.isBoss) {
+            // Find which neighbor is in goldenPath just before boss
+            const bossIndex = goldenPath.indexOf(coord);
+            if (bossIndex > 0) {
+                const prevCoord = goldenPath[bossIndex - 1];
+                const [prx, pry] = prevCoord.split(',').map(Number);
+                const entryDir = prx < rx ? "left" : (prx > rx ? "right" : (pry < ry ? "top" : "bottom"));
+
+                // Close all doors except entry
+                ["top", "bottom", "left", "right"].forEach(dir => {
+                    if (data.doors[dir]) data.doors[dir].active = (dir === entryDir ? 1 : 0);
+                });
+            }
+        }
+    }
+
+    console.log("Level Generated upfront with", Object.keys(levelMap).length, "rooms.");
+    console.log("Golden Path:", goldenPath);
 }
 
 const BOUNDARY = 20;
@@ -96,15 +185,15 @@ const DEBUG_START_BOSS = false; // TOGGLE THIS FOR DEBUGGING
 const DEBUG_PLAYER = true;
 
 // configurations
-function initGame(isRestart = false) {
-    // Synchronous reset to prevent race conditions
+// configurations
+async function initGame(isRestart = false) {
     gameState = isRestart ? STATES.PLAY : STATES.START;
     overlayEl.style.display = 'none';
     welcomeEl.style.display = isRestart ? 'none' : 'flex';
     if (uiEl) uiEl.style.display = isRestart ? 'block' : 'none';
     bullets = [];
 
-    // Hardcoded safe values to use while loading
+    // Reset player
     player.hp = 3;
     player.speed = 4;
     player.inventory.keys = 0;
@@ -117,95 +206,64 @@ function initGame(isRestart = false) {
     perfectStreak = 0;
     perfectEl.style.display = 'none';
     roomStartTime = Date.now();
-    visitedRooms = {}; // Clear persistence on new game
+    visitedRooms = {};
+    levelMap = {};
 
-
-
-    if (DEBUG_START_BOSS) {
-        console.log("DEBUG MODE: Starting in Boss Room");
-        Promise.all([
+    try {
+        // 1. Load basic configs
+        const [pData, gData, mData] = await Promise.all([
             fetch('player.json?t=' + Date.now()).then(res => res.json()),
-            fetch('rooms/boss1/room.json?t=' + Date.now()).then(res => res.json()),
             fetch('game.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ perfectGoal: 3, NoRooms: 11 })),
             fetch('rooms/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] }))
-        ]).then(([pData, rData, gData, mData]) => {
-            gameData = gData;
-            roomManifest = mData;
+        ]);
 
-            // Debug: Skip Golden Path, treat 0,0 as Boss
+        gameData = gData;
+        roomManifest = mData;
+        Object.assign(player, pData);
+
+        // 2. Pre-load ALL room templates
+        roomTemplates = {};
+        const templatePromises = [];
+
+        // Always load start and boss
+        templatePromises.push(fetch('rooms/start/room.json?t=' + Date.now()).then(res => res.json()).then(data => roomTemplates["start"] = data));
+        templatePromises.push(fetch('rooms/boss1/room.json?t=' + Date.now()).then(res => res.json()).then(data => roomTemplates["boss"] = data));
+
+        // Load all from manifest
+        roomManifest.rooms.forEach(id => {
+            templatePromises.push(fetch(`rooms/${id}/room.json?t=` + Date.now()).then(res => res.json()).then(data => roomTemplates[id] = data));
+        });
+
+        await Promise.all(templatePromises);
+        console.log("All room templates loaded:", Object.keys(roomTemplates));
+
+        // 3. Generate Level
+        if (DEBUG_START_BOSS) {
+            console.log("DEBUG MODE: Starting in Boss Room");
             bossCoord = "0,0";
             goldenPath = ["0,0"];
-            player.roomX = 0;
-            player.roomY = 0;
+            bossIntroEndTime = Date.now() + 2000;
+            // Create a minimal level map for debug
+            levelMap["0,0"] = { roomData: JSON.parse(JSON.stringify(roomTemplates["boss"])), cleared: false };
+        } else {
+            generateLevel(gameData.NoRooms || 11);
+        }
 
-            Object.assign(player, pData);
-            /*
-            hpEl.innerText = player.hp;
-            keysEl.innerText = player.inventory.keys;
-            roomEl.innerText = `${player.roomX},${player.roomY}`;
-            roomNameEl.innerText = rData.name || "Unknown Room";
-            console.log(DEBUG_PLAYER);
-            if (DEBUG_PLAYER) {
-                playerEl.innerText = `${player}`;
-            }
-                */
-            updateUI();
-            roomData = rData;
-            canvas.width = roomData.width || 800;
-            canvas.height = roomData.height || 600;
+        // Set initial room from levelMap
+        const startEntry = levelMap["0,0"];
+        roomData = startEntry.roomData;
+        visitedRooms["0,0"] = startEntry;
 
-            visitedRooms["0,0"] = { roomData: roomData, cleared: false }; // Not cleared initially
-            console.log("Boss Intro End Time set", bossIntroEndTime);
-            bossIntroEndTime = Date.now() + 2000; // Trigger intro for debug start
-            if (gameState === STATES.PLAY) {
-                spawnEnemies();
-                //console.log("Boss Intro End Time set to", bossIntroEndTime);
-                //bossIntroEndTime = Date.now() + 2000; // Trigger intro for debug start
-            }
-            draw(); // Start the game loop
-        }).catch(err => {
-            console.warn("Could not load configurations", err);
-            draw(); // Start the game loop even if config fails
-        });
-    } else {
-        // Normal Game Start
-        Promise.all([
-            fetch('player.json?t=' + Date.now()).then(res => res.json()),
-            fetch('rooms/start/room.json?t=' + Date.now()).then(res => res.json()),
-            fetch('game.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ perfectGoal: 3, NoRooms: 11 })),
-            fetch('rooms/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] }))
-        ]).then(([pData, rData, gData, mData]) => {
-            gameData = gData;
-            roomManifest = mData;
+        canvas.width = roomData.width || 800;
+        canvas.height = roomData.height || 600;
 
-            generateGoldenPath(gameData.NoRooms || 11);
+        if (gameState === STATES.PLAY) spawnEnemies();
 
-            Object.assign(player, pData);
-            /*
-            hpEl.innerText = player.hp;
-            keysEl.innerText = player.inventory.keys;
-            roomEl.innerText = `${player.roomX},${player.roomY}`;
-            roomNameEl.innerText = rData.name || "Unknown Room";
-            console.log(DEBUG_PLAYER);
-            if (DEBUG_PLAYER) {
-                playerEl.innerText = `${player}`;
-            }
-                */
-            updateUI();
+        draw(); // Start loop
 
-            roomData = rData;
-            canvas.width = roomData.width || 800;
-            canvas.height = roomData.height || 600;
-
-            visitedRooms["0,0"] = { roomData: roomData, cleared: true };
-
-            if (gameState === STATES.PLAY) spawnEnemies();
-            draw(); // Start the game loop
-        }).catch(err => {
-            console.warn("Could not load configurations", err);
-            if (gameState === STATES.PLAY) spawnEnemies();
-            draw(); // Start the game loop even if config fails
-        });
+    } catch (err) {
+        console.warn("Could not load configurations", err);
+        draw();
     }
 }
 
@@ -260,11 +318,41 @@ function spawnEnemies() {
     }
 }
 
+// --- Room Transition Helpers ---
+
+// Position player on opposite side of door (exactly on the boundary and centered on the DOOR)
+function spawnPlayer(dx, dy, data) {
+    let requiredDoor = null;
+    if (dx === 1) requiredDoor = "left";
+    if (dx === -1) requiredDoor = "right";
+    if (dy === 1) requiredDoor = "top";
+    if (dy === -1) requiredDoor = "bottom";
+
+    const door = (data.doors && data.doors[requiredDoor]) || { x: (data.width || 800) / 2, y: (data.height || 600) / 2 };
+
+    if (dx === 1) {
+        player.x = BOUNDARY + 10;
+        player.y = door.y !== undefined ? door.y : (data.height || 600) / 2;
+    }
+    if (dx === -1) {
+        player.x = (data.width || 800) - BOUNDARY - 10;
+        player.y = door.y !== undefined ? door.y : (data.height || 600) / 2;
+    }
+    if (dy === 1) {
+        player.y = BOUNDARY + 10;
+        player.x = door.x !== undefined ? door.x : (data.width || 800) / 2;
+    }
+    if (dy === -1) {
+        player.y = (data.height || 600) - BOUNDARY - 10;
+        player.x = door.x !== undefined ? door.x : (data.width || 800) / 2;
+    }
+}
+
 function changeRoom(dx, dy) {
     // Save cleared status of current room before leaving
     const currentCoord = `${player.roomX},${player.roomY}`;
-    if (visitedRooms[currentCoord]) {
-        visitedRooms[currentCoord].cleared = (enemies.length === 0);
+    if (levelMap[currentCoord]) {
+        levelMap[currentCoord].cleared = (enemies.length === 0);
     }
 
     // Check if door was locked and consume a key
@@ -277,7 +365,7 @@ function changeRoom(dx, dy) {
     if (doorUsed && roomData.doors && roomData.doors[doorUsed].locked && player.inventory.keys > 0) {
         player.inventory.keys--;
         keysEl.innerText = player.inventory.keys;
-        roomData.doors[doorUsed].locked = 0; // Persist unlock
+        roomData.doors[doorUsed].locked = 0; // Unlock permanently in this level instance
     }
 
     player.roomX += dx;
@@ -289,181 +377,33 @@ function changeRoom(dx, dy) {
     hitsInRoom = 0;
     perfectEl.style.display = 'none';
 
-    // Position player on opposite side of door (exactly on the boundary and centered on the DOOR)
-    function spawnPlayer(dx, dy, data) {
-        let requiredDoor = null;
-        if (dx === 1) requiredDoor = "left";
-        if (dx === -1) requiredDoor = "right";
-        if (dy === 1) requiredDoor = "top";
-        if (dy === -1) requiredDoor = "bottom";
+    // Transition to the pre-generated room
+    const nextEntry = levelMap[nextCoord];
+    if (nextEntry) {
+        roomData = nextEntry.roomData;
+        visitedRooms[nextCoord] = nextEntry; // Add to visited for minimap
 
-        const door = (data.doors && data.doors[requiredDoor]) || { x: (data.width || 800) / 2, y: (data.height || 600) / 2 };
-
-        if (dx === 1) {
-            player.x = BOUNDARY + 10;
-            player.y = door.y !== undefined ? door.y : (data.height || 600) / 2;
-        }
-        if (dx === -1) {
-            player.x = (data.width || 800) - BOUNDARY - 10;
-            player.y = door.y !== undefined ? door.y : (data.height || 600) / 2;
-        }
-        if (dy === 1) {
-            player.y = BOUNDARY + 10;
-            player.x = door.x !== undefined ? door.x : (data.width || 800) / 2;
-        }
-        if (dy === -1) {
-            player.y = (data.height || 600) - BOUNDARY - 10;
-            player.x = door.x !== undefined ? door.x : (data.width || 800) / 2;
-        }
-    }
-
-    // Dynamic Door Interconnectivity: Automatically connects adjacent discovered rooms
-    function syncNeighborDoors(rx, ry, data) {
-        const neighbors = [
-            { dx: 0, dy: -1, door: "top", opposite: "bottom" },
-            { dx: 0, dy: 1, door: "bottom", opposite: "top" },
-            { dx: -1, dy: 0, door: "left", opposite: "right" },
-            { dx: 1, dy: 0, door: "right", opposite: "left" }
-        ];
-
-        neighbors.forEach(n => {
-            // Check for override
-            if (data.allDoorsUnlocked) {
-                if (!data.doors) data.doors = {};
-                if (!data.doors[n.door]) data.doors[n.door] = { active: 1, locked: 0 };
-                else {
-                    data.doors[n.door].active = 1;
-                    data.doors[n.door].locked = 0;
-                }
-                // Ensure coordinates
-                if (n.door === "top" || n.door === "bottom") {
-                    if (data.doors[n.door].x === undefined) data.doors[n.door].x = (data.width || 800) / 2;
-                } else {
-                    if (data.doors[n.door].y === undefined) data.doors[n.door].y = (data.height || 600) / 2;
-                }
-            }
-
-            const neighborCoord = `${rx + n.dx},${ry + n.dy}`;
-            if (visitedRooms[neighborCoord]) {
-                // Activate door in current room
-                if (!data.doors) data.doors = {};
-                if (!data.doors[n.door]) data.doors[n.door] = { active: 1, locked: 0 };
-                else {
-                    data.doors[n.door].active = 1;
-                    data.doors[n.door].locked = 0;
-                }
-
-                // Ensure current door has coordinates
-                if (n.door === "top" || n.door === "bottom") {
-                    if (data.doors[n.door].x === undefined) data.doors[n.door].x = (data.width || 800) / 2;
-                } else {
-                    if (data.doors[n.door].y === undefined) data.doors[n.door].y = (data.height || 600) / 2;
-                }
-
-                // Activate matching door in neighbor room (two-way travel)
-                const nData = visitedRooms[neighborCoord].roomData;
-                if (!nData.doors) nData.doors = {};
-                if (!nData.doors[n.opposite]) nData.doors[n.opposite] = { active: 1, locked: 0 };
-                else {
-                    nData.doors[n.opposite].active = 1;
-                    nData.doors[n.opposite].locked = 0;
-                }
-
-                // Ensure neighbor door has coordinates
-                if (n.opposite === "top" || n.opposite === "bottom") {
-                    if (nData.doors[n.opposite].x === undefined) nData.doors[n.opposite].x = (nData.width || 800) / 2;
-                } else {
-                    if (nData.doors[n.opposite].y === undefined) nData.doors[n.opposite].y = (nData.height || 600) / 2;
-                }
-            }
-        });
-    }
-
-    // Load from cache if visited
-    if (visitedRooms[nextCoord]) {
-        roomData = visitedRooms[nextCoord].roomData;
-        syncNeighborDoors(player.roomX, player.roomY, roomData); // Sync all neighbors
         roomNameEl.innerText = roomData.name || "Unknown Room";
         canvas.width = roomData.width || 800;
         canvas.height = roomData.height || 600;
+
         spawnPlayer(dx, dy, roomData);
         roomStartTime = Date.now();
-        if (!visitedRooms[nextCoord].cleared) {
+
+        if (roomData.isBoss) {
+            bossIntroEndTime = Date.now() + 2000;
+        }
+
+        if (!nextEntry.cleared) {
             spawnEnemies();
         } else {
-            enemies = []; // Already cleared
+            enemies = [];
         }
-        return;
-    }
-
-    // Load the room data (randomly for new rooms or Boss room)
-    let roomUrl;
-    if (nextCoord === bossCoord) {
-        roomUrl = 'rooms/boss1/room.json';
     } else {
-        const randomRoom = roomManifest.rooms[Math.floor(Math.random() * roomManifest.rooms.length)];
-        roomUrl = `rooms/${randomRoom}/room.json`;
-    }
-
-    if (roomManifest.rooms.length > 0) {
-        fetch(roomUrl + '?t=' + Date.now())
-            .then(res => res.json())
-            .then(data => {
-                roomNameEl.innerText = data.name || "Unknown Room";
-                canvas.width = data.width || 800;
-                canvas.height = data.height || 600;
-                roomStartTime = Date.now();
-
-                // Boss Room Logic: Strictly ONE entry door
-                if (data.isBoss) {
-                    if (!data.doors) data.doors = {};
-                    const entryDoor = dx === 1 ? 'left' : (dx === -1 ? 'right' : (dy === 1 ? 'top' : 'bottom'));
-
-                    // Only activate the entry door
-                    data.doors[entryDoor].active = 1;
-                    data.doors[entryDoor].locked = 0;
-
-                    // Trigger Intro
-                    bossIntroEndTime = Date.now() + 2000;
-                } else {
-                    // Normal Room Logic: Stitching & Neighbor Sync
-                    const pathIndex = goldenPath.indexOf(nextCoord);
-                    if (pathIndex !== -1 && pathIndex < goldenPath.length - 1) {
-                        const nextP = goldenPath[pathIndex + 1].split(',').map(Number);
-                        const doorToNext = nextP[0] > player.roomX ? 'right' : (nextP[0] < player.roomX ? 'left' : (nextP[1] > player.roomY ? 'bottom' : 'top'));
-
-                        if (!data.doors) data.doors = {};
-                        if (!data.doors[doorToNext]) data.doors[doorToNext] = { active: 1, locked: 0 };
-                        else data.doors[doorToNext].active = 1;
-                    }
-
-                    // Prune doors for side rooms (dead ends)
-                    if (pathIndex === -1 && nextCoord !== "0,0") {
-                        const entryDoor = dx === 1 ? 'left' : (dx === -1 ? 'right' : (dy === 1 ? 'top' : 'bottom'));
-                        const others = ['top', 'bottom', 'left', 'right'].filter(d => d !== entryDoor);
-                        others.forEach(d => {
-                            if (Math.random() > 0.3) {
-                                if (data.doors && data.doors[d]) data.doors[d].active = 0;
-                            }
-                        });
-                    }
-
-                    syncNeighborDoors(player.roomX, player.roomY, data);
-                }
-
-                spawnPlayer(dx, dy, data);
-
-                roomData = data;
-                // Cache the new room
-                visitedRooms[nextCoord] = { roomData: roomData, cleared: false };
-                spawnEnemies();
-            })
-            .catch(err => {
-                console.error("Critical: Failed to load room.", err);
-                spawnEnemies();
-            });
-    } else {
-        spawnEnemies();
+        console.error("Critical: Room not found in levelMap at", nextCoord);
+        // Fallback: stay in current room but reset coords
+        player.roomX -= dx;
+        player.roomY -= dy;
     }
 }
 
@@ -599,16 +539,28 @@ function update() {
                             let msg = "";
                             if (isPerfect) {
                                 perfectStreak++;
+
                                 if (perfectStreak >= (gameData.perfectGoal || 3)) {
+                                    player.perfectCount++;
+                                    player.perfectTotalCount++;
+                                    player.perfectCount = 0;
                                     msg = "PERFECT BONUS!"; // Bonus takes priority over combo text
                                 } else {
+                                    player.perfectCount++;
+                                    player.perfectTotalCount++;
+                                    player.speedCount++;
+                                    player.speedTotalCount++;
                                     msg = isSpeedy ? "SPEEDY PERFECT!" : "PERFECT!";
                                 }
                             } else if (isSpeedy) {
                                 msg = "SPEEDY!";
                                 perfectStreak = 0;
+                                player.speedCount++;
+                                player.speedTotalCount++;
                             } else {
                                 perfectStreak = 0; // Reset streak if neither
+                                player.speedCount = 0;
+                                player.perfectCount = 0;
                             }
 
                             if (msg) {
@@ -697,7 +649,8 @@ function goToWelcome() {
     initGame(false);
 }
 
-function draw() {
+async function draw() {
+    await updateUI();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw Doors
