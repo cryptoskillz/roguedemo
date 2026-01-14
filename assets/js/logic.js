@@ -52,6 +52,7 @@ let roomTemplates = {};
 let levelMap = {}; // Pre-generated level structure
 let bossCoord = "";
 let bossIntroEndTime = 0;
+let gameLoopStarted = false;
 
 async function updateUI() {
     hpEl.innerText = player.hp;
@@ -259,11 +260,17 @@ async function initGame(isRestart = false) {
 
         if (gameState === STATES.PLAY) spawnEnemies();
 
-        draw(); // Start loop
+        if (!gameLoopStarted) {
+            gameLoopStarted = true;
+            draw(); // Start loop only once
+        }
 
     } catch (err) {
         console.warn("Could not load configurations", err);
-        draw();
+        if (!gameLoopStarted) {
+            gameLoopStarted = true;
+            draw();
+        }
     }
 }
 
