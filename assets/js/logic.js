@@ -186,6 +186,7 @@ const DOOR_THICKNESS = 15;
 // Load configurations (Async)
 const DEBUG_START_BOSS = false; // TOGGLE THIS FOR DEBUGGING
 const DEBUG_PLAYER = true;
+const CHEATS_ENABLED = false;
 
 // configurations
 // configurations
@@ -558,7 +559,7 @@ function update() {
     }
 
     // Cheat Keys
-    if (keys['KeyL']) { // Moved from K to L to avoid conflict with unlocking
+    if (CHEATS_ENABLED && keys['KeyL']) {
         player.inventory.keys++;
         keysEl.innerText = player.inventory.keys;
         keys['KeyL'] = false; // Prevents spam
@@ -648,13 +649,14 @@ function update() {
                                     player.speedCount++;
                                     player.speedTotalCount++;
                                 } else {
-                                    msg = "ROOM BONUS!"; // Default clear bonus if no key used
                                     perfectStreak = 0;
                                     player.speedCount = 0;
                                     player.perfectCount = 0;
                                 }
                             } else {
-                                console.log("Key used to enter room, no bonus awarded.");
+                                if (Math.random() < 0.1) {
+                                    msg = "ROOM BONUS!";
+                                }
                             }
 
                             if (msg) {

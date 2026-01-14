@@ -2,6 +2,7 @@
     "hp": 3,
     "speed": 4,
     "size": 20,
+    "luck": 0,
     "roomX": 0,
     "roomY": 0,
     "x": 300,
