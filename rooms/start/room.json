@@ -21,6 +21,7 @@
     },
     "allDoorsUnlocked": 1,
     "enemyCount": 0,
+    "enemies": [],
     "width": 800,
     "height": 600
 }

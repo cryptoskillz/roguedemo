@@ -24,5 +24,15 @@
         }
     },
     "width": 800,
-    "height": 500
+    "height": 500,
+    "enemies": [
+        {
+            "type": "grunt",
+            "count": 2
+        },
+        {
+            "type": "speedy",
+            "count": 1
+        }
+    ]
 }

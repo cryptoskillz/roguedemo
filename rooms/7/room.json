@@ -24,5 +24,11 @@
         }
     },
     "width": 800,
-    "height": 800
+    "height": 800,
+    "enemies": [
+        {
+            "type": "tank",
+            "count": 2
+        }
+    ]
 }

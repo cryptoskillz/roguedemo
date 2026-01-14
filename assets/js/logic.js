@@ -317,6 +317,9 @@ function spawnEnemies() {
     const freezeUntil = Date.now() + 1000;
     player.invulnUntil = freezeUntil;
 
+    // Skip if explicitly set to 0 enemies
+    if (roomData.enemyCount === 0) return;
+
     // Use roomData.enemies if defined (array of {type, count}), otherwise fallback
     if (roomData.enemies && Array.isArray(roomData.enemies)) {
         roomData.enemies.forEach(group => {
