@@ -1,5 +1,6 @@
 {
     "type": "boss",
+    "name": "The Guardian!",
     "hp": 20,
     "speed": 0.5,
     "size": 50,

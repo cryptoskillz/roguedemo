@@ -10,12 +10,36 @@
     "invuln": false,
     "invulnUntil": 0,
     "invulnColor": "white",
+    "Bullet": {
+        "speed": 14,
+        "size": 5,
+        "damage": 1,
+        "range": 70,
+        "curve": 0,
+        "spread": 0,
+        "spreadRate": 0,
+        "number": 1,
+        "homming": false,
+        "fireRate": 0.5,
+        "wallBounce": false,
+        "pierce": false,
+        "topAndBottom": false,
+        "Explode": {
+            "active": false,
+            "shards": 8,
+            "size": 2,
+            "damage": 0.1,
+            "shardRange": 30
+        }
+    },
     "lastShot": 0,
     "speedCount": 0,
     "speedTotalCount": 0,
     "perfectCount": 0,
     "perfectTotalCount": 0,
     "inventory": {
-        "keys": 5
+        "keys": 5,
+        "NormalBomb": 5,
+        "GoldenBomb": 5
     }
 }

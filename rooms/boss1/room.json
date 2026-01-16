@@ -1,6 +1,5 @@
 {
     "name": "Boss Room 1",
-    "bossName": "The Guardian",
     "speedGoal": 0,
     "isBoss": true,
     "enemies": [

@@ -15,8 +15,16 @@
             Room: [<span id="roomName">...</span>]<br>
             Coords: <span id="room">0,0</span>
         </div>
-        <canvas id="minimapCanvas" width="100" height="100"></canvas>
-        <br><span id="player">.</span>
+        <div id="debug-panel">
+            <canvas id="minimapCanvas" width="100" height="100"></canvas>
+            <div id="debug-editor">
+                <select id="debug-select">
+                    <option value="player">Player</option>
+                    <option value="room">Current Room</option>
+                </select>
+                <div id="debug-form"></div>
+            </div>
+        </div>
     </div>
     <div id="welcome">
         <h1>rouge demo</h1>

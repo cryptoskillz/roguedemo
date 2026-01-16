@@ -4,7 +4,6 @@ const ctx = canvas.getContext('2d');
 const hpEl = document.getElementById('hp');
 const keysEl = document.getElementById('keys');
 const roomEl = document.getElementById('room');
-const playerEl = document.getElementById('player');
 const overlayEl = document.getElementById('overlay');
 const welcomeEl = document.getElementById('welcome');
 const uiEl = document.getElementById('ui');
@@ -13,6 +12,9 @@ const perfectEl = document.getElementById('perfect');
 const roomNameEl = document.getElementById('roomName');
 const mapCanvas = document.getElementById('minimapCanvas');
 const mctx = mapCanvas.getContext('2d');
+const debugSelect = document.getElementById('debug-select');
+const debugForm = document.getElementById('debug-form');
+const debugPanel = document.getElementById('debug-panel');
 
 // --- Game State ---
 let player = {
@@ -61,11 +63,89 @@ async function updateUI() {
     keysEl.innerText = player.inventory.keys;
     roomEl.innerText = `${player.roomX},${player.roomY}`;
     roomNameEl.innerText = roomData.name || "Unknown Room";
-    // console.log(player);
-    if (DEBUG_PLAYER) {
-        const playerDup = structuredClone(player);
-        playerEl.innerText = `Player: ${JSON.stringify(playerDup, null, 2)}`;
+    updateDebugEditor();
+}
+
+function updateDebugEditor() {
+    if (!debugForm || !debugSelect) return;
+
+    // Only rebuild if it's the first time or we changed source/room
+    // For now, let's keep it simple and rebuild only when source changes or on manual calls
+    // To prevent rebuilding every frame, we check if we actually need a full refresh.
+    // However, for this demo, let's just make a dedicated "refresh" trigger.
+}
+
+function renderDebugForm() {
+    if (!debugForm || !debugSelect) return;
+    debugForm.innerHTML = '';
+    const type = debugSelect.value;
+    const target = type === 'player' ? player : roomData;
+
+    function createFields(parent, obj, path) {
+        for (const key in obj) {
+            // Ignore internal props or noisy ones
+            if (key === 'lastShot' || key === 'invulnUntil') continue;
+
+            const value = obj[key];
+            const currentPath = path ? `${path}.${key}` : key;
+
+            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                const group = document.createElement('div');
+                group.className = 'debug-nested';
+                const header = document.createElement('div');
+                header.style.color = '#5dade2';
+                header.style.fontSize = '13px';
+                header.style.fontWeight = 'bold';
+                header.style.marginBottom = '8px';
+                header.style.marginLeft = '-10px';
+                header.style.paddingBottom = '4px';
+                header.style.borderBottom = '1px solid rgba(93, 173, 226, 0.3)';
+                header.innerText = key;
+                group.appendChild(header);
+                createFields(group, value, currentPath);
+                parent.appendChild(group);
+            } else {
+                const field = document.createElement('div');
+                field.className = 'debug-field';
+
+                const label = document.createElement('label');
+                label.innerText = key;
+                field.appendChild(label);
+
+                const input = document.createElement('input');
+                if (typeof value === 'boolean') {
+                    input.type = 'checkbox';
+                    input.checked = value;
+                } else if (typeof value === 'number') {
+                    input.type = 'number';
+                    input.value = value;
+                    input.step = 'any';
+                } else {
+                    input.type = 'text';
+                    input.value = value;
+                }
+
+                input.addEventListener('input', (e) => {
+                    let newVal = input.type === 'checkbox' ? input.checked : input.value;
+                    if (input.type === 'number') newVal = parseFloat(newVal);
+
+                    // Update state
+                    let o = type === 'player' ? player : roomData;
+                    const parts = currentPath.split('.');
+                    for (let i = 0; i < parts.length - 1; i++) o = o[parts[i]];
+                    o[parts[parts.length - 1]] = newVal;
+
+                    // Sync UI if needed
+                    if (key === 'hp' || key === 'luck') updateUI();
+                });
+
+                field.appendChild(input);
+                parent.appendChild(field);
+            }
+        }
     }
+
+    createFields(debugForm, target, '');
 }
 
 // --- Level Generation Logic ---
@@ -159,22 +239,6 @@ function generateLevel(length) {
             }
         });
 
-        // Boss room logic - ensure only entry is open
-        if (data.isBoss) {
-            // Find which neighbor is in goldenPath just before boss
-            const bossIndex = goldenPath.indexOf(coord);
-            let entryDir = null;
-            if (bossIndex > 0) {
-                const prevCoord = goldenPath[bossIndex - 1];
-                const [prx, pry] = prevCoord.split(',').map(Number);
-                entryDir = prx < rx ? "left" : (prx > rx ? "right" : (pry < ry ? "top" : "bottom"));
-            }
-
-            // Close all doors except entry
-            ["top", "bottom", "left", "right"].forEach(dir => {
-                if (data.doors[dir]) data.doors[dir].active = (dir === entryDir ? 1 : 0);
-            });
-        }
     }
 
     console.log("Level Generated upfront with", Object.keys(levelMap).length, "rooms.");
@@ -188,10 +252,12 @@ const DOOR_THICKNESS = 15;
 const DEBUG_START_BOSS = false; // TOGGLE THIS FOR DEBUGGING
 const DEBUG_PLAYER = true;
 const CHEATS_ENABLED = false;
+const DEBUG_WINDOW_ENABLED = true;
 
 // configurations
 // configurations
 async function initGame(isRestart = false) {
+    if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
     gameState = isRestart ? STATES.PLAY : STATES.START;
     overlayEl.style.display = 'none';
     welcomeEl.style.display = isRestart ? 'none' : 'flex';
@@ -297,6 +363,7 @@ initGame();
 
 // --- Input Handling ---
 window.addEventListener('keydown', e => {
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
     if (gameState === STATES.START) {
         gameState = STATES.PLAY;
         welcomeEl.style.display = 'none';
@@ -315,13 +382,25 @@ window.addEventListener('keydown', e => {
         restartGame();
     }
 });
-window.addEventListener('keyup', e => keys[e.code] = false);
+window.addEventListener('keyup', e => {
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+    keys[e.code] = false;
+});
+
+// Debug Listeners
+if (debugSelect) debugSelect.addEventListener('change', renderDebugForm);
+// Force initial render of the form
+setTimeout(renderDebugForm, 100);
 
 function spawnEnemies() {
     enemies = [];
 
     const freezeUntil = Date.now() + 1000;
-    player.invulnUntil = freezeUntil;
+
+    // Only apply invulnerability if NOT in start room
+    if (player.roomX !== 0 || player.roomY !== 0) {
+        player.invulnUntil = freezeUntil;
+    }
 
     // Skip if explicitly set to 0 enemies
     if (roomData.enemyCount === 0) return;
@@ -412,6 +491,7 @@ function changeRoom(dx, dy) {
     const nextCoord = `${player.roomX},${player.roomY}`;
     roomEl.innerText = nextCoord;
 
+    bullets = []; // Clear bullets on room entry
     bulletsInRoom = 0;
     hitsInRoom = 0;
     perfectEl.style.display = 'none';
@@ -427,15 +507,22 @@ function changeRoom(dx, dy) {
         canvas.height = roomData.height || 600;
 
         spawnPlayer(dx, dy, roomData);
-        roomStartTime = Date.now() + (roomData.isBoss ? 2000 : 1000); // Start timer after freeze
+
+        // Remove freeze period for start room (0,0)
+        let freezeDelay = (player.roomX === 0 && player.roomY === 0) ? 0 : 1000;
+        if (roomData.isBoss) freezeDelay = 2000;
+
+        roomStartTime = Date.now() + freezeDelay; // Start timer after freeze
         keyUsedForRoom = keyWasUsedForThisRoom; // Apply key usage penalty to next room
 
         // Immediate Room Bonus if key used
-        if (keyUsedForRoom) {
+        // Immediate Room Bonus if key used (First visit only)
+        if (keyUsedForRoom && !levelMap[nextCoord].bonusAwarded) {
             const baseChance = roomData.keyBonus !== undefined ? roomData.keyBonus : 1.0;
             const finalChance = baseChance + (player.luck || 0);
             console.log(`Bonus Roll - Base: ${baseChance}, Luck: ${player.luck}, Final: ${finalChance}`);
             if (Math.random() < finalChance) {
+                levelMap[nextCoord].bonusAwarded = true; // Mark bonus as awarded
                 perfectEl.innerText = "ROOM BONUS!";
                 perfectEl.style.display = 'block';
                 perfectEl.style.animation = 'none';
@@ -452,8 +539,7 @@ function changeRoom(dx, dy) {
                 roomData.doors[entryDoor].locked = 0;
             }
         }
-
-        if (roomData.isBoss) {
+        if (roomData.isBoss && !nextEntry.cleared) {
             bossIntroEndTime = Date.now() + 2000;
         }
 
@@ -462,6 +548,8 @@ function changeRoom(dx, dy) {
         } else {
             enemies = [];
         }
+        updateUI();
+        renderDebugForm(); // Refresh form for new room
     } else {
         console.error("Critical: Room not found in levelMap at", nextCoord);
         // Fallback: stay in current room but reset coords
@@ -582,15 +670,94 @@ function update() {
     }
 
     if (keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight']) {
-        if (Date.now() - (player.lastShot || 0) > 300) {
+        const fireDelay = (player.Bullet?.fireRate !== undefined ? player.Bullet.fireRate : 0.3) * 1000;
+        if (Date.now() - (player.lastShot || 0) > fireDelay) {
             bulletsInRoom++;
-            let vx = 0, vy = 0;
-            if (keys['ArrowUp']) vy = -7;
-            else if (keys['ArrowDown']) vy = 7;
-            else if (keys['ArrowLeft']) vx = -7;
-            else if (keys['ArrowRight']) vx = 7;
+            let baseAngle = 0;
+            if (keys['ArrowUp']) baseAngle = -Math.PI / 2;
+            else if (keys['ArrowDown']) baseAngle = Math.PI / 2;
+            else if (keys['ArrowLeft']) baseAngle = Math.PI;
+            else if (keys['ArrowRight']) baseAngle = 0;
 
-            bullets.push({ x: player.x, y: player.y, vx, vy, life: 60 });
+            if (player.Bullet?.homming) {
+                if (enemies.length === 0) return;
+                let nearest = null;
+                let minDist = Infinity;
+                enemies.forEach(en => {
+                    let d = Math.hypot(player.x - en.x, player.y - en.y);
+                    if (d < minDist) {
+                        minDist = d;
+                        nearest = en;
+                    }
+                });
+                if (nearest) {
+                    baseAngle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+                }
+            }
+
+            const bulletCount = player.Bullet?.number || 1;
+            const spreadRate = player.Bullet?.spreadRate || 0.2; // Radians between streams
+
+            for (let i = 0; i < bulletCount; i++) {
+                let angle = baseAngle;
+
+                if (bulletCount > 1) {
+                    // Center the arc
+                    angle += (i - (bulletCount - 1) / 2) * spreadRate;
+                }
+
+                if (player.Bullet?.spread) {
+                    angle += (Math.random() - 0.5) * player.Bullet.spread;
+                }
+
+                const speed = player.Bullet?.speed || 7;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+
+                // topAndBottom mode: fire one bullet north and one south
+                if (player.Bullet?.topAndBottom) {
+                    // North bullet (up)
+                    bullets.push({
+                        x: player.x,
+                        y: player.y,
+                        vx: 0,
+                        vy: -speed,
+                        life: player.Bullet?.range || 60,
+                        damage: player.Bullet?.damage || 1,
+                        size: player.Bullet?.size || 5,
+                        curve: player.Bullet?.curve || 0,
+                        homing: player.Bullet?.homming,
+                        hitEnemies: []
+                    });
+                    // South bullet (down)
+                    bullets.push({
+                        x: player.x,
+                        y: player.y,
+                        vx: 0,
+                        vy: speed,
+                        life: player.Bullet?.range || 60,
+                        damage: player.Bullet?.damage || 1,
+                        size: player.Bullet?.size || 5,
+                        curve: player.Bullet?.curve || 0,
+                        homing: player.Bullet?.homming,
+                        hitEnemies: []
+                    });
+                } else {
+                    // Normal mode: fire in aimed direction
+                    bullets.push({
+                        x: player.x,
+                        y: player.y,
+                        vx,
+                        vy,
+                        life: player.Bullet?.range || 60,
+                        damage: player.Bullet?.damage || 1,
+                        size: player.Bullet?.size || 5,
+                        curve: player.Bullet?.curve || 0,
+                        homing: player.Bullet?.homming,
+                        hitEnemies: []
+                    });
+                }
+            }
             player.lastShot = Date.now();
         }
     }
@@ -606,8 +773,46 @@ function update() {
 
     // Bullet Logic
     bullets.forEach((b, i) => {
+        if (b.homing && enemies.length > 0) {
+            let nearest = null;
+            let minDist = Infinity;
+            enemies.forEach(en => {
+                let d = Math.hypot(b.x - en.x, b.y - en.y);
+                if (d < minDist) {
+                    minDist = d;
+                    nearest = en;
+                }
+            });
+            if (nearest) {
+                let desiredAngle = Math.atan2(nearest.y - b.y, nearest.x - b.x);
+                let currentAngle = Math.atan2(b.vy, b.vx);
+                let speed = Math.hypot(b.vx, b.vy);
+                let diff = desiredAngle - currentAngle;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                let steerAmount = 0.1;
+                if (Math.abs(diff) < steerAmount) currentAngle = desiredAngle;
+                else currentAngle += Math.sign(diff) * steerAmount;
+                b.vx = Math.cos(currentAngle) * speed;
+                b.vy = Math.sin(currentAngle) * speed;
+            }
+        }
+        if (b.curve) {
+            let speed = Math.hypot(b.vx, b.vy);
+            let angle = Math.atan2(b.vy, b.vx);
+            angle += b.curve; // curve as angle delta per frame
+            b.vx = Math.cos(angle) * speed;
+            b.vy = Math.sin(angle) * speed;
+        }
         b.x += b.vx;
         b.y += b.vy;
+
+        if (player.Bullet?.wallBounce) {
+            if (b.x < 0) { b.x = 0; b.vx = -b.vx; }
+            if (b.x > canvas.width) { b.x = canvas.width; b.vx = -b.vx; }
+            if (b.y < 0) { b.y = 0; b.vy = -b.vy; }
+            if (b.y > canvas.height) { b.y = canvas.height; b.vy = -b.vy; }
+        }
         b.life--;
         if (b.life <= 0) bullets.splice(i, 1);
     });
@@ -627,11 +832,50 @@ function update() {
         bullets.forEach((b, bi) => {
             let dist = Math.hypot(b.x - en.x, b.y - en.y);
             if (dist < en.size) {
+                // For piercing bullets, check if this enemy was already hit
+                if (player.Bullet?.pierce && b.hitEnemies && b.hitEnemies.includes(ei)) {
+                    return; // Skip this enemy, already hit by this bullet
+                }
+
+                // Explosion Logic
+                if (player.Bullet?.Explode?.active && !b.isShard) {
+                    const shardCount = player.Bullet.Explode.shards || 8;
+                    const step = (Math.PI * 2) / shardCount;
+                    for (let i = 0; i < shardCount; i++) {
+                        const angle = step * i;
+                        bullets.push({
+                            x: b.x,
+                            y: b.y,
+                            vx: Math.cos(angle) * (player.Bullet?.speed || 7),
+                            vy: Math.sin(angle) * (player.Bullet?.speed || 7),
+                            life: player.Bullet.Explode.shardRange || 30,
+                            damage: player.Bullet.Explode.damage || 0.1,
+                            size: player.Bullet.Explode.size || 2,
+                            isShard: true
+                        });
+                    }
+                }
+
+                // Only destroy bullet if not piercing
+                if (!player.Bullet?.pierce) {
+                    bullets.splice(bi, 1);
+                } else {
+                    // Track that this bullet hit this enemy
+                    if (!b.hitEnemies) b.hitEnemies = [];
+                    b.hitEnemies.push(ei);
+                    // Halve damage after each pierce
+                    b.damage = (b.damage || 1) / 2;
+                    // Destroy bullet if damage is too low
+                    if (b.damage <= 0) {
+                        bullets.splice(bi, 1);
+                    }
+                }
+
                 const isFrozen = Date.now() < en.freezeUntil;
                 if (!isFrozen) {
-                    en.hp--;
+                    en.hp -= (b.damage || 1);
                     hitsInRoom++;
-                    bullets.splice(bi, 1);
+
                     if (en.hp <= 0) {
                         enemies.splice(ei, 1);
                         if (enemies.length === 0) {
@@ -719,7 +963,7 @@ function update() {
 
         // Enemy hit player
         let pDist = Math.hypot(player.x - en.x, player.y - en.y);
-        if (pDist < 20) {
+        if (pDist < player.size + en.size) {
             const isInvuln = player.invuln || Date.now() < player.invulnUntil;
             // Very basic "iframes" logic
             if (!isInvuln) {
@@ -803,23 +1047,45 @@ async function draw() {
     ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
     ctx.fill();
 
+    // Reload Bar (when fire rate is > 1s)
+    const fireRate = player.Bullet?.fireRate !== undefined ? player.Bullet.fireRate : 0.3;
+    if (fireRate > 1) {
+        const fireDelay = fireRate * 1000;
+        const elapsed = Date.now() - (player.lastShot || 0);
+        if (elapsed < fireDelay) {
+            const barWidth = 40;
+            const barHeight = 4;
+            const bx = player.x - barWidth / 2;
+            const by = player.y - player.size - 10;
+
+            // Background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(bx, by, barWidth, barHeight);
+
+            // Progress (Cooldown)
+            ctx.fillStyle = '#3498db'; // Nice blue for reload
+            ctx.fillRect(bx, by, barWidth * (elapsed / fireDelay), barHeight);
+        }
+    }
+
     // Draw Bullets
     ctx.fillStyle = 'yellow';
     bullets.forEach(b => {
         ctx.beginPath();
-        ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
+        ctx.arc(b.x, b.y, b.size || 5, 0, Math.PI * 2);
         ctx.fill();
     });
 
     // Boss Intro Sequence
-    if (roomData.isBoss) {
+    if (roomData.isBoss && !roomData.cleared) {
         if (Date.now() < bossIntroEndTime) {
             // Draw Boss Name during intro
             ctx.fillStyle = "#e74c3c"; // Red text for visibility
             ctx.font = "bold 50px 'Courier New'"; // Matched Font
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(roomData.bossName || "BOSS", canvas.width / 2, canvas.height / 2);
+            const currentBossName = (enemyTemplates["boss"] && enemyTemplates["boss"].name) || "BOSS";
+            ctx.fillText(currentBossName, canvas.width / 2, canvas.height / 2);
 
             // Don't draw enemies yet
         } else {
