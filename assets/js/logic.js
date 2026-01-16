@@ -770,6 +770,13 @@ function update() {
         }
         b.x += b.vx;
         b.y += b.vy;
+
+        if (player.bulletWallBounce) {
+            if (b.x < 0) { b.x = 0; b.vx = -b.vx; }
+            if (b.x > canvas.width) { b.x = canvas.width; b.vx = -b.vx; }
+            if (b.y < 0) { b.y = 0; b.vy = -b.vy; }
+            if (b.y > canvas.height) { b.y = canvas.height; b.vy = -b.vy; }
+        }
         b.life--;
         if (b.life <= 0) bullets.splice(i, 1);
     });

@@ -20,6 +20,7 @@
     "bulletNumber": 1,
     "bulletHomming": false,
     "bulletFireRate": 0.5,
+    "bulletWallBounce": false,
     "lastShot": 0,
     "speedCount": 0,
     "speedTotalCount": 0,
