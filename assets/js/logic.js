@@ -392,7 +392,11 @@ function spawnEnemies() {
     enemies = [];
 
     const freezeUntil = Date.now() + 1000;
-    player.invulnUntil = freezeUntil;
+
+    // Only apply invulnerability if NOT in start room
+    if (player.roomX !== 0 || player.roomY !== 0) {
+        player.invulnUntil = freezeUntil;
+    }
 
     // Skip if explicitly set to 0 enemies
     if (roomData.enemyCount === 0) return;
@@ -499,7 +503,12 @@ function changeRoom(dx, dy) {
         canvas.height = roomData.height || 600;
 
         spawnPlayer(dx, dy, roomData);
-        roomStartTime = Date.now() + (roomData.isBoss ? 2000 : 1000); // Start timer after freeze
+
+        // Remove freeze period for start room (0,0)
+        let freezeDelay = (player.roomX === 0 && player.roomY === 0) ? 0 : 1000;
+        if (roomData.isBoss) freezeDelay = 2000;
+
+        roomStartTime = Date.now() + freezeDelay; // Start timer after freeze
         keyUsedForRoom = keyWasUsedForThisRoom; // Apply key usage penalty to next room
 
         // Immediate Room Bonus if key used
