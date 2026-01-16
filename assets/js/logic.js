@@ -872,7 +872,7 @@ function update() {
 
         // Enemy hit player
         let pDist = Math.hypot(player.x - en.x, player.y - en.y);
-        if (pDist < 20) {
+        if (pDist < player.size + en.size) {
             const isInvuln = player.invuln || Date.now() < player.invulnUntil;
             // Very basic "iframes" logic
             if (!isInvuln) {
