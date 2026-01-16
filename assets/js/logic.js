@@ -503,11 +503,13 @@ function changeRoom(dx, dy) {
         keyUsedForRoom = keyWasUsedForThisRoom; // Apply key usage penalty to next room
 
         // Immediate Room Bonus if key used
-        if (keyUsedForRoom) {
+        // Immediate Room Bonus if key used (First visit only)
+        if (keyUsedForRoom && !levelMap[nextCoord].bonusAwarded) {
             const baseChance = roomData.keyBonus !== undefined ? roomData.keyBonus : 1.0;
             const finalChance = baseChance + (player.luck || 0);
             console.log(`Bonus Roll - Base: ${baseChance}, Luck: ${player.luck}, Final: ${finalChance}`);
             if (Math.random() < finalChance) {
+                levelMap[nextCoord].bonusAwarded = true; // Mark bonus as awarded
                 perfectEl.innerText = "ROOM BONUS!";
                 perfectEl.style.display = 'block';
                 perfectEl.style.animation = 'none';
