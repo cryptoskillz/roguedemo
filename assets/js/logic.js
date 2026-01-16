@@ -801,6 +801,11 @@ function update() {
         bullets.forEach((b, bi) => {
             let dist = Math.hypot(b.x - en.x, b.y - en.y);
             if (dist < en.size) {
+                // For piercing bullets, check if this enemy was already hit
+                if (player.Bullet?.pierce && b.hitEnemies && b.hitEnemies.includes(ei)) {
+                    return; // Skip this enemy, already hit by this bullet
+                }
+
                 // Explosion Logic
                 if (player.Bullet?.Explode?.active && !b.isShard) {
                     const shardCount = player.Bullet.Explode.shards || 8;
@@ -823,7 +828,12 @@ function update() {
                 // Only destroy bullet if not piercing
                 if (!player.Bullet?.pierce) {
                     bullets.splice(bi, 1);
+                } else {
+                    // Track that this bullet hit this enemy
+                    if (!b.hitEnemies) b.hitEnemies = [];
+                    b.hitEnemies.push(ei);
                 }
+
                 const isFrozen = Date.now() < en.freezeUntil;
                 if (!isFrozen) {
                     en.hp -= (b.damage || 1);
