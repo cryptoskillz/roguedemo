@@ -10,6 +10,7 @@ const uiEl = document.getElementById('ui');
 const statsEl = document.getElementById('stats');
 const perfectEl = document.getElementById('perfect');
 const roomNameEl = document.getElementById('roomName');
+const bombsEl = document.getElementById('bombs');
 const mapCanvas = document.getElementById('minimapCanvas');
 const mctx = mapCanvas.getContext('2d');
 const debugSelect = document.getElementById('debug-select');
@@ -61,7 +62,17 @@ let keyUsedForRoom = false;
 async function updateUI() {
     hpEl.innerText = player.hp;
     keysEl.innerText = player.inventory.keys;
-    roomEl.innerText = `${player.roomX},${player.roomY}`;
+    //check if bomb type is golden and if so set the count colour to gold 
+    if (player.bombType === "golden") {
+        bombsEl.style.color = "gold";
+    } else {
+        bombsEl.style.color = "white";
+    }
+    bombsEl.innerText = player.inventory.bombs;
+    //update cords only if debug mode is enabled otherwise hide this
+    if (DEBUG_WINDOW_ENABLED) {
+        roomEl.innerText = `Coords: ${player.roomX},${player.roomY}`;
+    }
     roomNameEl.innerText = roomData.name || "Unknown Room";
     updateDebugEditor();
 }
@@ -263,6 +274,13 @@ async function initGame(isRestart = false) {
     welcomeEl.style.display = isRestart ? 'none' : 'flex';
     if (uiEl) uiEl.style.display = isRestart ? 'block' : 'none';
     bullets = [];
+
+    //check if debug mode is enabled and if so show the room cords
+    if (DEBUG_WINDOW_ENABLED) {
+        roomEl.style.display = 'block';
+    } else {
+        roomEl.style.display = 'none';
+    }
 
     // Reset player
     player.hp = 3;
@@ -569,7 +587,6 @@ function fireBullet(direction, speed, vx, vy, angle) {
     */
 
     //check if the have bullets, they are in a mode where no bullets should be fired
-    console.log(player.Bullet?.NoBullets);
     if (player.Bullet?.NoBullets) {
         return;
     }
@@ -772,6 +789,18 @@ function update() {
         if (player.x < canvas.width - BOUNDARY || (inDoorRange && canPass)) {
             player.x += player.speed;
         }
+    }
+
+
+    //check for space key
+    if (keys['KeyB']) {
+        if (player.inventory && player.inventory.bombs > 0) {
+            player.inventory.bombs--;
+            //bombsInRoom++;
+            console.log("Bombs used, bombs left: " + player.inventory.bombs);
+            keys['KeyB'] = false;
+        }
+        updateUI();
     }
 
     // Cheat Keys
@@ -1370,11 +1399,16 @@ async function draw() {
             ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
             ctx.fillText("UNLOCK", mx, my - 45);
             drawKey("K", mx, my);
-
+            //restart
             mx = mx + 100
             ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
             ctx.fillText("RESTART", mx, my - 45);
             drawKey("P", mx, my);
+            //bomb
+            mx = mx + 100
+            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+            ctx.fillText("BOMB", mx, my - 45);
+            drawKey("B", mx, my);
         }
     }
 

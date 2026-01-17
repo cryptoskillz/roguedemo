@@ -13,7 +13,6 @@ start room
 
 bullets  
     no bullets
-    frontLocked it only fires forward the way you are moving
     added ammo, if it is active it should count count
     
 
@@ -56,8 +55,11 @@ mini map
 debug window 
     CHEATS_ENABLED
     enemies
-    bombs
-    items
+    updateDebugEditor make it update in realtime when something happens in the game
+    when you click off of it it should focus back on the game
+    add a export json option
+    move the cords into this 
+
 
 
 

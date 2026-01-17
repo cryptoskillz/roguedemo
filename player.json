@@ -53,9 +53,9 @@
     "speedTotalCount": 0,
     "perfectCount": 0,
     "perfectTotalCount": 0,
+    "bombType": "golden",
     "inventory": {
         "keys": 5,
-        "NormalBomb": 5,
-        "GoldenBomb": 5
+        "bombs": 5
     }
 }
