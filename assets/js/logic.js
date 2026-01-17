@@ -1179,7 +1179,7 @@ function gameOver() {
     overlayEl.style.display = 'flex';
     statsEl.innerText = "Rooms cleared: " + (Math.abs(player.roomX) + Math.abs(player.roomY));
     document.querySelector('#overlay h1').innerText = "Game Over";
-    overlayEl.querySelector('#cancelBtn').style.display = 'none';
+    overlayEl.querySelector('#continueBtn').style.display = 'none';
 }
 
 function gameWon() {
