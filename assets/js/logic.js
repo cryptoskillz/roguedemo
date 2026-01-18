@@ -517,6 +517,7 @@ function changeRoom(dx, dy) {
     roomEl.innerText = nextCoord;
 
     bullets = []; // Clear bullets on room entry
+    bombs = []; // Clear bombs on room entry
     bulletsInRoom = 0;
     hitsInRoom = 0;
     perfectEl.style.display = 'none';

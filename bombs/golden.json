@@ -18,7 +18,7 @@
     "explosionColour": "#FF0000",
     "canDamagePlayer": true,
     "active": true,
-    "timer": 1000,
+    "timer": 3000,
     "max": 100,
     "throwable": false,
     "throwableTimer": 0,

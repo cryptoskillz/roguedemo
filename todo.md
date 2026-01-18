@@ -8,7 +8,6 @@ bugs
     get invulTime from player file
     shake room is causing a little bleed and moving doors
     move bomb to player hit
-    exploding bombs have to clear when you enter a new room
     check that nothing can be done, dropping bombs etc when you the player is dead
 
 
