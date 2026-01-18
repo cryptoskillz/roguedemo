@@ -9,11 +9,12 @@ bugs
     shake room is causing a little bleed and moving doors
     move bomb to player hit
     exploding bombs have to clear when you enter a new room
+    check that nothing can be done, dropping bombs etc when you the player is dead
 
 
 logic
     move item to space bar 
-    replace K and to space and make it items that way space can open doors, chests, kicks bombs etc without requiring a special key
+        replace K and to space and make it items that way space can open doors, chests, kicks bombs etc without requiring a special key
     add the room shake when you get shot
     when bomb hits you you shoudl go white with invul, the same as happens when you get shot
 
