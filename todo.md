@@ -6,8 +6,6 @@ bugs
 bombs
     bombs can get be dropped, thrown and kicked with items you pick as well as default settings
     bombs are in the invetroy and can be picked up, when you press the space bar they can be dropped normal bombs can blow open doors and secret doors (in walls etc)golden bombs can blow open red doors with enemies still in the room 
-
-    make the bombs drop to the to the right of the player if they are not moving if they are moving make it drop behind them
     add collision to bombs
    
 
@@ -21,6 +19,7 @@ player
     iron man mode (ooe hit dead, all modifiers reset)
     if speed is over 2 x starting speed show a blur effect
     if you stay in a room for too long show a ghost demon
+    animaton when you die
 
 
 bullets  
@@ -36,6 +35,8 @@ enemies
     have swarm enemies that run away unless there are x of them
     have run away enemies
     last enemy tougher
+    animatoin when they die
+    make them go to hit color if a bomb or bullet hits them 
 
 
 key binding
