@@ -9,6 +9,7 @@
     "y": 200,
     "invuln": false,
     "invulnUntil": 0,
+    "invulTimer": 1000000,
     "invulnColor": "white",
     "Bullet": {
         "count": {

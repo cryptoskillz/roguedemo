@@ -66,7 +66,12 @@ let gameLoopStarted = false;
 let keyUsedForRoom = false;
 
 async function updateUI() {
-    hpEl.innerText = player.hp;
+    if (player.hp < 0) {
+        hpEl.innerText = 0
+    }
+    else {
+        hpEl.innerText = player.hp;
+    }
     keysEl.innerText = player.inventory.keys;
     //check if bomb type is golden and if so set the count colour to gold 
     if (player.bombType === "golden") {
@@ -419,8 +424,8 @@ setTimeout(renderDebugForm, 100);
 
 function spawnEnemies() {
     enemies = [];
-
-    const freezeUntil = Date.now() + 1000;
+    //add the invul timer to the freeze until so they invulnerable for the time in player json
+    const freezeUntil = Date.now() + player.invulTimer;
 
     // Only apply invulnerability if NOT in start room
     if (player.roomX !== 0 || player.roomY !== 0) {
