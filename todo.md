@@ -1,11 +1,23 @@
 bugs
-    homing missles should start at the side of the key that was pressde
+    homing missles should start at the side of the key that was pressed
     if you get hit perfect bonus will reset 
     360 bullet mode the right bullet is a little slow
+    bombs hurt player seems to create a little bleed.
+    display UO should not show hp under 0
+    add the enemy knockback modifier to the player
+    get invulTime from player file
+    shake room is causing a little bleed and moving doors
+    move bomb to player hit
+    exploding bombs have to clear when you enter a new room
+
+
+logic
+    move item to space bar 
+    replace K and to space and make it items that way space can open doors, chests, kicks bombs etc without requiring a special key
+    add the room shake when you get shot
+    when bomb hits you you shoudl go white with invul, the same as happens when you get shot
 
 bombs
-    bomb radius
-    
     bombs can get be dropped, thrown and kicked with items you pick as well as default settings
     bombs are in the invetroy and can be picked up, when you press the space bar they can be dropped normal bombs can blow open doors and secret doors (in walls etc)golden bombs can blow open red doors with enemies still in the room 
     add collision to bombs

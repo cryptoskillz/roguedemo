@@ -1219,19 +1219,69 @@ function update() {
         // Enemy hit player
         let pDist = Math.hypot(player.x - en.x, player.y - en.y);
         if (pDist < player.size + en.size) {
-            const isInvuln = player.invuln || Date.now() < player.invulnUntil;
-            // Very basic "iframes" logic
-            if (!isInvuln) {
-                player.hp--;
-                hpEl.innerText = player.hp;
-                player.invuln = true;
-                setTimeout(() => player.invuln = false, 1000);
-            }
+            playerHit(en, true, true, true);
+
         }
     });
 
     if (player.hp <= 0) {
         gameOver();
+    }
+}
+
+function playerHit(en, invuln = false, knockback = false, shakescreen = false) {
+    //check if player should be made invulerable
+    if (invuln) {
+        const isInvuln = player.invuln || Date.now() < player.invulnUntil;
+        // Very basic "iframes" logic
+        if (!isInvuln) {
+            //deduct enemies damage type
+            player.hp -= en.damage || 1;
+            hpEl.innerText = player.hp;
+            player.invuln = true;
+            setTimeout(() => player.invuln = false, 1000);
+        }
+
+    }
+    if (knockback) {
+
+        //add the enemy knockback modifier to the player
+        const dx = player.x - en.x;
+        const dy = player.y - en.y;
+        const len = Math.hypot(dx, dy) || 1;
+
+        const nx = dx / len;
+        const ny = dy / len;
+
+        // Push player to just outside the enemy radius
+        const padding = 6;
+        const targetDist = en.size + player.size + padding;
+        const needed = targetDist - len;
+
+        if (needed > 0) {
+            player.x += nx * needed;
+            player.y += ny * needed;
+        }
+
+        // Clamp to room bounds
+        player.x = Math.max(
+            BOUNDARY + player.size,
+            Math.min(canvas.width - BOUNDARY - player.size, player.x)
+        );
+        player.y = Math.max(
+            BOUNDARY + player.size,
+            Math.min(canvas.height - BOUNDARY - player.size, player.y)
+        );
+
+    }
+
+    if (shakescreen) {
+        // basic screen shake not dependant bombs max radius
+        const explosionStrength = 120 / 40; // scale with explosion size
+        const shakePower = (en.shake || 8) * explosionStrength;
+
+        screenShake.power = Math.max(screenShake.power, shakePower);
+        screenShake.endAt = Date.now() + (en.shakeDuration || 200);
     }
 }
 
