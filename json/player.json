@@ -12,6 +12,7 @@
     "invulTimer": 100,
     "invulnColor": "white",
     "lastShot": 0,
+    "lastBomb": 0,
     "speedCount": 0,
     "speedTotalCount": 0,
     "perfectCount": 0,

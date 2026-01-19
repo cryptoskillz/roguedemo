@@ -613,29 +613,34 @@ async function dropBomb() {
     const gap = 6;
     const backDist = player.size + baseR + gap;
 
-    bombs.push({
-        x: player.x - dirX * backDist,
-        y: player.y - dirY * backDist,
+    const bombDelay = (bomb?.fireRate !== undefined ? bomb?.fireRate : 0.3) * 1000;
+    if (Date.now() - (player.lastBomb || 0) > bombDelay) {
+        bombsInRoom++; // for perfecr calcs later
+        bombs.push({
+            x: player.x - dirX * backDist,
+            y: player.y - dirY * backDist,
 
-        baseR,
-        maxR,
+            baseR,
+            maxR,
 
-        colour: bomb.colour || "white",
-        damage: bomb.damage || 1,
-        canDamagePlayer: !!bomb.canDamagePlayer,
+            colour: bomb.colour || "white",
+            damage: bomb.damage || 1,
+            canDamagePlayer: !!bomb.canDamagePlayer,
 
 
-        explodeAt: Date.now() + timer,
-        exploding: false,
-        explosionStartAt: 0,
-        explosionDuration: bomb.explosionDuration || 300,
-        explosionColour: bomb.explosionColour || bomb.colour || "white",
-        didDamage: false,
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Math.random()),
-        triggeredBy: null, // optional debug
-    });
+            explodeAt: Date.now() + timer,
+            exploding: false,
+            explosionStartAt: 0,
+            explosionDuration: bomb.explosionDuration || 300,
+            explosionColour: bomb.explosionColour || bomb.colour || "white",
+            didDamage: false,
+            id: crypto.randomUUID ? crypto.randomUUID() : String(Math.random()),
+            triggeredBy: null, // optional debug
+        });
+        player.lastBomb = Date.now();
+
+    }
 }
-
 
 function fireBullet(direction, speed, vx, vy, angle) {
     /*
@@ -744,8 +749,6 @@ function fireBullet(direction, speed, vx, vy, angle) {
             hitEnemies: []
         });
     }
-
-    console.log(bullets)
 }
 
 // --- Generic "Use" action (SPACE) ---
