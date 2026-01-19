@@ -1,0 +1,25 @@
+{
+    "hp": 3,
+    "speed": 4,
+    "size": 20,
+    "luck": 0,
+    "roomX": 0,
+    "roomY": 0,
+    "x": 300,
+    "y": 200,
+    "invuln": false,
+    "invulnUntil": 0,
+    "invulTimer": 1000000,
+    "invulnColor": "white",
+    "lastShot": 0,
+    "speedCount": 0,
+    "speedTotalCount": 0,
+    "perfectCount": 0,
+    "perfectTotalCount": 0,
+    "bombType": "golden",
+    "gunType": "peashooter",
+    "inventory": {
+        "keys": 5,
+        "bombs": 115
+    }
+}

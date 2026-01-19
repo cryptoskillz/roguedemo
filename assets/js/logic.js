@@ -28,7 +28,8 @@ let enemies = [];
 let bombs = [];
 let keys = {};
 
-let bomb = { bombType: "" }
+let bomb = {}
+let gun = {}
 let bombsInRoom = 0;
 let screenShake = { power: 0, endAt: 0 };
 
@@ -313,9 +314,9 @@ async function initGame(isRestart = false) {
     try {
         // 1. Load basic configs
         const [pData, gData, mData] = await Promise.all([
-            fetch('player.json?t=' + Date.now()).then(res => res.json()),
-            fetch('game.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ perfectGoal: 3, NoRooms: 11 })),
-            fetch('rooms/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] }))
+            fetch('/json/player.json?t=' + Date.now()).then(res => res.json()),
+            fetch('/json/game.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ perfectGoal: 3, NoRooms: 11 })),
+            fetch('json/rooms/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] }))
         ]);
 
         gameData = gData;
@@ -325,17 +326,27 @@ async function initGame(isRestart = false) {
         if (pData.inventory === undefined) pData.inventory = { keys: 0 };
         Object.assign(player, pData);
 
+        //2. load the bomb and gun data
+        const [bData, gunData] = await Promise.all([
+            fetch(`/json/weapons/bombs/${player.bombType}.json?t=` + Date.now()).then(res => res.json()),
+            fetch(`/json/weapons/guns/${player.gunType}.json?t=` + Date.now()).then(res => res.json()),
+
+        ])
+
+        bomb = bData;
+        gun = gData;
+
         // 2. Pre-load ALL room templates
         roomTemplates = {};
         const templatePromises = [];
 
         // Always load start and boss
-        templatePromises.push(fetch('rooms/start/room.json?t=' + Date.now()).then(res => res.json()).then(data => roomTemplates["start"] = data));
-        templatePromises.push(fetch('rooms/boss1/room.json?t=' + Date.now()).then(res => res.json()).then(data => roomTemplates["boss"] = data));
+        templatePromises.push(fetch('/json/rooms/start/room.json?t=' + Date.now()).then(res => res.json()).then(data => roomTemplates["start"] = data));
+        templatePromises.push(fetch('/json/rooms/boss1/room.json?t=' + Date.now()).then(res => res.json()).then(data => roomTemplates["boss"] = data));
 
         // Load all from manifest
         roomManifest.rooms.forEach(id => {
-            templatePromises.push(fetch(`rooms/${id}/room.json?t=` + Date.now()).then(res => res.json()).then(data => roomTemplates[id] = data));
+            templatePromises.push(fetch(`/json/rooms/${id}/room.json?t=` + Date.now()).then(res => res.json()).then(data => roomTemplates[id] = data));
         });
 
         await Promise.all(templatePromises);
@@ -590,13 +601,7 @@ function changeRoom(dx, dy) {
 }
 
 async function dropBomb() {
-    const bombType = player.bombType || "normal";
-
-    if (bomb.bombType !== bombType) {
-        bomb = await fetch(`/bombs/${bombType}.json?t=${Date.now()}`).then(r => r.json());
-        bomb.bombType = bombType;
-    }
-
+    console.log(bomb)
     const baseR = bomb.size || 20;         // visible bomb radius
     const maxR = bomb.radius || 120;      // explosion max radius
     const timer = bomb.timer || 1000;
