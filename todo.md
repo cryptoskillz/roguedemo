@@ -15,6 +15,7 @@ logic
     add the room shake when you get shot
     when bomb hits you you shoudl go white with invul, the same as happens when you get shot
     reload gun / bomb when they pick up a new item
+    add a debug log so we can clean up console
 
 bombs
     bombs can get be dropped, thrown and kicked with items you pick as well as default settings
