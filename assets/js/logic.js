@@ -332,7 +332,6 @@ async function initGame(isRestart = false) {
             fetch(`/json/weapons/guns/${player.gunType}.json?t=` + Date.now()).then(res => res.json()),
 
         ])
-
         bomb = bData;
         gun = gunData;
 
@@ -666,6 +665,9 @@ function fireBullet(direction, speed, vx, vy, angle) {
             size: gun.Bullet?.size || 5,
             curve: gun.Bullet?.curve || 0,
             homing: gun.Bullet?.homming,
+            shape: gun.Bullet?.geometry?.shape || "circle",
+            animated: gun.Bullet?.geometry?.animated || false,
+            colour: gun.Bullet?.colour || "yellow",
             hitEnemies: []
         });
 
@@ -684,6 +686,10 @@ function fireBullet(direction, speed, vx, vy, angle) {
                 size: gun.Bullet?.size || 5,
                 curve: gun.Bullet?.curve || 0,
                 homing: gun.Bullet?.homming,
+                shape: gun.Bullet?.geometry?.shape || "circle",
+                animated: gun.Bullet?.geometry?.animated || false,
+                colour: gun.Bullet?.colour || "yellow",
+
                 hitEnemies: []
             });
         }
@@ -701,6 +707,10 @@ function fireBullet(direction, speed, vx, vy, angle) {
             size: gun.Bullet?.size || 5,
             curve: gun.Bullet?.curve || 0,
             homing: gun.Bullet?.homming,
+            shape: gun.Bullet?.geometry?.shape || "circle",
+            animated: gun.Bullet?.geometry?.animated || false,
+            colour: gun.Bullet?.colour || "yellow",
+
             hitEnemies: []
         });
     }
@@ -716,6 +726,9 @@ function fireBullet(direction, speed, vx, vy, angle) {
             size: gun.Bullet?.size || 5,
             curve: gun.Bullet?.curve || 0,
             homing: gun.Bullet?.homming,
+            shape: gun.Bullet?.geometry?.shape || "circle",
+            animated: gun.Bullet?.geometry?.animated || false,
+            colour: gun.Bullet?.colour || "yellow",
             hitEnemies: []
         });
     }
@@ -732,6 +745,9 @@ function fireBullet(direction, speed, vx, vy, angle) {
             size: gun.Bullet?.size || 5,
             curve: gun.Bullet?.curve || 0,
             homing: gun.Bullet?.homming,
+            shape: gun.Bullet?.geometry?.shape || "circle",
+            animated: gun.Bullet?.geometry?.animated || false,
+            colour: gun.Bullet?.colour || "yellow",
             hitEnemies: []
         });
     }
@@ -746,9 +762,13 @@ function fireBullet(direction, speed, vx, vy, angle) {
             size: gun.Bullet?.size || 5,
             curve: gun.Bullet?.curve || 0,
             homing: gun.Bullet?.homming,
+            shape: gun.Bullet?.geometry?.shape || "circle",
+            animated: gun.Bullet?.geometry?.animated || false,
+            colour: gun.Bullet?.colour || "yellow",
             hitEnemies: []
         });
     }
+
 }
 
 // --- Generic "Use" action (SPACE) ---
@@ -1017,7 +1037,7 @@ function update() {
                 }
                 else {
                     // Normal mode: fire in aimed direction
-                    fireBullet(0)
+                    fireBullet(0, speed, vx, vy, angle);
                     //check if backFire is active and if it is then fire the opposite arrow key
                     if (gun.Bullet?.backfire) {
                         if (keys['ArrowUp']) {
@@ -1179,6 +1199,7 @@ function update() {
                             life: gun.Bullet.Explode.shardRange || 30,
                             damage: gun.Bullet.Explode.damage || 0.1,
                             size: gun.Bullet.Explode.size || 2,
+                            shape: gun.Bullet?.geometry?.shape || "circle",
                             isShard: true
                         });
                     }
@@ -1477,11 +1498,59 @@ async function draw() {
     }
 
     // Draw Bullets
-    ctx.fillStyle = 'yellow';
+
     bullets.forEach(b => {
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.size || 5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = b.colour || 'yellow';
+        const size = b.size || 5;
+
+        // 1. Update the spin angle for animation
+        if (b.animated) {
+            // Higher number = faster spin
+            b.spinAngle = (b.spinAngle || 0) + 0.1;
+        }
+
+        switch (b.shape) {
+            case 'triangle':
+                if (b.animated) {
+                    ctx.save();
+                    ctx.translate(b.x, b.y);
+                    ctx.rotate(b.spinAngle);
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, -size);    // Tip (Points Up)
+                    ctx.lineTo(size, size);  // Bottom Right
+                    ctx.lineTo(-size, size); // Bottom Left
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                } else {
+                    ctx.beginPath();
+                    ctx.moveTo(b.x, b.y - size);
+                    ctx.lineTo(b.x + size, b.y + size);
+                    ctx.lineTo(b.x - size, b.y + size);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                break;
+
+            case 'square':
+                ctx.beginPath();
+                ctx.rect(b.x - size, b.y - size, size * 2, size * 2);
+                ctx.fill();
+                break;
+
+            case 'rectangle':
+                ctx.beginPath();
+                ctx.rect(b.x - size * 1.5, b.y - size, size * 3, size * 2);
+                ctx.fill();
+                break;
+
+            default: // Circle
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, size, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+        }
     });
 
 

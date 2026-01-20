@@ -3,13 +3,14 @@ bugs
     if you get hit perfect bonus will reset 
     360 bullet mode the right bullet is a little slow
     bombs hurt player seems to create a little bleed.
-    display UO should not show hp under 0
     add the enemy knockback modifier to the player
     get invulTime from player file
     shake room is causing a little bleed and moving doors
     move bomb to player hit
     check that nothing can be done, dropping bombs etc when you the player is dead
     room count at the end is off (maybe same room type in generation)
+    only take one arrow input to fie otherwise it will fire in multipile directions
+
 
 items folder
     move all items to a items folder
@@ -63,6 +64,7 @@ enemies
     last enemy tougher
     animatoin when they die
     make them go to hit color if a bomb or bullet hits them 
+    add gemotery to the enemy
 
 
 key binding
