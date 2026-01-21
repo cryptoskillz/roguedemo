@@ -1,0 +1,7 @@
+{
+    "name": "normal",
+    "drawType": "arc",
+    "playerDraw": "arc",
+    "location": "weapons/bombs/normal.json",
+    "type": "bomb"
+}

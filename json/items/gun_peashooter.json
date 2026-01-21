@@ -1,0 +1,5 @@
+{
+    "name": "peashooter",
+    "location": "weapons/guns/peashooter.json",
+    "type": "gun"
+}

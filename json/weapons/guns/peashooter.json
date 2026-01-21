@@ -1,0 +1,47 @@
+{
+    "name": "Pea Shooter",
+    "Bullet": {
+        "colour": "yellow",
+        "count": {
+            "active": false,
+            "timer": 0,
+            "max": 100,
+            "amount": 100
+        },
+        "geometry": {
+            "shape": "circle",
+            "animated": false,
+            "filled": true
+        },
+        "speed": 10,
+        "size": 15,
+        "damage": 1,
+        "range": 70,
+        "curve": 0,
+        "spread": 0,
+        "spreadRate": 0,
+        "number": 5,
+        "homing": false,
+        "fireRate": 0.1,
+        "wallBounce": false,
+        "pierce": false,
+        "backfire": false,
+        "frontLocked": false,
+        "NoBullets": false,
+        "multiDirectional": {
+            "active": false,
+            "fireNorth": false,
+            "fireEast": false,
+            "fireSouth": false,
+            "fireWest": false,
+            "fire360": false
+        },
+        "Explode": {
+            "active": false,
+            "shards": 8,
+            "size": 2,
+            "damage": 0.1,
+            "shardRange": 30
+        }
+    }
+}

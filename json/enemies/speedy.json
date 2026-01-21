@@ -1,6 +1,9 @@
 {
     "type": "speedy",
     "hp": 1,
+    "damage": 2,
+    "knockback": 100,
+    "shake": 2,
     "speed": 2.2,
     "size": 20,
     "color": "rgba(155, 89, 182, 0.8)",

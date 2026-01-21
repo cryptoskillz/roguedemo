@@ -4,19 +4,23 @@
     "doors": {
         "top": {
             "locked": 0,
-            "active": 1
+            "active": 1,
+            "secret": true
         },
         "bottom": {
             "locked": 0,
-            "active": 1
+            "active": 1,
+            "secret": false
         },
         "left": {
             "locked": 0,
-            "active": 1
+            "active": 1,
+            "secret": false
         },
         "right": {
             "locked": 0,
-            "active": 1
+            "active": 1,
+            "secret": false
         }
     },
     "allDoorsUnlocked": 1,

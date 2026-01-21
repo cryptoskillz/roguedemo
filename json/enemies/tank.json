@@ -1,6 +1,9 @@
 {
     "type": "tank",
     "hp": 6,
+    "damage": 2,
+    "knockback": 100,
+    "shake": 2,
     "speed": 0.6,
     "size": 35,
     "color": "rgba(230, 126, 34, 0.8)",

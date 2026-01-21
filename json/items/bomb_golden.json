@@ -1,0 +1,7 @@
+{
+    "name": "golden",
+    "drawType": "arc",
+    "playerDraw": "arc",
+    "location": "weapons/bombs/golden.json",
+    "type": "bomb"
+}

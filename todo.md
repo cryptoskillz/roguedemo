@@ -1,17 +1,31 @@
 bugs
-    homing missles should start at the side of the key that was pressde
+
+    homing missles should start at the side of the key that was pressed
     if you get hit perfect bonus will reset 
-    360 bullet mode the right bullet is a little slow
+    add the enemy knockback modifier to the player
+    get invulTime from player file
+    move bomb to player hit
+    room count at the end is off (maybe same room type in generation)
+ add a muzzle flash or a small particle effect that triggers whenever fireBullet is called?
+when homing is on with number of bullets it is only firing 1.
+
+items folder
+    store lcation etc in json and the draw cords
+
+
+logic
+    when bomb hits you you shoudl go white with invul, the same as happens when you get shot
+    reload gun / bomb when they pick up a new item
+    add a debug log so we can clean up console
+    get the drawr cordes for bomnbs, player, items, guns and bombs from the json files
 
 bombs
     bombs can get be dropped, thrown and kicked with items you pick as well as default settings
     bombs are in the invetroy and can be picked up, when you press the space bar they can be dropped normal bombs can blow open doors and secret doors (in walls etc)golden bombs can blow open red doors with enemies still in the room 
-
-    start a bomb timer when dropped 
-    use a bomb array to show multipile bombs
-    make the bombs drop to the to the right of the player if they are not moving if they are moving make it drop behind them
     add collision to bombs
-    restart clear the bombs
+    add canShoot to bombs
+    add remoteControl to bombs
+   
 
 start room
     if its first time it should just say game complete and unlock door and take you back to the menu
@@ -21,12 +35,18 @@ start room
 
 player 
     iron man mode (ooe hit dead, all modifiers reset)
+    if speed is over 2 x starting speed show a blur effect
+    if you stay in a room for too long show a ghost demon
+    animaton when you die
+    draw the weapon in the player draw
 
 
 bullets  
     added ammo, if it is active it should count count
    if a bullet hits you it will cause no damage but disapear
    there will be a mr glass item where your own bullets hurt you 
+   bullet co sine
+   fix the curve attr
 
 
 
@@ -36,6 +56,9 @@ enemies
     have swarm enemies that run away unless there are x of them
     have run away enemies
     last enemy tougher
+    animatoin when they die
+    make them go to hit color if a bomb or bullet hits them 
+    add gemotery to the enemy
 
 
 key binding
