@@ -9,9 +9,9 @@
             "amount": 100
         },
         "geometry": {
-            "shape": "square",
+            "shape": "circle",
             "animated": false,
-            "filled": false
+            "filled": true
         },
         "speed": 10,
         "size": 15,

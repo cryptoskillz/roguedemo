@@ -642,145 +642,65 @@ async function dropBomb() {
 }
 
 function fireBullet(direction, speed, vx, vy, angle) {
-    /*
-    0 = normal
-    1= north
-    2 = east
-    3 = south
-    4 = west
-    360 = 360 degres
-    */
-    //check if the have bullets, they are in a mode where no bullets should be fired
-
+    // 1. Safety check
     if (gun.Bullet?.NoBullets) {
         return;
     }
-    if (direction === 0) {
-        bullets.push({
+
+    // Helper to create the base bullet object
+    const createBullet = (velX, velY) => {
+        // Determine the shape ONCE at creation
+        let bulletShape = gun.Bullet?.geometry?.shape || "circle";
+
+        // If shape is 'random', pick one from the shapes array immediately
+        if (bulletShape === 'random' && gun.Bullet?.geometry?.shapes?.length > 0) {
+            const possibleShapes = gun.Bullet.geometry.shapes;
+            bulletShape = possibleShapes[Math.floor(Math.random() * possibleShapes.length)];
+        }
+
+        return {
             x: player.x,
             y: player.y,
-            vx,
-            vy,
+            vx: velX,
+            vy: velY,
             life: gun.Bullet?.range || 60,
             damage: gun.Bullet?.damage || 1,
             size: gun.Bullet?.size || 5,
             curve: gun.Bullet?.curve || 0,
-            homing: gun.Bullet?.homming,
-            shape: gun.Bullet?.geometry?.shape || "circle",
+            homing: gun.Bullet?.homing,
+            shape: bulletShape, // This is now a fixed shape (triangle, square, etc.)
             animated: gun.Bullet?.geometry?.animated || false,
-            filled: gun.Bullet?.geometry?.filled,
+            filled: gun.Bullet?.geometry?.filled !== undefined ? gun.Bullet.geometry.filled : true,
             colour: gun.Bullet?.colour || "yellow",
+            spinAngle: 0,
             hitEnemies: []
-        });
+        };
+    };
 
+    // 2. Spawning Logic (using else-if to prevent duplicate logic execution)
+    if (direction === 0) {
+        bullets.push(createBullet(vx, vy));
     }
-
-    //360 degrees
-    if (direction === 360) {
-        for (let i = 0; i < 360; i++) {
-            bullets.push({
-                x: player.x,
-                y: player.y,
-                vx: Math.cos(i * Math.PI / 180) * speed,
-                vy: Math.sin(i * Math.PI / 180) * speed,
-                life: gun.Bullet?.range || 60,
-                damage: gun.Bullet?.damage || 1,
-                size: gun.Bullet?.size || 5,
-                curve: gun.Bullet?.curve || 0,
-                homing: gun.Bullet?.homming,
-                shape: gun.Bullet?.geometry?.shape || "circle",
-                animated: gun.Bullet?.geometry?.animated || false,
-                filled: gun.Bullet?.geometry?.filled,
-                colour: gun.Bullet?.colour || "yellow",
-
-                hitEnemies: []
-            });
+    else if (direction === 360) {
+        for (let i = 0; i < 360; i += 10) {
+            const rad = i * Math.PI / 180;
+            bullets.push(createBullet(Math.cos(rad) * speed, Math.sin(rad) * speed));
         }
     }
-
-    //up
-    if (direction === 1) {
-        bullets.push({
-            x: player.x,
-            y: player.y,
-            vx: 0,
-            vy: -speed,
-            life: gun.Bullet?.range || 60,
-            damage: gun.Bullet?.damage || 1,
-            size: gun.Bullet?.size || 5,
-            curve: gun.Bullet?.curve || 0,
-            homing: gun.Bullet?.homming,
-            shape: gun.Bullet?.geometry?.shape || "circle",
-            animated: gun.Bullet?.geometry?.animated || false,
-            filled: gun.Bullet?.geometry?.filled,
-            colour: gun.Bullet?.colour || "yellow",
-
-            hitEnemies: []
-        });
+    else if (direction === 1) { // North
+        bullets.push(createBullet(0, -speed));
     }
-    //right
-    if (direction === 2) {
-        bullets.push({
-            x: player.x,
-            y: player.y,
-            vx: speed,
-            vy: 0,
-            life: gun.Bullet?.range || 60,
-            damage: gun.Bullet?.damage || 1,
-            size: gun.Bullet?.size || 5,
-            curve: gun.Bullet?.curve || 0,
-            homing: gun.Bullet?.homming,
-            shape: gun.Bullet?.geometry?.shape || "circle",
-            animated: gun.Bullet?.geometry?.animated || false,
-            filled: gun.Bullet?.geometry?.filled,
-            colour: gun.Bullet?.colour || "yellow",
-            hitEnemies: []
-        });
+    else if (direction === 2) { // East
+        bullets.push(createBullet(speed, 0));
+    }
+    else if (direction === 3) { // South
+        bullets.push(createBullet(0, speed));
+    }
+    else if (direction === 4) { // West
+        bullets.push(createBullet(-speed, 0));
     }
 
-    //down
-    if (direction === 3) {
-        bullets.push({
-            x: player.x,
-            y: player.y,
-            vx: 0,
-            vy: speed,
-            life: gun.Bullet?.range || 60,
-            damage: gun.Bullet?.damage || 1,
-            size: gun.Bullet?.size || 5,
-            curve: gun.Bullet?.curve || 0,
-            homing: gun.Bullet?.homming,
-            shape: gun.Bullet?.geometry?.shape || "circle",
-            animated: gun.Bullet?.geometry?.animated || false,
-            filled: gun.Bullet?.geometry?.filled,
-            colour: gun.Bullet?.colour || "yellow",
-            hitEnemies: []
-        });
-
-    }
-    if (direction === 4) {
-        bullets.push({
-            x: player.x,
-            y: player.y,
-            vx: -speed,
-            vy: 0,
-            life: gun.Bullet?.range || 60,
-            damage: gun.Bullet?.damage || 1,
-            size: gun.Bullet?.size || 5,
-            curve: gun.Bullet?.curve || 0,
-            homing: gun.Bullet?.homming,
-            shape: gun.Bullet?.geometry?.shape || "circle",
-            animated: gun.Bullet?.geometry?.animated || false,
-            filled: gun.Bullet?.geometry?.filled,
-            colour: gun.Bullet?.colour || "yellow",
-            hitEnemies: []
-        });
-
-
-    }
-    //console.log(gun.Bullet?.geometry?.filled)
-    //console.log(bullets[bullets.length - 1])
-
+    bulletsInRoom++;
 }
 
 // --- Generic "Use" action (SPACE) ---
@@ -1520,6 +1440,9 @@ async function draw() {
             // Higher number = faster spin
             b.spinAngle = (b.spinAngle || 0) + 0.1;
         }
+
+
+
 
         switch (b.shape) {
             case 'triangle':

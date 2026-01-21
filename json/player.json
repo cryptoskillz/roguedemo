@@ -18,7 +18,7 @@
     "perfectCount": 0,
     "perfectTotalCount": 0,
     "bombType": "golden",
-    "gunType": "peashooter",
+    "gunType": "geometry",
     "inventory": {
         "keys": 5,
         "bombs": 115
