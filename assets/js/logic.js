@@ -389,6 +389,8 @@ async function initGame(isRestart = false) {
             draw(); // Start loop only once
         }
 
+
+
     } catch (err) {
         console.warn("Could not load configurations", err);
         if (!gameLoopStarted) {
@@ -1347,542 +1349,270 @@ function goContinue() {
     gameState = STATES.PLAY
 }
 
-async function draw() {
-    await updateUI();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // --- Screen shake transform ---
-    if (screenShake.power > 0) {
-        const now = Date.now();
-        if (now < screenShake.endAt) {
-            const p = (screenShake.endAt - now) / (screenShake.endAt - (screenShake.endAt - 180)); // rough decay
-            const strength = screenShake.power * Math.max(0, Math.min(1, p));
-
-            ctx.save();
-            ctx.translate(
-                (Math.random() - 0.5) * strength,
-                (Math.random() - 0.5) * strength
-            );
-        } else {
-            screenShake.power = 0;
-        }
-    }
-
-
-    // Draw Doors
-    const roomLocked = enemies.length > 0;
-    const doors = roomData.doors || {};
-    const getDoorColor = (direction) => {
-        if (roomLocked) return "#c0392b"; // Red if enemy-locked
-        const door = doors[direction] || { locked: 0 };
-        return door.locked ? "#f1c40f" : "#222"; // Yellow for key-locked, Dark for open
-    };
-
-    if (doors.top && doors.top.active) {
-        ctx.fillStyle = getDoorColor('top');
-        const doorX = doors.top.x !== undefined ? doors.top.x : canvas.width / 2;
-        ctx.fillRect(doorX - DOOR_SIZE / 2, 0, DOOR_SIZE, DOOR_THICKNESS); // Top
-    }
-    if (doors.bottom && doors.bottom.active) {
-        ctx.fillStyle = getDoorColor('bottom');
-        const doorX = doors.bottom.x !== undefined ? doors.bottom.x : canvas.width / 2;
-        ctx.fillRect(doorX - DOOR_SIZE / 2, canvas.height - DOOR_THICKNESS, DOOR_SIZE, DOOR_THICKNESS); // Bottom
-    }
-    if (doors.left && doors.left.active) {
-        ctx.fillStyle = getDoorColor('left');
-        const doorY = doors.left.y !== undefined ? doors.left.y : canvas.height / 2;
-        ctx.fillRect(0, doorY - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE); // Left
-    }
-    if (doors.right && doors.right.active) {
-        ctx.fillStyle = getDoorColor('right');
-        const doorY = doors.right.y !== undefined ? doors.right.y : canvas.height / 2;
-        ctx.fillRect(canvas.width - DOOR_THICKNESS, doorY - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE); // Right
-    }
-
-    // Draw Minimap
-    drawMinimap();
-
-    // Draw Player
-    const isInvuln = player.invuln || Date.now() < player.invulnUntil;
-    ctx.fillStyle = isInvuln ? 'white' : '#5dade2';
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Reload Bar (when fire rate is > 1s)
-    const fireRate = gun.Bullet?.fireRate !== undefined ? gun.Bullet.fireRate : 0.3;
-    if (fireRate > 1) {
-        const fireDelay = fireRate * 1000;
-        const elapsed = Date.now() - (player.lastShot || 0);
-        if (elapsed < fireDelay) {
-            const barWidth = 40;
-            const barHeight = 4;
-            const bx = player.x - barWidth / 2;
-            const by = player.y - player.size - 10;
-
-            // Background
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(bx, by, barWidth, barHeight);
-
-            // Progress (Cooldown)
-            ctx.fillStyle = '#3498db'; // Nice blue for reload
-            ctx.fillRect(bx, by, barWidth * (elapsed / fireDelay), barHeight);
-        }
-    }
-
-    // Draw Bullets
-
-    bullets.forEach(b => {
-        ctx.fillStyle = b.colour || 'yellow';
-        const size = b.size || 5;
-
-        // 1. Update the spin angle for animation
-        if (b.animated) {
-            // Higher number = faster spin
-            b.spinAngle = (b.spinAngle || 0) + 0.1;
-        }
-
-
-
-
-        switch (b.shape) {
-            case 'triangle':
-                if (b.animated) {
-                    ctx.save();
-                    ctx.translate(b.x, b.y);
-                    ctx.rotate(b.spinAngle);
-                    ctx.beginPath();
-                    ctx.moveTo(0, -size);
-                    ctx.lineTo(size, size);
-                    ctx.lineTo(-size, size);
-                    ctx.closePath();
-                    // Toggle Fill or Stroke
-                    b.filled ? ctx.fill() : ctx.stroke();
-                    ctx.restore();
-                } else {
-                    ctx.beginPath();
-                    ctx.moveTo(b.x, b.y - size);
-                    ctx.lineTo(b.x + size, b.y + size);
-                    ctx.lineTo(b.x - size, b.y + size);
-                    ctx.closePath();
-                    b.filled ? ctx.fill() : ctx.stroke();
-                }
-                break;
-
-            case 'square':
-                if (b.animated) {
-                    ctx.save();
-                    ctx.translate(b.x, b.y);
-                    ctx.rotate(b.spinAngle);
-                    ctx.beginPath();
-                    ctx.rect(-size, -size, size * 2, size * 2);
-                    b.filled ? ctx.fill() : ctx.stroke();
-                    ctx.restore();
-                } else {
-                    ctx.beginPath();
-                    ctx.rect(b.x - size, b.y - size, size * 2, size * 2);
-                    b.filled ? ctx.fill() : ctx.stroke();
-                }
-                break;
-
-            case 'rectangle':
-                if (b.animated) {
-                    ctx.save();
-                    ctx.translate(b.x, b.y);
-                    ctx.rotate(b.spinAngle);
-                    ctx.beginPath();
-                    ctx.rect(-size * 1.5, -size, size * 3, size * 2);
-                    b.filled ? ctx.fill() : ctx.stroke();
-                    ctx.restore();
-                } else {
-                    ctx.beginPath();
-                    ctx.rect(b.x - size * 1.5, b.y - size, size * 3, size * 2);
-                    b.filled ? ctx.fill() : ctx.stroke();
-                }
-                break;
-
-            default: // Circle
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, size, 0, Math.PI * 2);
-                b.filled ? ctx.fill() : ctx.stroke();
-                break;
-        }
-    });
-
-
-    // Draw Bomb (if active)
-    const now = Date.now();
-    bombs.forEach(b => {
-        const now = Date.now();
-
-        for (let i = bombs.length - 1; i >= 0; i--) {
-            const b = bombs[i];
-
-            // Start exploding when timer runs out
-            if (!b.exploding && now >= b.explodeAt) {
-                b.exploding = true;
-                b.explosionStartAt = now;
-            }
-
-            // EXPLOSION ANIMATION (from bomb edge outward)
-            if (b.exploding) {
-                const t = (now - b.explosionStartAt) / b.explosionDuration; // 0..1
-                const p = Math.max(0, Math.min(1, t));
-
-                // ey line: starts at baseR (bomb perimeter), grows to maxR
-                const r = b.baseR + (b.maxR - b.baseR) * p;
-
-                // --- Player damage + knockback + shake (once per bomb) ---
-                if (b.canDamagePlayer && !b.didPlayerDamage && !player.invuln) {
-                    const dist = Math.hypot(player.x - b.x, player.y - b.y);
-
-                    if (dist <= r + player.size) {
-                        b.didPlayerDamage = true;
-
-                        // Damage
-                        player.hp -= b.damage;
-                        hpEl.innerText = player.hp;
-
-                        // i-frames (your existing style)
-                        player.invuln = true;
-                        setTimeout(() => player.invuln = false, 1000);
-
-                        // --- Knockback: push player OUTSIDE the blast radius ---
-                        const dx = player.x - b.x;
-                        const dy = player.y - b.y;
-                        const len = Math.hypot(dx, dy) || 1;
-
-                        const nx = dx / len;
-                        const ny = dy / len;
-
-                        // Push player to just outside the blast radius
-                        const padding = 6;
-                        const targetDist = b.maxR + player.size + padding;
-                        const needed = targetDist - len;
-
-                        if (needed > 0) {
-                            player.x += nx * needed;
-                            player.y += ny * needed;
-                        }
-
-                        // Clamp to room bounds
-                        player.x = Math.max(
-                            BOUNDARY + player.size,
-                            Math.min(canvas.width - BOUNDARY - player.size, player.x)
-                        );
-                        player.y = Math.max(
-                            BOUNDARY + player.size,
-                            Math.min(canvas.height - BOUNDARY - player.size, player.y)
-                        );
-
-                        // --- Screen shake (DO NOT depend on closeness anymore) ---
-                        const explosionStrength = b.maxR / 40; // scale with explosion size
-                        const shakePower = (b.shake || 8) * explosionStrength;
-
-                        screenShake.power = Math.max(screenShake.power, shakePower);
-                        screenShake.endAt = Date.now() + (b.shakeDuration || 200);
-
-                    }
-                }
-
-
-                // Chain reaction: trigger other bombs inside current explosion radius
-                for (let j = 0; j < bombs.length; j++) {
-                    if (j === i) continue;
-                    const other = bombs[j];
-
-                    if (other.exploding) continue;           // already going
-                    if (now < other.explodeAt) {             // still waiting (normal)
-                        const dist = Math.hypot(other.x - b.x, other.y - b.y);
-
-                        // if the other bomb's CENTER is inside this explosion radius (+ its base radius feels nicer)
-                        if (dist <= r + (other.baseR || 0)) {
-                            other.exploding = true;
-                            other.explosionStartAt = now;
-                            other.didDamage = false;             // ensure it deals damage
-                            other.triggeredBy = b.id;            // optional debug
-                        }
-                    }
-                }
-
-
-                // optional: draw as a ring shockwave (feels more "explosion")
-                ctx.save();
-                ctx.fillStyle = b.explosionColour;
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, r, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.globalAlpha = 1 - p;
-                ctx.strokeStyle = b.explosionColour;
-                ctx.lineWidth = 6;
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, r, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.restore();
-
-                // Damage once (using maxR so it matches full blast)
-                if (!b.didDamage) {
-                    b.didDamage = true;
-                    for (let ei = enemies.length - 1; ei >= 0; ei--) {
-                        const e = enemies[ei];
-                        const dist = Math.hypot(e.x - b.x, e.y - b.y);
-                        if (dist <= b.maxR + e.size) {
-                            e.hp = (e.hp ?? 0) - b.damage;
-                            if (e.hp <= 0) enemies.splice(ei, 1);
-                        }
-                    }
-                }
-
-                // Remove after animation finishes
-                if (p >= 1) bombs.splice(i, 1);
-                continue;
-            }
-
-            // Waiting bomb (static)
-            ctx.save();
-            ctx.fillStyle = b.colour;
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, b.baseR, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-
-    });
-
-    // Boss Intro Sequence
-    if (roomData.isBoss && !roomData.cleared) {
-        if (Date.now() < bossIntroEndTime) {
-            // Draw Boss Name during intro
-            ctx.fillStyle = "#e74c3c"; // Red text for visibility
-            ctx.font = "bold 50px 'Courier New'"; // Matched Font
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            const currentBossName = (enemyTemplates["boss"] && enemyTemplates["boss"].name) || "BOSS";
-            ctx.fillText(currentBossName, canvas.width / 2, canvas.height / 2);
-
-            // Don't draw enemies yet
-        } else {
-            // Draw enemies after intro
-            //console.log("Drawing Enemies", roomData.bossName + ' ' + Date.now() + ' ' + bossIntroEndTime); // Debug log
-            console.log("Enemies", enemies.length); // Debug log
-            enemies.forEach((en, ei) => {
-                ctx.fillStyle = en.color || "rgba(231, 76, 60, 0.8)";
-                if (Date.now() < en.freezeUntil) {
-                    ctx.fillStyle = "#3498db"; // Blue for frozen
-                    ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 100) * 0.2;
-                }
-
-                ctx.beginPath();
-                ctx.arc(en.x, en.y, en.size, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.globalAlpha = 1.0; // Reset alpha
-            });
-        }
-    } else {
-        // Normal room enemy drawing
-        enemies.forEach((en, ei) => {
-            ctx.fillStyle = en.color || "rgba(231, 76, 60, 0.8)";
-            if (Date.now() < en.freezeUntil) {
-                ctx.fillStyle = "#3498db"; // Blue for frozen
-                ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 100) * 0.2;
-            }
-
-            ctx.beginPath();
-            ctx.arc(en.x, en.y, en.size, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.globalAlpha = 1.0; // Reset alpha
-        });
-    }
-
-
-    // Start Room Tutorial Text
-    if (player.roomX === 0 && player.roomY === 0) {
+function drawTutorial() {
+    // --- Start Room Tutorial Text ---
+    if (player.roomX === 0 && player.roomY === 0 && (DEBUG_START_BOSS === false)) {
         ctx.save();
+        console.log("in")
 
-        // Helper to draw a keycap
-        function drawKey(text, x, y) {
+        // Internal helper for keycaps
+        const drawKey = (text, x, y) => {
             ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
             ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
             ctx.lineWidth = 2;
-
-            // Keybox
             ctx.beginPath();
             ctx.roundRect(x - 20, y - 20, 40, 40, 5);
             ctx.fill();
             ctx.stroke();
 
-            // Text
             ctx.font = "bold 20px 'Courier New'";
             ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText(text, x, y);
-        }
+        };
 
-        // WASD (Left side)
-        const lx = 200;
         const ly = canvas.height / 2;
-        if (DEBUG_START_BOSS === false) {
-            // Movement Icon (Running Stickman-ish)
-            ctx.font = "16px 'Courier New'";
-            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-            ctx.textAlign = "center";
-            ctx.fillText("MOVE", lx, ly - 90);
 
-            drawKey("W", lx, ly - 45);
-            drawKey("A", lx - 45, ly);
-            drawKey("S", lx, ly);
-            drawKey("D", lx + 45, ly);
+        // MOVE (WASD)
+        const lx = 200;
+        ctx.font = "16px 'Courier New'";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+        ctx.textAlign = "center";
+        ctx.fillText("MOVE", lx, ly - 90);
+        drawKey("W", lx, ly - 45);
+        drawKey("A", lx - 45, ly);
+        drawKey("S", lx, ly);
+        drawKey("D", lx + 45, ly);
 
-            // Arrows (Right side)
-            const rx = canvas.width - 200;
+        // SHOOT (Arrows)
+        const rx = canvas.width - 200;
+        ctx.fillText("SHOOT", rx, ly - 90);
+        ctx.beginPath();
+        ctx.arc(rx, ly - 75, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#e74c3c";
+        ctx.fill();
 
-            // Shooting Icon (Bullet)
-            ctx.fillText("SHOOT", rx, ly - 90);
-            // Draw a little bullet graphic
-            ctx.beginPath();
-            ctx.arc(rx, ly - 75, 5, 0, Math.PI * 2);
-            ctx.fillStyle = "#e74c3c"; // Red bullet color
-            ctx.fill();
-            // Speed lines
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-            ctx.beginPath();
-            ctx.moveTo(rx - 15, ly - 75); ctx.lineTo(rx - 8, ly - 75);
-            ctx.moveTo(rx - 15, ly - 78); ctx.lineTo(rx - 10, ly - 78);
-            ctx.moveTo(rx - 15, ly - 72); ctx.lineTo(rx - 10, ly - 72);
-            ctx.stroke();
+        drawKey("↑", rx, ly - 45);
+        drawKey("←", rx - 45, ly);
+        drawKey("→", rx + 45, ly);
+        drawKey("↓", rx, ly + 45);
 
-            drawKey("↑", rx, ly - 45);
-            drawKey("←", rx - 45, ly);
-            drawKey("→", rx + 45, ly);
-            drawKey("↓", rx, ly + 45);
+        // Action Keys (Bottom Row)
+        let mx = canvas.width / 6;
+        let my = canvas.height - 80;
 
-            // draw space bar
-            let mx = canvas.width / 6;
-            let my = canvas.height - 80;
-            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-            ctx.fillText("ITEM", mx, my - 45);
-            drawKey("⎵", mx, my);
-            //restart
-            mx = mx + 100
-            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-            ctx.fillText("MENU", mx, my - 45);
-            drawKey("M", mx, my);
-            //bomb
-            mx = mx + 100
-            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-            ctx.fillText("BOMB", mx, my - 45);
-            drawKey("B", mx, my);
-            if (DEBUG_WINDOW_ENABLED) {
-                mx = mx + 100
-                ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-                ctx.fillText("RESTART", mx, my - 45);
-                drawKey("R", mx, my);
-            }
+        const actions = [
+            { label: "ITEM", key: "⎵" },
+            { label: "MENU", key: "M" },
+            { label: "BOMB", key: "B" }
+        ];
+
+        if (typeof DEBUG_WINDOW_ENABLED !== 'undefined' && DEBUG_WINDOW_ENABLED) {
+            actions.push({ label: "RESTART", key: "R" });
         }
+
+        actions.forEach(action => {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+            ctx.fillText(action.label, mx, my - 45);
+            drawKey(action.key, mx, my);
+            mx += 100;
+        });
+
+        ctx.restore();
     }
+}
+
+async function draw() {
 
 
-    // Draw Portal (only if cleared and NOT in intro)
-    if (roomData.isBoss && (!bossIntroEndTime || Date.now() > bossIntroEndTime)) {
-        const currentCoord = `${player.roomX}, ${player.roomY}`;
-        if (visitedRooms[currentCoord] && visitedRooms[currentCoord].cleared) {
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            const time = Date.now() / 200;
-            const distToPortal = Math.hypot(player.x - cx, player.y - cy);
+    await updateUI();
 
-            console.log(`Portal Check - Dist: ${distToPortal.toFixed(2)} | Player: ${player.x.toFixed(0)}, ${player.y.toFixed(0)} | Center: ${cx}, ${cy}`);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (distToPortal < 50) {
-                console.log("VICTORY TRIGGERED!");
-                gameWon();
-            }
-
+    // 1. --- SCREEN SHAKE (Start) ---
+    let isShaking = false;
+    if (screenShake.power > 0) {
+        const now = Date.now();
+        if (now < screenShake.endAt) {
+            const p = (screenShake.endAt - now) / 180; // decay
+            const strength = screenShake.power * Math.max(0, Math.min(1, p));
             ctx.save();
-            ctx.translate(cx, cy);
-            ctx.rotate(time);
-            ctx.fillStyle = "#9b59b6";
-            ctx.fillRect(-15, -15, 30, 30);
-            ctx.rotate(-time * 2);
-            ctx.strokeStyle = "#8e44ad";
-            ctx.lineWidth = 3;
-            ctx.strokeRect(-20, -20, 40, 40);
-            // ctx.strokeStyle = "red";
-            //ctx.lineWidth = 2;
-            // ctx.stroke();
-            ctx.restore();
-        }
-
-        // If we applied shake, restore the context
-        if (screenShake.power > 0 && Date.now() < screenShake.endAt) {
-            ctx.restore();
+            ctx.translate((Math.random() - 0.5) * strength, (Math.random() - 0.5) * strength);
+            isShaking = true;
+        } else {
+            screenShake.power = 0;
         }
     }
-    requestAnimationFrame(() => {
-        update();
-        draw();
+
+    // 2. --- DRAW ENVIRONMENT (Doors) ---
+    const roomLocked = enemies.length > 0;
+    const doors = roomData.doors || {};
+    const getDoorColor = (dir) => {
+        if (roomLocked) return "#c0392b";
+        return doors[dir]?.locked ? "#f1c40f" : "#222";
+    };
+
+    Object.entries(doors).forEach(([dir, door]) => {
+        if (!door.active) return;
+        ctx.fillStyle = getDoorColor(dir);
+        const doorX = door.x ?? canvas.width / 2;
+        const doorY = door.y ?? canvas.height / 2;
+
+        if (dir === 'top') ctx.fillRect(doorX - DOOR_SIZE / 2, 0, DOOR_SIZE, DOOR_THICKNESS);
+        if (dir === 'bottom') ctx.fillRect(doorX - DOOR_SIZE / 2, canvas.height - DOOR_THICKNESS, DOOR_SIZE, DOOR_THICKNESS);
+        if (dir === 'left') ctx.fillRect(0, doorY - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
+        if (dir === 'right') ctx.fillRect(canvas.width - DOOR_THICKNESS, doorY - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
     });
-    function gameWon() {
-        gameState = STATES.GAMEOVER;
-        overlayEl.style.display = 'flex';
-        statsEl.innerText = "VICTORY! You cleared the dungeon!";
-        document.querySelector('#overlay h1').innerText = "You Won!";
-    }
 
+    drawMinimap();
 
+    // 3. --- DRAW PLAYER ---
+    const isInvuln = player.invuln || Date.now() < player.invulnUntil;
+    ctx.fillStyle = isInvuln ? 'rgba(255, 255, 255, 0.7)' : '#5dade2';
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+    ctx.fill();
 
-    function drawMinimap() {
-        const mapSize = 100;
-        const roomSize = 12;
-        const padding = 2;
-
-        // Clear Minimap
-        mctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-        mctx.fillRect(0, 0, mapSize, mapSize);
-        mctx.strokeStyle = "#888";
-        mctx.lineWidth = 1;
-        mctx.strokeRect(0, 0, mapSize, mapSize);
-
-        // Draw Explored Rooms
-        mctx.save();
-        // Center map on player's room
-        mctx.translate(mapSize / 2, mapSize / 2);
-
-        for (let coord in visitedRooms) {
-            const parts = coord.split(',');
-            const rx = parseInt(parts[0]);
-            const ry = parseInt(parts[1]);
-            const isCurrent = rx === player.roomX && ry === player.roomY;
-            const isCleared = visitedRooms[coord].cleared;
-
-            // Relative position (inverted Y for intuitive map)
-            const dx = (rx - player.roomX) * (roomSize + padding);
-            const dy = (ry - player.roomY) * (roomSize + padding);
-
-            // Only draw if within minimap bounds
-            if (Math.abs(dx) < mapSize / 2 - 5 && Math.abs(dy) < mapSize / 2 - 5) {
-                let color = isCleared ? "#27ae60" : "#e74c3c"; // Green (safe) vs Red (uncleared)
-
-                // Special Colors
-                if (rx === 0 && ry === 0) color = "#f1c40f"; // Yellow for Start
-                if (visitedRooms[coord].roomData.isBoss) color = "#c0392b"; // Dark Red for Boss
-
-                mctx.fillStyle = isCurrent ? "#fff" : color;
-                mctx.fillRect(dx - roomSize / 2, dy - roomSize / 2, roomSize, roomSize);
-
-                // Simple exit indicators
-                const dData = visitedRooms[coord].roomData.doors;
-                if (dData) {
-                    mctx.fillStyle = "#000";
-                    if (dData.top && dData.top.active) mctx.fillRect(dx - 1, dy - roomSize / 2, 2, 2);
-                    if (dData.bottom && dData.bottom.active) mctx.fillRect(dx - 1, dy + roomSize / 2 - 2, 2, 2);
-                    if (dData.left && dData.left.active) mctx.fillRect(dx - roomSize / 2, dy - 1, 2, 2);
-                    if (dData.right && dData.right.active) mctx.fillRect(dx + roomSize / 2 - 2, dy - 1, 2, 2);
-                }
-            }
+    // Reload Bar
+    const fireRate = gun.Bullet?.fireRate ?? 0.3;
+    if (fireRate > 1) {
+        const fireDelay = fireRate * 1000;
+        const elapsed = Date.now() - (player.lastShot || 0);
+        if (elapsed < fireDelay) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(player.x - 20, player.y - player.size - 10, 40, 4);
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(player.x - 20, player.y - player.size - 10, 40 * (elapsed / fireDelay), 4);
         }
-        mctx.restore();
     }
+
+    // 4. --- DRAW BULLETS (With Rotation) ---
+    bullets.forEach(b => {
+        ctx.fillStyle = b.colour || 'yellow';
+        ctx.strokeStyle = b.colour || 'yellow';
+        const size = b.size || 5;
+        if (b.animated) b.spinAngle = (b.spinAngle || 0) + 0.15;
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        if (b.animated) ctx.rotate(b.spinAngle);
+
+        ctx.beginPath();
+        if (b.shape === 'triangle') {
+            ctx.moveTo(0, -size);
+            ctx.lineTo(size, size);
+            ctx.lineTo(-size, size);
+            ctx.closePath();
+        } else if (b.shape === 'square') {
+            ctx.rect(-size, -size, size * 2, size * 2);
+        } else if (b.shape === 'rectangle') {
+            ctx.rect(-size * 1.5, -size, size * 3, size * 2);
+        } else { // Circle
+            ctx.arc(0, 0, size, 0, Math.PI * 2);
+        }
+
+        b.filled ? ctx.fill() : ctx.stroke();
+        ctx.restore();
+    });
+
+    // 5. --- DRAW BOMBS & EXPLOSIONS ---
+    for (let i = bombs.length - 1; i >= 0; i--) {
+        const b = bombs[i];
+        const now = Date.now();
+
+        if (!b.exploding && now >= b.explodeAt) {
+            b.exploding = true;
+            b.explosionStartAt = now;
+        }
+
+        if (b.exploding) {
+            const p = Math.min(1, (now - b.explosionStartAt) / b.explosionDuration);
+            const r = b.baseR + (b.maxR - b.baseR) * p;
+
+            // Explosion Visual
+            ctx.save();
+            ctx.globalAlpha = 1 - p;
+            ctx.fillStyle = b.explosionColour;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Damage logic... (Keep your existing enemy/player damage loops here)
+
+            if (p >= 1) bombs.splice(i, 1);
+        } else {
+            ctx.fillStyle = b.colour;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.baseR, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // 6. --- DRAW ENEMIES ---
+    enemies.forEach(en => {
+        ctx.save();
+        const isFrozen = Date.now() < en.freezeUntil;
+        ctx.fillStyle = isFrozen ? "#3498db" : (en.color || "#e74c3c");
+        if (isFrozen) ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 100) * 0.2;
+
+        ctx.beginPath();
+        ctx.arc(en.x, en.y, en.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    });
+
+    // 7. --- SCREEN SHAKE (End) ---
+    if (isShaking) ctx.restore();
+
+    // Draw UI/Tutorial on the clean, non-shaking coordinate system
+    drawTutorial();
+
+    update()
+    requestAnimationFrame(draw);
+}
+
+function drawMinimap() {
+    const mapSize = 100;
+    const roomSize = 12;
+    const padding = 2;
+
+    // Clear Minimap
+    mctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    mctx.fillRect(0, 0, mapSize, mapSize);
+    mctx.strokeStyle = "#888";
+    mctx.lineWidth = 1;
+    mctx.strokeRect(0, 0, mapSize, mapSize);
+
+    mctx.save();
+    mctx.translate(mapSize / 2, mapSize / 2);
+
+    for (let coord in visitedRooms) {
+        const parts = coord.split(',');
+        const rx = parseInt(parts[0]);
+        const ry = parseInt(parts[1]);
+        const isCurrent = rx === player.roomX && ry === player.roomY;
+        const isCleared = visitedRooms[coord].cleared;
+
+        const dx = (rx - player.roomX) * (roomSize + padding);
+        const dy = (ry - player.roomY) * (roomSize + padding);
+
+        if (Math.abs(dx) < mapSize / 2 - 5 && Math.abs(dy) < mapSize / 2 - 5) {
+            let color = isCleared ? "#27ae60" : "#e74c3c";
+            if (rx === 0 && ry === 0) color = "#f1c40f";
+            if (visitedRooms[coord].roomData.isBoss) color = "#c0392b";
+
+            mctx.fillStyle = isCurrent ? "#fff" : color;
+            mctx.fillRect(dx - roomSize / 2, dy - roomSize / 2, roomSize, roomSize);
+        }
+    }
+    mctx.restore();
+}
+
+function gameWon() {
+    gameState = STATES.GAMEOVER;
+    overlayEl.style.display = 'flex';
+    statsEl.innerText = "VICTORY! You cleared the dungeon!";
+    document.querySelector('#overlay h1').innerText = "You Won!";
 }

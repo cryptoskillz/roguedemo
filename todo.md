@@ -1,7 +1,7 @@
 bugs
     when you have homing missies activated and the enemies die and there still bulletd they freeze when you press the 
     arrow keys.  Maybe when all enemies are dead the bullets should stop homing or just be deleted from the screen.  We could also have the arrow ignore the key press so the bullets are still animated.
-    
+
     homing missles should start at the side of the key that was pressed
     if you get hit perfect bonus will reset 
     360 bullet mode the right bullet is a little slow
@@ -13,7 +13,8 @@ bugs
     check that nothing can be done, dropping bombs etc when you the player is dead
     room count at the end is off (maybe same room type in generation)
     only take one arrow input to fie otherwise it will fire in multipile directions
-
+Would you like me to help you add a muzzle flash or a small particle effect that triggers whenever fireBullet is called?
+geometry gun 2 bullets are firing (might be a genruc bug)
 
 items folder
     move all items to a items folder
