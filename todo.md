@@ -1,11 +1,7 @@
 bugs
     add back all bullet tyoes stupid ai keeps removng it
-    m top toggle music
-    guradian loads
-
-    
-
-
+    guradian intro music
+    debug logging
     explode seems over powered
     fixed front locked
     homing missles should start at the side of the key that was pressed

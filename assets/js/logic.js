@@ -542,8 +542,10 @@ function spawnEnemies() {
 
     // Use roomData.enemies if defined (array of {type, count}), otherwise fallback
     if (roomData.enemies && Array.isArray(roomData.enemies)) {
+        console.log(`Spawning enemies for room: ${roomData.name}`, roomData.enemies);
         roomData.enemies.forEach(group => {
             const template = enemyTemplates[group.type];
+            console.log(`Looking for enemy type: ${group.type}, found: ${!!template}`);
             if (template) {
                 for (let i = 0; i < group.count; i++) {
                     const inst = JSON.parse(JSON.stringify(template));
@@ -552,6 +554,8 @@ function spawnEnemies() {
                     inst.freezeUntil = freezeUntil;
                     enemies.push(inst);
                 }
+            } else {
+                console.warn(`Enemy template not found for: ${group.type}`);
             }
         });
     } else {
@@ -862,6 +866,7 @@ async function draw() {
     if (screenShake.power > 0) ctx.restore();
     drawMinimap();
     drawTutorial();
+    drawBossIntro();
     requestAnimationFrame(() => { update(); draw(); });
 }
 
@@ -1570,4 +1575,41 @@ function drawMinimap() {
 
 
     mctx.restore();
+}
+
+function drawBossIntro() {
+    const now = Date.now();
+    if (now < bossIntroEndTime) {
+        ctx.save();
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Find boss name
+        let bossName = "BOSS";
+        let bossDesc = "Prepare yourself!";
+
+        // Try to find from templates or current enemies
+        if (enemyTemplates["boss"]) {
+            bossName = enemyTemplates["boss"].name || bossName;
+            bossDesc = enemyTemplates["boss"].description || bossDesc;
+        }
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        // Title
+        ctx.font = "bold 60px 'Courier New'";
+        ctx.fillStyle = "#c0392b";
+        ctx.shadowColor = "#e74c3c";
+        ctx.shadowBlur = 20;
+        ctx.fillText(bossName, canvas.width / 2, canvas.height / 2 - 40);
+
+        // Subtitle
+        ctx.font = "italic 24px 'Courier New'";
+        ctx.fillStyle = "#ecf0f1";
+        ctx.shadowBlur = 0;
+        ctx.fillText(bossDesc, canvas.width / 2, canvas.height / 2 + 30);
+
+        ctx.restore();
+    }
 }
