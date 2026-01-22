@@ -876,7 +876,6 @@ function tryUse() {
     console.log(`${target.dir} door used (already unlocked)`);
 }
 
-
 function update() {
     if (gameState !== STATES.PLAY) return;
 
@@ -923,7 +922,6 @@ function update() {
     const moveKeys = { "KeyW": [0, -1, 'top'], "KeyS": [0, 1, 'bottom'], "KeyA": [-1, 0, 'left'], "KeyD": [1, 0, 'right'] };
     for (let [key, [dx, dy, dir]] of Object.entries(moveKeys)) {
         if (keys[key]) {
-            // Track last move for frontLocked firing
             player.lastMoveX = dx;
             player.lastMoveY = dy;
 
@@ -956,7 +954,6 @@ function update() {
             SFX.shoot(0.05);
 
             let centerAngle = 0;
-            // Apply frontLocked logic
             if (gun.frontLocked) {
                 centerAngle = Math.atan2(player.lastMoveY || 0, player.lastMoveX || 1);
             } else {
@@ -975,12 +972,8 @@ function update() {
             player.y = Math.max(BOUNDARY, Math.min(canvas.height - BOUNDARY, player.y));
 
             for (let i = 0; i < count; i++) {
-                // 1. Calculate the base angle for each bullet in the fan
                 let spreadGap = gun.Bullet?.spreadRate || 0.2;
                 let fanAngle = centerAngle + (count > 1 ? (i - (count - 1) / 2) * spreadGap : 0);
-
-                // 2. Add random inaccuracy using the 'spread' value from your JSON
-                // We convert the spread (0-100) to a small radian offset
                 let inaccuracy = (gun.Bullet?.spread || 0) / 1000;
                 let finalAngle = fanAngle + (Math.random() - 0.5) * inaccuracy;
 
@@ -991,7 +984,7 @@ function update() {
         }
     }
 
-    // --- 5. BULLETS & PARTICLES ---
+    // --- 5. BULLETS & PARTICLES (Including Wall Bounce) ---
     if (typeof particles !== 'undefined') {
         for (let i = particles.length - 1; i >= 0; i--) {
             particles[i].life -= 0.05;
@@ -1000,16 +993,16 @@ function update() {
     }
 
     bullets.forEach((b, i) => {
-        // --- CURVE MATH (Rotation Matrix) ---
+        // --- CURVE ---
         if (b.curve && b.curve !== 0) {
             const cos = Math.cos(b.curve);
             const sin = Math.sin(b.curve);
             const vxNew = b.vx * cos - b.vy * sin;
             const vyNew = b.vx * sin + b.vy * cos;
-            b.vx = vxNew;
-            b.vy = vyNew;
+            b.vx = vxNew; b.vy = vyNew;
         }
 
+        // --- HOMING ---
         const aliveEnemies = enemies.filter(en => !en.isDead);
         if (gun.Bullet?.homing && aliveEnemies.length > 0) {
             let nearest = aliveEnemies.reduce((prev, curr) =>
@@ -1026,14 +1019,34 @@ function update() {
             b.vy = Math.sin(currentAngle) * speed;
         }
 
+        // Move bullet
+        b.x += b.vx;
+        b.y += b.vy;
+
+        // --- WALL BOUNCE ---
+        const bounce = gun.Bullet?.wallBounce;
+        if (b.x < 0 || b.x > canvas.width) {
+            if (bounce) {
+                b.vx *= -1;
+                b.x = b.x < 0 ? 0 : canvas.width;
+            } else {
+                b.life = 0; // Kill bullet on next check
+            }
+        }
+        if (b.y < 0 || b.y > canvas.height) {
+            if (bounce) {
+                b.vy *= -1;
+                b.y = b.y < 0 ? 0 : canvas.height;
+            } else {
+                b.life = 0; // Kill bullet on next check
+            }
+        }
+
         const pSettings = gun.Bullet?.particles;
         if (pSettings?.active && Math.random() < (pSettings.frequency || 0.5)) {
             particles.push({ x: b.x, y: b.y, color: b.colour || 'yellow', life: pSettings.life || 0.5, size: (b.size || 5) * (pSettings.sizeMult || 0.5) });
         }
 
-        // Final position update
-        b.x += b.vx;
-        b.y += b.vy;
         b.life--;
         if (b.life <= 0) bullets.splice(i, 1);
     });
@@ -1097,7 +1110,6 @@ function update() {
 }
 
 
-
 async function draw() {
     await updateUI();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1149,7 +1161,6 @@ async function draw() {
         const elapsed = now - (player.lastShot || 0);
         const cooldownMs = fr * 1000;
 
-        // Only draw if we are actually waiting for the cooldown
         if (elapsed < cooldownMs) {
             const progress = elapsed / cooldownMs;
             const barWidth = 40;
@@ -1157,11 +1168,9 @@ async function draw() {
             const x = player.x - barWidth / 2;
             const y = player.y - player.size - 15;
 
-            // Background (Grey)
             ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
             ctx.fillRect(x, y, barWidth, barHeight);
 
-            // Progress (Cyan/White)
             ctx.fillStyle = "#00f2ff";
             ctx.fillRect(x, y, barWidth * progress, barHeight);
         }
@@ -1180,16 +1189,29 @@ async function draw() {
         });
     }
 
-    // 5. --- BULLETS ---
+    // 5. --- BULLETS (Updated for visual rotation on bounce/curve) ---
     bullets.forEach(b => {
         ctx.fillStyle = b.colour || 'yellow';
         const s = b.size || 5;
-        ctx.save(); ctx.translate(b.x, b.y);
+        ctx.save();
+        ctx.translate(b.x, b.y);
+
+        // Rotate the shape to face where the bullet is currently moving (vx, vy)
+        ctx.rotate(Math.atan2(b.vy, b.vx));
+
         if (b.animated) ctx.rotate(b.spinAngle = (b.spinAngle || 0) + 0.15);
+
         ctx.beginPath();
-        if (b.shape === 'triangle') { ctx.moveTo(0, -s); ctx.lineTo(s, s); ctx.lineTo(-s, s); ctx.closePath(); }
+        if (b.shape === 'triangle') {
+            // Triangle points forward (along X axis after rotation)
+            ctx.moveTo(s, 0);
+            ctx.lineTo(-s, s);
+            ctx.lineTo(-s, -s);
+            ctx.closePath();
+        }
         else if (b.shape === 'square') ctx.rect(-s, -s, s * 2, s * 2);
         else ctx.arc(0, 0, s, 0, Math.PI * 2);
+
         b.filled ? ctx.fill() : ctx.stroke();
         ctx.restore();
     });
@@ -1215,21 +1237,20 @@ async function draw() {
         } else { ctx.fillStyle = b.colour; ctx.beginPath(); ctx.arc(b.x, b.y, b.baseR, 0, Math.PI * 2); ctx.fill(); }
     }
 
-    // 7. --- BOSS/ENEMIES (NEW HIT/FADE DRAW) ---
+    // 7. --- BOSS/ENEMIES ---
     if (roomData.isBoss && !roomData.cleared && Date.now() < (bossIntroEndTime || 0)) {
         ctx.fillStyle = "#e74c3c"; ctx.font = "bold 50px 'Courier New'"; ctx.textAlign = "center";
         ctx.fillText((enemyTemplates["boss"]?.name || "BOSS").toUpperCase(), canvas.width / 2, canvas.height / 2);
     } else {
-        // Inside draw() enemy loop
         enemies.forEach(en => {
             ctx.save();
             if (en.isDead) ctx.globalAlpha = Math.max(0, en.deathTimer / (en.deathDuration || 30));
 
             if (en.hitTimer > 0) {
-                ctx.fillStyle = en.lastHitWasCrit ? "#ff00ff" : "white"; // Purple for Crits
+                ctx.fillStyle = en.lastHitWasCrit ? "#ff00ff" : "white";
                 en.hitTimer--;
             } else if (en.freezeUntil && Date.now() < en.freezeUntil) {
-                ctx.fillStyle = "#3498db"; // Cyan for Frozen
+                ctx.fillStyle = "#3498db";
             } else {
                 ctx.fillStyle = en.color || "#e74c3c";
             }
