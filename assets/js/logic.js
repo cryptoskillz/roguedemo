@@ -984,7 +984,7 @@ function update() {
         }
     }
 
-    // --- 5. BULLETS & PARTICLES (Including Wall Bounce) ---
+    // --- 5. BULLETS & PARTICLES ---
     if (typeof particles !== 'undefined') {
         for (let i = particles.length - 1; i >= 0; i--) {
             particles[i].life -= 0.05;
@@ -993,16 +993,13 @@ function update() {
     }
 
     bullets.forEach((b, i) => {
-        // --- CURVE ---
         if (b.curve && b.curve !== 0) {
-            const cos = Math.cos(b.curve);
-            const sin = Math.sin(b.curve);
+            const cos = Math.cos(b.curve), sin = Math.sin(b.curve);
             const vxNew = b.vx * cos - b.vy * sin;
             const vyNew = b.vx * sin + b.vy * cos;
             b.vx = vxNew; b.vy = vyNew;
         }
 
-        // --- HOMING ---
         const aliveEnemies = enemies.filter(en => !en.isDead);
         if (gun.Bullet?.homing && aliveEnemies.length > 0) {
             let nearest = aliveEnemies.reduce((prev, curr) =>
@@ -1019,27 +1016,17 @@ function update() {
             b.vy = Math.sin(currentAngle) * speed;
         }
 
-        // Move bullet
         b.x += b.vx;
         b.y += b.vy;
 
-        // --- WALL BOUNCE ---
         const bounce = gun.Bullet?.wallBounce;
         if (b.x < 0 || b.x > canvas.width) {
-            if (bounce) {
-                b.vx *= -1;
-                b.x = b.x < 0 ? 0 : canvas.width;
-            } else {
-                b.life = 0; // Kill bullet on next check
-            }
+            if (bounce) { b.vx *= -1; b.x = b.x < 0 ? 0 : canvas.width; }
+            else { b.life = 0; }
         }
         if (b.y < 0 || b.y > canvas.height) {
-            if (bounce) {
-                b.vy *= -1;
-                b.y = b.y < 0 ? 0 : canvas.height;
-            } else {
-                b.life = 0; // Kill bullet on next check
-            }
+            if (bounce) { b.vy *= -1; b.y = b.y < 0 ? 0 : canvas.height; }
+            else { b.life = 0; }
         }
 
         const pSettings = gun.Bullet?.particles;
@@ -1051,7 +1038,7 @@ function update() {
         if (b.life <= 0) bullets.splice(i, 1);
     });
 
-    // --- 6. ENEMIES ---
+    // --- 6. ENEMIES (Updated with Pierce) ---
     enemies.forEach((en, ei) => {
         if (en.isDead) {
             en.deathTimer--;
@@ -1065,8 +1052,13 @@ function update() {
             en.y += Math.sin(angle) * en.speed;
         }
 
-        bullets.forEach((b, bi) => {
+        // Bullet Collision Logic
+        for (let bi = bullets.length - 1; bi >= 0; bi--) {
+            const b = bullets[bi];
             if (Math.hypot(b.x - en.x, b.y - en.y) < en.size) {
+                // To prevent a piercing bullet from hitting the same enemy every frame:
+                if (b.pierce && b.lastHitEnemy === en) continue;
+
                 let damage = b.damage || 1;
                 if (Math.random() < (gun.Bullet?.critChance || 0)) {
                     damage *= (gun.Bullet?.critDamage || 2);
@@ -1075,18 +1067,28 @@ function update() {
                 } else {
                     en.hitTimer = 4; en.lastHitWasCrit = false;
                 }
+
                 if (Math.random() < (gun.Bullet?.freezeChance || 0)) {
                     en.freezeUntil = Date.now() + (gun.Bullet?.freezeDuration || 1000);
                 }
+
                 en.hp -= damage;
                 SFX.explode(0.08);
-                bullets.splice(bi, 1);
+
+                // Pierce Check
+                if (!gun.Bullet?.pierce) {
+                    bullets.splice(bi, 1);
+                } else {
+                    b.lastHitEnemy = en; // Track last hit to avoid multi-hits on one target
+                }
+
                 if (en.hp <= 0) {
                     en.isDead = true;
                     en.deathTimer = en.deathDuration || 30;
+                    break; // Move to next enemy
                 }
             }
-        });
+        }
 
         if (Math.hypot(player.x - en.x, player.y - en.y) < player.size + en.size) {
             if (!player.isInvulnerable) SFX.playerHit(0.3);
@@ -1108,7 +1110,6 @@ function update() {
         gameOver();
     }
 }
-
 
 async function draw() {
     await updateUI();
