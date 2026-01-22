@@ -882,71 +882,72 @@ function update() {
 
     // --- RESTART & MUSIC LOGIC ---
     if (typeof DEBUG_WINDOW_ENABLED !== 'undefined' && DEBUG_WINDOW_ENABLED && keys['KeyR']) restartGame();
-    if (keys['KeyM'] && Date.now() - (lastMKeyTime || 0) > 300) {
-        musicMuted = !musicMuted;
-        if (introMusic) musicMuted ? introMusic.pause() : introMusic.play().catch(e => { });
-        lastMKeyTime = Date.now();
-    }
 
-    const roomLocked = enemies.filter(en => !en.isDead).length > 0;
+    // --- 1. ROOM CLEARING & LOCK STATUS ---
+    // Check if enemies are still alive (ignoring dead ones in animation)
+    const aliveEnemies = enemies.filter(en => !en.isDead);
+    const roomLocked = aliveEnemies.length > 0;
     const doors = roomData.doors || {};
 
-    // --- 1. ROOM CLEARING ---
     if (!roomLocked && !roomData.cleared) {
         roomData.cleared = true;
         const currentCoord = `${player.roomX}, ${player.roomY}`;
         if (visitedRooms[currentCoord]) visitedRooms[currentCoord].cleared = true;
     }
 
-    // --- 2. BOMB DROPPING ---
+    // --- 2. BOMB DROPPING (Respecting bomb JSON) ---
     if (keys['KeyB'] && player.inventory?.bombs > 0) {
         const now = Date.now();
-
-        // Check if global 'bomb' object exists and respect its fireRate
         if (bomb && now - (player.lastBombTime || 0) > (bomb.fireRate * 1000)) {
             player.inventory.bombs--;
             player.lastBombTime = now;
-
-            // Push a new bomb instance using the fetched JSON data
             bombs.push({
-                x: player.x,
-                y: player.y,
-                explodeAt: now + bomb.timer,               // 1000ms
-                explosionDuration: bomb.explosionDuration, // 1000ms
-                baseR: 12,                                 // Visual item size
-                maxR: bomb.radius,                         // 100
-                damage: bomb.damage,                       // 2
-                colour: bomb.colour,                       // #ffff00
-                explosionColour: bomb.explosionColour,     // #FF0000
-                openDoors: bomb.openDoors,                 // true
-                openSecretRooms: bomb.openSecretRooms,     // true
-                canDamagePlayer: bomb.canDamagePlayer,     // true
-                exploding: false,
-                didDamage: false,
-                didDoorCheck: false
+                x: player.x, y: player.y,
+                explodeAt: now + bomb.timer,
+                explosionDuration: bomb.explosionDuration,
+                baseR: 12, maxR: bomb.radius,
+                damage: bomb.damage, colour: bomb.colour,
+                explosionColour: bomb.explosionColour,
+                openDoors: bomb.openDoors, openSecretRooms: bomb.openSecretRooms,
+                canDamagePlayer: bomb.canDamagePlayer,
+                exploding: false, didDamage: false, didDoorCheck: false
             });
-
             SFX.shoot(0.1);
             updateUI();
         }
     }
-    // --- 3. MOVEMENT ---
-    const moveKeys = { "KeyW": [0, -1, 'top'], "KeyS": [0, 1, 'bottom'], "KeyA": [-1, 0, 'left'], "KeyD": [1, 0, 'right'] };
+
+    // --- 3. MOVEMENT & DOOR COLLISION ---
+    const moveKeys = {
+        "KeyW": [0, -1, 'top'],
+        "KeyS": [0, 1, 'bottom'],
+        "KeyA": [-1, 0, 'left'],
+        "KeyD": [1, 0, 'right']
+    };
+
     for (let [key, [dx, dy, dir]] of Object.entries(moveKeys)) {
         if (keys[key]) {
             player.lastMoveX = dx; player.lastMoveY = dy;
-            const door = doors[dir] || { active: 0, locked: 0 };
+            const door = doors[dir] || { active: 0, locked: 0, hidden: 0 };
+
+            // Get door reference point (X for top/bottom doors, Y for left/right doors)
             const doorRef = (dir === 'top' || dir === 'bottom') ? (door.x ?? canvas.width / 2) : (door.y ?? canvas.height / 2);
             const playerPos = (dir === 'top' || dir === 'bottom') ? player.x : player.y;
-            const inDoorRange = playerPos > doorRef - DOOR_SIZE && playerPos < doorRef + DOOR_SIZE;
-            const canPass = door.active && !door.locked && !roomLocked;
 
-            if (dx !== 0) {
+            // Check if player is aligned with the door
+            const inDoorRange = playerPos > doorRef - DOOR_SIZE && playerPos < doorRef + DOOR_SIZE;
+            const canPass = door.active && !door.locked && !door.hidden && !roomLocked;
+
+            if (dx !== 0) { // Horizontal movement
                 const limit = dx < 0 ? BOUNDARY : canvas.width - BOUNDARY;
-                if ((dx < 0 ? player.x > limit : player.x < limit) || (inDoorRange && canPass)) player.x += dx * player.speed;
-            } else {
+                if ((dx < 0 ? player.x > limit : player.x < limit) || (inDoorRange && canPass)) {
+                    player.x += dx * player.speed;
+                }
+            } else { // Vertical movement
                 const limit = dy < 0 ? BOUNDARY : canvas.height - BOUNDARY;
-                if ((dy < 0 ? player.y > limit : player.y < limit) || (inDoorRange && canPass)) player.y += dy * player.speed;
+                if ((dy < 0 ? player.y > limit : player.y < limit) || (inDoorRange && canPass)) {
+                    player.y += dy * player.speed;
+                }
             }
         }
     }
@@ -960,29 +961,19 @@ function update() {
             let centerAngle = 0;
             if (gun.frontLocked) centerAngle = Math.atan2(player.lastMoveY || 0, player.lastMoveX || 1);
             else {
-                if (keys['ArrowUp']) centerAngle = -Math.PI / 2; else if (keys['ArrowDown']) centerAngle = Math.PI / 2;
-                else if (keys['ArrowLeft']) centerAngle = Math.PI; else if (keys['ArrowRight']) centerAngle = 0;
+                if (keys['ArrowUp']) centerAngle = -Math.PI / 2;
+                else if (keys['ArrowDown']) centerAngle = Math.PI / 2;
+                else if (keys['ArrowLeft']) centerAngle = Math.PI;
+                else if (keys['ArrowRight']) centerAngle = 0;
             }
 
             const count = gun.Bullet?.number || 1;
-            const recoilVal = gun.Bullet?.recoil || 0;
-            player.x -= Math.cos(centerAngle) * (recoilVal * count);
-            player.y -= Math.sin(centerAngle) * (recoilVal * count);
-
-            let firingAngles = new Set();
-            firingAngles.add(centerAngle);
+            const firingAngles = new Set([centerAngle]);
             if (gun.Bullet?.backfire) firingAngles.add(centerAngle + Math.PI);
-            const md = gun.Bullet?.multiDirectional;
-            if (md?.active) {
-                if (md.fireNorth) firingAngles.add(-Math.PI / 2); if (md.fireSouth) firingAngles.add(Math.PI / 2);
-                if (md.fireEast) firingAngles.add(0); if (md.fireWest) firingAngles.add(Math.PI);
-                if (md.fire360) for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) firingAngles.add(a);
-            }
 
             firingAngles.forEach(baseAngle => {
                 for (let i = 0; i < count; i++) {
-                    let spreadGap = gun.Bullet?.spreadRate || 0.2;
-                    let fanAngle = baseAngle + (count > 1 ? (i - (count - 1) / 2) * spreadGap : 0);
+                    let fanAngle = baseAngle + (count > 1 ? (i - (count - 1) / 2) * (gun.Bullet?.spreadRate || 0.2) : 0);
                     let finalAngle = fanAngle + (Math.random() - 0.5) * ((gun.Bullet?.spread || 0) / 1000);
                     const speed = gun.Bullet?.speed || 7;
                     fireBullet(0, speed, Math.cos(finalAngle) * speed, Math.sin(finalAngle) * speed, finalAngle);
@@ -992,33 +983,30 @@ function update() {
         }
     }
 
-    // --- 5. BULLETS & PARTICLES ---
+    // --- 5. BULLET UPDATE ---
     bullets.forEach((b, i) => {
         b.x += b.vx; b.y += b.vy;
-
-        const bounce = gun.Bullet?.wallBounce;
         if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
-            if (bounce) {
+            if (gun.Bullet?.wallBounce) {
                 if (b.x < 0 || b.x > canvas.width) b.vx *= -1;
                 if (b.y < 0 || b.y > canvas.height) b.vy *= -1;
-                b.x = Math.max(0, Math.min(canvas.width, b.x));
-                b.y = Math.max(0, Math.min(canvas.height, b.y));
             } else {
+                // EXPLOADE ON WALL
                 if (gun.Bullet?.Explode?.active && !b.isShard) {
                     const ex = gun.Bullet.Explode;
                     const step = (Math.PI * 2) / ex.shards;
                     for (let j = 0; j < ex.shards; j++) {
                         bullets.push({
-                            x: b.x, y: b.y, vx: Math.cos(step * j) * (gun.Bullet?.speed || 7), vy: Math.sin(step * j) * (gun.Bullet?.speed || 7),
+                            x: b.x, y: b.y, vx: Math.cos(step * j) * (gun.Bullet?.speed || 7),
+                            vy: Math.sin(step * j) * (gun.Bullet?.speed || 7),
                             life: ex.shardRange, damage: ex.damage, size: ex.size, isShard: true, colour: b.colour
                         });
                     }
                 }
-                bullets.splice(i, 1); return;
+                bullets.splice(i, 1);
             }
         }
-        b.life--;
-        if (b.life <= 0) bullets.splice(i, 1);
+        b.life--; if (b.life <= 0) bullets.splice(i, 1);
     });
 
     // --- 6. ENEMIES ---
@@ -1031,20 +1019,20 @@ function update() {
             let dist = Math.hypot(b.x - en.x, b.y - en.y);
             if (dist < en.size) {
                 if (gun.Bullet?.pierce && b.hitEnemies?.includes(ei)) return;
+
+                // TRIGGER SHARDS
                 if (gun.Bullet?.Explode?.active && !b.isShard) {
                     const ex = gun.Bullet.Explode;
-                    const step = (Math.PI * 2) / ex.shards;
                     for (let i = 0; i < ex.shards; i++) {
+                        const step = (Math.PI * 2) / ex.shards;
                         bullets.push({
-                            x: b.x, y: b.y, vx: Math.cos(step * i) * (gun.Bullet?.speed || 7), vy: Math.sin(step * i) * (gun.Bullet?.speed || 7),
+                            x: b.x, y: b.y, vx: Math.cos(step * i) * (gun.Bullet?.speed || 7),
+                            vy: Math.sin(step * i) * (gun.Bullet?.speed || 7),
                             life: ex.shardRange, damage: ex.damage, size: ex.size, isShard: true, colour: b.colour
                         });
                     }
                 }
-                if (gun.Bullet?.pierce) {
-                    if (!b.hitEnemies) b.hitEnemies = [];
-                    b.hitEnemies.push(ei);
-                }
+                if (gun.Bullet?.pierce) { if (!b.hitEnemies) b.hitEnemies = []; b.hitEnemies.push(ei); }
                 en.hp -= (b.damage || 1);
                 SFX.explode(0.08);
                 if (!gun.Bullet?.pierce) bullets.splice(bi, 1);
@@ -1055,8 +1043,11 @@ function update() {
 
     // --- 7. ROOM TRANSITIONS ---
     if (!roomLocked) {
-        if (player.x < 5 && doors.left?.active) changeRoom(-1, 0);
-        else if (player.x > canvas.width - 5 && doors.right?.active) changeRoom(1, 0);
+        const threshold = 10;
+        if (player.x < threshold && doors.left?.active && !doors.left?.locked) changeRoom(-1, 0);
+        else if (player.x > canvas.width - threshold && doors.right?.active && !doors.right?.locked) changeRoom(1, 0);
+        else if (player.y < threshold && doors.top?.active && !doors.top?.locked) changeRoom(0, -1);
+        else if (player.y > canvas.height - threshold && doors.bottom?.active && !doors.bottom?.locked) changeRoom(0, 1);
     }
 }
 async function draw() {
