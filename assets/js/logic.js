@@ -944,7 +944,7 @@ function update() {
         }
     }
 
-    // --- 4. SHOOTING (With Backfire Support) ---
+    // --- 4. SHOOTING (With Backfire & Multi-Directional Support) ---
     const shootingKeys = keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight'];
     if (shootingKeys) {
         const fireDelay = (gun.Bullet?.fireRate ?? 0.3) * 1000;
@@ -964,14 +964,25 @@ function update() {
             const count = gun.Bullet?.number || 1;
             const recoilVal = gun.Bullet?.recoil || 0;
 
-            // Apply Recoil
+            // Recoil
             player.x -= Math.cos(centerAngle) * (recoilVal * count);
             player.y -= Math.sin(centerAngle) * (recoilVal * count);
 
-            // Determine firing angles (Front and optional Back)
-            let firingAngles = [centerAngle];
-            if (gun.Bullet?.backfire) {
-                firingAngles.push(centerAngle + Math.PI); // Add 180 degrees
+            // Collect all angles to fire
+            let firingAngles = new Set(); // Use Set to avoid duplicate angles
+            firingAngles.add(centerAngle);
+
+            if (gun.Bullet?.backfire) firingAngles.add(centerAngle + Math.PI);
+
+            const md = gun.Bullet?.multiDirectional;
+            if (md?.active) {
+                if (md.fireNorth) firingAngles.add(-Math.PI / 2);
+                if (md.fireSouth) firingAngles.add(Math.PI / 2);
+                if (md.fireEast) firingAngles.add(0);
+                if (md.fireWest) firingAngles.add(Math.PI);
+                if (md.fire360) {
+                    for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) firingAngles.add(a);
+                }
             }
 
             firingAngles.forEach(baseAngle => {
@@ -980,7 +991,6 @@ function update() {
                     let fanAngle = baseAngle + (count > 1 ? (i - (count - 1) / 2) * spreadGap : 0);
                     let inaccuracy = (gun.Bullet?.spread || 0) / 1000;
                     let finalAngle = fanAngle + (Math.random() - 0.5) * inaccuracy;
-
                     const speed = gun.Bullet?.speed || 7;
                     fireBullet(0, speed, Math.cos(finalAngle) * speed, Math.sin(finalAngle) * speed, finalAngle);
                 }
@@ -1021,8 +1031,7 @@ function update() {
             b.vy = Math.sin(currentAngle) * speed;
         }
 
-        b.x += b.vx;
-        b.y += b.vy;
+        b.x += b.vx; b.y += b.vy;
 
         const bounce = gun.Bullet?.wallBounce;
         if (b.x < 0 || b.x > canvas.width) {
