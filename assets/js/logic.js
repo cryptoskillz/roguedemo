@@ -876,6 +876,7 @@ function tryUse() {
     console.log(`${target.dir} door used (already unlocked)`);
 }
 
+
 function update() {
     if (gameState !== STATES.PLAY) return;
 
@@ -883,15 +884,12 @@ function update() {
 
     // --- RESTART LOGIC ---
     if (typeof DEBUG_WINDOW_ENABLED !== 'undefined' && DEBUG_WINDOW_ENABLED && keys['KeyR']) {
-
-        // if (gameState === STATES.GAMEOVER ) {
         restartGame();
     }
 
-    // --- 0. MUSIC TOGGLE (With Safety Check) ---
+    // --- 0. MUSIC TOGGLE ---
     if (keys['KeyM'] && Date.now() - (lastMKeyTime || 0) > 300) {
         musicMuted = !musicMuted;
-        // The safety check 'introMusic && introMusic.pause' prevents the error
         if (introMusic) {
             if (musicMuted) introMusic.pause();
             else introMusic.play().catch(e => console.log("Audio play blocked"));
@@ -925,18 +923,19 @@ function update() {
     const moveKeys = { "KeyW": [0, -1, 'top'], "KeyS": [0, 1, 'bottom'], "KeyA": [-1, 0, 'left'], "KeyD": [1, 0, 'right'] };
     for (let [key, [dx, dy, dir]] of Object.entries(moveKeys)) {
         if (keys[key]) {
-            player.lastMoveX = dx; player.lastMoveY = dy;
+            // Track last move for frontLocked firing
+            player.lastMoveX = dx;
+            player.lastMoveY = dy;
+
             const door = doors[dir] || { active: 0, locked: 0 };
             const doorRef = (dir === 'top' || dir === 'bottom') ? (door.x ?? canvas.width / 2) : (door.y ?? canvas.height / 2);
             const playerPos = (dir === 'top' || dir === 'bottom') ? player.x : player.y;
 
-            // Check if player is aligned with the door opening
             const inDoorRange = playerPos > doorRef - DOOR_SIZE && playerPos < doorRef + DOOR_SIZE;
             const canPass = door.active && !door.locked && !roomLocked;
 
             if (dx !== 0) {
                 const limit = dx < 0 ? BOUNDARY : canvas.width - BOUNDARY;
-                // Allow movement if within boundary OR if moving through a valid door
                 if ((dx < 0 ? player.x > limit : player.x < limit) || (inDoorRange && canPass)) {
                     player.x += dx * player.speed;
                 }
@@ -955,11 +954,17 @@ function update() {
         const fireDelay = (gun.Bullet?.fireRate ?? 0.3) * 1000;
         if (Date.now() - (player.lastShot || 0) > fireDelay) {
             SFX.shoot(0.05);
+
             let centerAngle = 0;
-            if (keys['ArrowUp']) centerAngle = -Math.PI / 2;
-            else if (keys['ArrowDown']) centerAngle = Math.PI / 2;
-            else if (keys['ArrowLeft']) centerAngle = Math.PI;
-            else if (keys['ArrowRight']) centerAngle = 0;
+            // Apply frontLocked logic
+            if (gun.frontLocked) {
+                centerAngle = Math.atan2(player.lastMoveY || 0, player.lastMoveX || 1);
+            } else {
+                if (keys['ArrowUp']) centerAngle = -Math.PI / 2;
+                else if (keys['ArrowDown']) centerAngle = Math.PI / 2;
+                else if (keys['ArrowLeft']) centerAngle = Math.PI;
+                else if (keys['ArrowRight']) centerAngle = 0;
+            }
 
             const count = gun.Bullet?.number || 1;
             const recoilVal = gun.Bullet?.recoil || 0;
@@ -970,8 +975,15 @@ function update() {
             player.y = Math.max(BOUNDARY, Math.min(canvas.height - BOUNDARY, player.y));
 
             for (let i = 0; i < count; i++) {
-                let spread = gun.Bullet?.spreadRate || 0.2;
-                let finalAngle = centerAngle + (count > 1 ? (i - (count - 1) / 2) * spread : 0);
+                // 1. Calculate the base angle for each bullet in the fan
+                let spreadGap = gun.Bullet?.spreadRate || 0.2;
+                let fanAngle = centerAngle + (count > 1 ? (i - (count - 1) / 2) * spreadGap : 0);
+
+                // 2. Add random inaccuracy using the 'spread' value from your JSON
+                // We convert the spread (0-100) to a small radian offset
+                let inaccuracy = (gun.Bullet?.spread || 0) / 1000;
+                let finalAngle = fanAngle + (Math.random() - 0.5) * inaccuracy;
+
                 const speed = gun.Bullet?.speed || 7;
                 fireBullet(0, speed, Math.cos(finalAngle) * speed, Math.sin(finalAngle) * speed, finalAngle);
             }
@@ -988,6 +1000,16 @@ function update() {
     }
 
     bullets.forEach((b, i) => {
+        // --- CURVE MATH (Rotation Matrix) ---
+        if (b.curve && b.curve !== 0) {
+            const cos = Math.cos(b.curve);
+            const sin = Math.sin(b.curve);
+            const vxNew = b.vx * cos - b.vy * sin;
+            const vyNew = b.vx * sin + b.vy * cos;
+            b.vx = vxNew;
+            b.vy = vyNew;
+        }
+
         const aliveEnemies = enemies.filter(en => !en.isDead);
         if (gun.Bullet?.homing && aliveEnemies.length > 0) {
             let nearest = aliveEnemies.reduce((prev, curr) =>
@@ -1008,7 +1030,10 @@ function update() {
         if (pSettings?.active && Math.random() < (pSettings.frequency || 0.5)) {
             particles.push({ x: b.x, y: b.y, color: b.colour || 'yellow', life: pSettings.life || 0.5, size: (b.size || 5) * (pSettings.sizeMult || 0.5) });
         }
-        b.x += b.vx; b.y += b.vy;
+
+        // Final position update
+        b.x += b.vx;
+        b.y += b.vy;
         b.life--;
         if (b.life <= 0) bullets.splice(i, 1);
     });
@@ -1057,7 +1082,6 @@ function update() {
     });
 
     // --- 7. ROOM TRANSITIONS ---
-    // We check if the player has physically touched the edge of the screen
     if (!roomLocked) {
         const threshold = 5;
         if (player.x < threshold && doors.left?.active) changeRoom(-1, 0);
@@ -1071,6 +1095,9 @@ function update() {
         gameOver();
     }
 }
+
+
+
 async function draw() {
     await updateUI();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
