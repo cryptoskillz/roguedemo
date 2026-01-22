@@ -924,11 +924,9 @@ function update() {
         if (keys[key]) {
             player.lastMoveX = dx;
             player.lastMoveY = dy;
-
             const door = doors[dir] || { active: 0, locked: 0 };
             const doorRef = (dir === 'top' || dir === 'bottom') ? (door.x ?? canvas.width / 2) : (door.y ?? canvas.height / 2);
             const playerPos = (dir === 'top' || dir === 'bottom') ? player.x : player.y;
-
             const inDoorRange = playerPos > doorRef - DOOR_SIZE && playerPos < doorRef + DOOR_SIZE;
             const canPass = door.active && !door.locked && !roomLocked;
 
@@ -946,7 +944,7 @@ function update() {
         }
     }
 
-    // --- 4. SHOOTING ---
+    // --- 4. SHOOTING (With Backfire Support) ---
     const shootingKeys = keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight'];
     if (shootingKeys) {
         const fireDelay = (gun.Bullet?.fireRate ?? 0.3) * 1000;
@@ -966,20 +964,27 @@ function update() {
             const count = gun.Bullet?.number || 1;
             const recoilVal = gun.Bullet?.recoil || 0;
 
+            // Apply Recoil
             player.x -= Math.cos(centerAngle) * (recoilVal * count);
             player.y -= Math.sin(centerAngle) * (recoilVal * count);
-            player.x = Math.max(BOUNDARY, Math.min(canvas.width - BOUNDARY, player.x));
-            player.y = Math.max(BOUNDARY, Math.min(canvas.height - BOUNDARY, player.y));
 
-            for (let i = 0; i < count; i++) {
-                let spreadGap = gun.Bullet?.spreadRate || 0.2;
-                let fanAngle = centerAngle + (count > 1 ? (i - (count - 1) / 2) * spreadGap : 0);
-                let inaccuracy = (gun.Bullet?.spread || 0) / 1000;
-                let finalAngle = fanAngle + (Math.random() - 0.5) * inaccuracy;
-
-                const speed = gun.Bullet?.speed || 7;
-                fireBullet(0, speed, Math.cos(finalAngle) * speed, Math.sin(finalAngle) * speed, finalAngle);
+            // Determine firing angles (Front and optional Back)
+            let firingAngles = [centerAngle];
+            if (gun.Bullet?.backfire) {
+                firingAngles.push(centerAngle + Math.PI); // Add 180 degrees
             }
+
+            firingAngles.forEach(baseAngle => {
+                for (let i = 0; i < count; i++) {
+                    let spreadGap = gun.Bullet?.spreadRate || 0.2;
+                    let fanAngle = baseAngle + (count > 1 ? (i - (count - 1) / 2) * spreadGap : 0);
+                    let inaccuracy = (gun.Bullet?.spread || 0) / 1000;
+                    let finalAngle = fanAngle + (Math.random() - 0.5) * inaccuracy;
+
+                    const speed = gun.Bullet?.speed || 7;
+                    fireBullet(0, speed, Math.cos(finalAngle) * speed, Math.sin(finalAngle) * speed, finalAngle);
+                }
+            });
             player.lastShot = Date.now();
         }
     }
@@ -1038,7 +1043,7 @@ function update() {
         if (b.life <= 0) bullets.splice(i, 1);
     });
 
-    // --- 6. ENEMIES (Updated with Pierce) ---
+    // --- 6. ENEMIES ---
     enemies.forEach((en, ei) => {
         if (en.isDead) {
             en.deathTimer--;
@@ -1052,12 +1057,10 @@ function update() {
             en.y += Math.sin(angle) * en.speed;
         }
 
-        // Bullet Collision Logic
         for (let bi = bullets.length - 1; bi >= 0; bi--) {
             const b = bullets[bi];
             if (Math.hypot(b.x - en.x, b.y - en.y) < en.size) {
-                // To prevent a piercing bullet from hitting the same enemy every frame:
-                if (b.pierce && b.lastHitEnemy === en) continue;
+                if (gun.Bullet?.pierce && b.lastHitEnemy === en) continue;
 
                 let damage = b.damage || 1;
                 if (Math.random() < (gun.Bullet?.critChance || 0)) {
@@ -1075,17 +1078,16 @@ function update() {
                 en.hp -= damage;
                 SFX.explode(0.08);
 
-                // Pierce Check
                 if (!gun.Bullet?.pierce) {
                     bullets.splice(bi, 1);
                 } else {
-                    b.lastHitEnemy = en; // Track last hit to avoid multi-hits on one target
+                    b.lastHitEnemy = en;
                 }
 
                 if (en.hp <= 0) {
                     en.isDead = true;
                     en.deathTimer = en.deathDuration || 30;
-                    break; // Move to next enemy
+                    break;
                 }
             }
         }
