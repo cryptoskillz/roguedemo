@@ -329,9 +329,25 @@ const DEBUG_PLAYER = true;
 const CHEATS_ENABLED = false;
 const DEBUG_WINDOW_ENABLED = true;
 
+let musicMuted = false;
+let lastMKeyTime = 0;
+
+
+
 // configurations
 async function initGame(isRestart = false) {
     if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
+    // Attempt to start music immediately
+    introMusic.play().catch(() => console.log("Waiting for interaction to play music..."));
+
+    // One-time listener to start music on first click/key if blocked by browser
+    const startAudio = () => {
+        if (!musicMuted) introMusic.play();
+        window.removeEventListener('keydown', startAudio);
+        window.removeEventListener('mousedown', startAudio);
+    };
+    window.addEventListener('keydown', startAudio);
+    window.addEventListener('mousedown', startAudio);
 
     gameState = isRestart ? STATES.PLAY : STATES.START;
     overlayEl.style.display = 'none';
@@ -857,11 +873,20 @@ function tryUse() {
     console.log(`${target.dir} door used (already unlocked)`);
 }
 
-
 function update() {
     if (gameState !== STATES.PLAY) return;
 
+    // --- 0. AUDIO CONTEXT & MUSIC TOGGLE ---
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
+    // Toggle Music with 'M' (with a 300ms debounce to prevent flickering)
+    if (keys['KeyM'] && Date.now() - (lastMKeyTime || 0) > 300) {
+        musicMuted = !musicMuted;
+        if (musicMuted) introMusic.pause();
+        else introMusic.play();
+        lastMKeyTime = Date.now();
+        console.log(musicMuted ? "Music: OFF" : "Music: ON");
+    }
 
     const currentCoord = `${player.roomX}, ${player.roomY}`;
     const roomLocked = enemies.length > 0;
@@ -871,23 +896,17 @@ function update() {
     if (!roomLocked && !roomData.cleared) {
         roomData.cleared = true;
         if (visitedRooms[currentCoord]) visitedRooms[currentCoord].cleared = true;
-        if (roomData.isBoss) {
-            perfectEl.innerText = "BOSS CLEARED!";
-            perfectEl.style.display = 'block';
-            setTimeout(() => perfectEl.style.display = 'none', 5000);
-        }
     }
 
     // --- 2. INPUT HANDLERS ---
-    if (keys['KeyM']) gameMenu();
-    if (keys['KeyR'] && DEBUG_WINDOW_ENABLED) restartGame();
+    if (keys['Escape']) gameMenu(); // Open menu with Escape
     tryUse();
 
     if (keys['KeyB'] && player.inventory?.bombs > 0) {
         player.inventory.bombs--;
         keys['KeyB'] = false;
         dropBomb();
-        SFX.explode(0.2); // BOMB SOUND
+        SFX.explode(0.2); // Play bomb chiptune
         updateUI();
     }
 
@@ -912,13 +931,13 @@ function update() {
         }
     }
 
-    // --- 4. SHOOTING LOGIC (With SFX + Recoil) ---
+    // --- 4. SHOOTING LOGIC (With SFX + JSON Recoil) ---
     const shootingKeys = keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight'];
     if (shootingKeys) {
         const fireDelay = (gun.Bullet?.fireRate ?? 0.3) * 1000;
         if (Date.now() - (player.lastShot || 0) > fireDelay) {
 
-            SFX.shoot(0.05); // PLAY SHOOT SOUND
+            SFX.shoot(0.05); // Play shoot chiptune
 
             let centerAngle = 0;
             if (keys['ArrowUp']) centerAngle = -Math.PI / 2;
@@ -926,6 +945,7 @@ function update() {
             else if (keys['ArrowLeft']) centerAngle = Math.PI;
             else if (keys['ArrowRight']) centerAngle = 0;
 
+            // Homing Target Selection
             if (gun.Bullet?.homing && enemies.length > 0) {
                 let nearest = enemies.reduce((a, b) =>
                     Math.hypot(player.x - a.x, player.y - a.y) < Math.hypot(player.x - b.x, player.y - b.y) ? a : b
@@ -937,56 +957,29 @@ function update() {
             const spread = gun.Bullet?.spreadRate || 0.2;
             const recoilVal = gun.Bullet?.recoil || 0;
 
+            // Apply Recoil (Push player back)
             player.x -= Math.cos(centerAngle) * (recoilVal * count);
             player.y -= Math.sin(centerAngle) * (recoilVal * count);
+
+            // Boundary Safety (Keep player in room after recoil)
             player.x = Math.max(BOUNDARY, Math.min(canvas.width - BOUNDARY, player.x));
             player.y = Math.max(BOUNDARY, Math.min(canvas.height - BOUNDARY, player.y));
 
+            // Fire Bullet Loop
             for (let i = 0; i < count; i++) {
                 let finalAngle = centerAngle + (count > 1 ? (i - (count - 1) / 2) * spread : 0);
                 const speed = gun.Bullet?.speed || 7;
                 const vx = Math.cos(finalAngle) * speed;
                 const vy = Math.sin(finalAngle) * speed;
-
-                if (gun.Bullet?.multiDirectional?.active) {
-                    if (gun.Bullet.multiDirectional.fire360) fireBullet(360, speed, vx, vy, finalAngle);
-                    else {
-                        if (gun.Bullet.multiDirectional.fireNorth) fireBullet(1, speed, vx, vy, finalAngle);
-                        if (gun.Bullet.multiDirectional.fireEast) fireBullet(2, speed, vx, vy, finalAngle);
-                        if (gun.Bullet.multiDirectional.fireSouth) fireBullet(3, speed, vx, vy, finalAngle);
-                        if (gun.Bullet.multiDirectional.fireWest) fireBullet(4, speed, vx, vy, finalAngle);
-                    }
-                }
-                else if (gun.Bullet?.backfire) {
-                    fireBullet(0, speed, vx, vy, finalAngle);
-                    if (keys['ArrowUp']) fireBullet(3, speed, vx, vy, finalAngle);
-                    if (keys['ArrowDown']) fireBullet(1, speed, vx, vy, finalAngle);
-                    if (keys['ArrowLeft']) fireBullet(2, speed, vx, vy, finalAngle);
-                    if (keys['ArrowRight']) fireBullet(4, speed, vx, vy, finalAngle);
-                }
-                else if (gun.Bullet?.frontLocked) {
-                    const moving = keys['KeyW'] || keys['KeyS'] || keys['KeyA'] || keys['KeyD'];
-                    if (!moving) {
-                        if (keys['ArrowUp']) fireBullet(1, speed, vx, vy, finalAngle);
-                        else if (keys['ArrowDown']) fireBullet(3, speed, vx, vy, finalAngle);
-                        else if (keys['ArrowLeft']) fireBullet(4, speed, vx, vy, finalAngle);
-                        else if (keys['ArrowRight']) fireBullet(2, speed, vx, vy, finalAngle);
-                    } else {
-                        if (keys['KeyW']) fireBullet(1, speed, vx, vy, finalAngle);
-                        if (keys['KeyS']) fireBullet(3, speed, vx, vy, finalAngle);
-                        if (keys['KeyA']) fireBullet(4, speed, vx, vy, finalAngle);
-                        if (keys['KeyD']) fireBullet(2, speed, vx, vy, finalAngle);
-                    }
-                }
-                else {
-                    fireBullet(0, speed, vx, vy, finalAngle);
-                }
+                fireBullet(0, speed, vx, vy, finalAngle);
             }
             player.lastShot = Date.now();
         }
     }
 
     // --- 5. BULLETS, PARTICLES, & ENEMIES ---
+
+    // A. Update Existing Particles (Fade Out)
     if (typeof particles !== 'undefined') {
         for (let i = particles.length - 1; i >= 0; i--) {
             particles[i].life -= 0.05;
@@ -994,96 +987,58 @@ function update() {
         }
     }
 
+    // B. Update Bullets & Spawn Trail Particles
     bullets.forEach((b, i) => {
-        if (gun.Bullet?.homing && enemies.length > 0 && !b.isShard) {
-            let nearest = enemies.reduce((prev, curr) => {
-                let d1 = Math.hypot(b.x - prev.x, b.y - prev.y);
-                let d2 = Math.hypot(b.x - curr.x, b.y - curr.y);
-                return d1 < d2 ? prev : curr;
+        const pSettings = gun.Bullet?.particles;
+        if (pSettings?.active && Math.random() < (pSettings.frequency || 0.5)) {
+            particles.push({
+                x: b.x,
+                y: b.y,
+                color: b.colour || 'yellow',
+                life: pSettings.life || 0.5,
+                size: (b.size || 5) * (pSettings.sizeMult || 0.5)
             });
-
-            let offsetX = Math.sin(i * 0.5) * 15;
-            let offsetY = Math.cos(i * 0.5) * 15;
-            let desiredAngle = Math.atan2((nearest.y + offsetY) - b.y, (nearest.x + offsetX) - b.x);
-            let currentAngle = Math.atan2(b.vy, b.vx);
-            let speed = Math.hypot(b.vx, b.vy);
-
-            let diff = desiredAngle - currentAngle;
-            while (diff < -Math.PI) diff += Math.PI * 2;
-            while (diff > Math.PI) diff -= Math.PI * 2;
-
-            let steerAmount = 0.12 + (i % 3) * 0.02;
-            if (Math.abs(diff) < steerAmount) currentAngle = desiredAngle;
-            else currentAngle += Math.sign(diff) * steerAmount;
-
-            b.vx = Math.cos(currentAngle) * speed;
-            b.vy = Math.sin(currentAngle) * speed;
-        }
-
-        if (typeof particles !== 'undefined' && Math.random() > 0.4) {
-            particles.push({ x: b.x, y: b.y, color: b.colour || 'yellow', life: 0.5, size: (b.size || 5) * 0.5 });
         }
 
         b.x += b.vx; b.y += b.vy;
-        if (gun.Bullet?.wallBounce) {
-            if (b.x < 0 || b.x > canvas.width) b.vx *= -1;
-            if (b.y < 0 || b.y > canvas.height) b.vy *= -1;
-        }
-        b.life--; if (b.life <= 0) bullets.splice(i, 1);
+        b.life--;
+        if (b.life <= 0) bullets.splice(i, 1);
     });
 
+    // C. Enemy AI & Collision
     enemies.forEach((en, ei) => {
-        if (Date.now() > (en.freezeUntil || 0)) {
-            let angle = Math.atan2(player.y - en.y, player.x - en.x);
-            en.x += Math.cos(angle) * en.speed; en.y += Math.sin(angle) * en.speed;
-        }
+        let angle = Math.atan2(player.y - en.y, player.x - en.x);
+        en.x += Math.cos(angle) * en.speed;
+        en.y += Math.sin(angle) * en.speed;
 
         bullets.forEach((b, bi) => {
             if (Math.hypot(b.x - en.x, b.y - en.y) < en.size) {
-                const explode = gun.Bullet?.Explode;
-                if (explode && explode.active && !b.isShard) {
-                    SFX.explode(0.08); // HIT/SHARD SOUND
-                    const numShards = explode.shards || 8;
-                    for (let s = 0; s < numShards; s++) {
-                        const shardAngle = (Math.PI * 2 / numShards) * s;
-                        bullets.push({
-                            x: b.x, y: b.y,
-                            vx: Math.cos(shardAngle) * ((gun.Bullet?.speed || 7) * 0.7),
-                            vy: Math.sin(shardAngle) * ((gun.Bullet?.speed || 7) * 0.7),
-                            life: explode.shardRange || 30,
-                            size: explode.size || 2,
-                            damage: explode.damage || 0.1,
-                            colour: b.colour,
-                            isShard: true,
-                            shape: b.shape,
-                            filled: b.filled
-                        });
-                    }
-                }
-                en.hp -= (b.damage || 1); hitsInRoom++;
-                if (!gun.Bullet?.pierce) bullets.splice(bi, 1);
+                SFX.explode(0.08); // Play hit sound
+                en.hp -= (b.damage || 1);
+                bullets.splice(bi, 1);
                 if (en.hp <= 0) enemies.splice(ei, 1);
             }
         });
 
-        //if (Math.hypot(player.x - en.x, player.y - en.y) < player.size + en.size) playerHit(en, true, true, true);
+        // Player Collision
         if (Math.hypot(player.x - en.x, player.y - en.y) < player.size + en.size) {
-            // Check if player is actually taking damage (to avoid sound spamming every frame)
-            if (!player.isInvulnerable) {
-                SFX.playerHit(0.3);
-            }
+            if (!player.isInvulnerable) SFX.playerHit(0.3); // Play hurt sound
             playerHit(en, true, true, true);
         }
     });
 
-    // --- 6. TRANSITIONS ---
+    // --- 6. TRANSITIONS & GAME OVER ---
     if (!roomLocked) {
         if (player.x < 10 && doors.left?.active) changeRoom(-1, 0);
         if (player.x > canvas.width - 10 && doors.right?.active) changeRoom(1, 0);
         if (player.y < 10 && doors.top?.active) changeRoom(0, -1);
         if (player.y > canvas.height - 10 && doors.bottom?.active) changeRoom(0, 1);
     }
-    if (player.hp <= 0) gameOver();
+
+    if (player.hp <= 0) {
+        introMusic.pause(); // Kill music on death
+        gameOver();
+    }
 }
 
 

@@ -1,4 +1,6 @@
 bugs
+    explode seems over powered
+    add music play / stop
     fixed front locked
     homing missles should start at the side of the key that was pressed
     if you get hit perfect bonus will reset 

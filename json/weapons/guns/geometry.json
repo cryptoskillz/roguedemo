@@ -1,6 +1,12 @@
 {
     "name": "Pea Shooter",
     "Bullet": {
+        "particles": {
+            "active": true,
+            "frequency": 0.5,
+            "life": 0.5,
+            "sizeMult": 0.5
+        },
         "colour": "yellow",
         "count": {
             "active": false,
@@ -17,18 +23,18 @@
                 "circle"
             ],
             "animated": true,
-            "filled": true
+            "filled": false
         },
         "speed": 5,
-        "size": 10,
+        "size": 5,
         "damage": 1,
         "range": 70,
         "curve": 0,
         "spread": 0,
         "spreadRate": 0,
         "number": 1,
-        "recoil": 0.5,
-        "homing": false,
+        "recoil": 5,
+        "homing": true,
         "fireRate": 0.5,
         "wallBounce": true,
         "pierce": false,
