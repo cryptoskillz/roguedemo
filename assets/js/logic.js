@@ -442,6 +442,13 @@ async function initGame(isRestart = false) {
         bomb = bData;
         gun = gunData;
 
+        // Initialize Ammo
+        if (gun.ammo?.active) {
+            player.ammo = gun.ammo.amount !== undefined ? gun.ammo.amount : gun.ammo.max;
+            player.maxAmmo = gun.ammo.max;
+            player.reloading = false;
+        }
+
         // 3. Pre-load ALL room templates
         roomTemplates = {};
         const templatePromises = [];
@@ -768,6 +775,20 @@ function fireBullet(direction, speed, vx, vy, angle) {
         return;
     }
 
+    // Ammo Check
+    if (gun.ammo?.active) {
+        if (player.reloading) return; // Cannot fire while reloading
+        if (player.ammo <= 0) {
+            reloadWeapon();
+            return;
+        }
+        player.ammo--;
+        // Check if empty AFTER firing
+        if (player.ammo <= 0) {
+            reloadWeapon();
+        }
+    }
+
     // Helper to create the base bullet object
     const createBullet = (velX, velY) => {
         // Determine the shape ONCE at creation
@@ -827,6 +848,22 @@ function fireBullet(direction, speed, vx, vy, angle) {
     }
 
     bulletsInRoom++;
+    bulletsInRoom++;
+}
+
+function reloadWeapon() {
+    if (player.reloading) return;
+    player.reloading = true;
+    log("Reloading...");
+
+    // Optional: Add sound here
+    // SFX.reload(); 
+
+    setTimeout(() => {
+        player.ammo = player.maxAmmo;
+        player.reloading = false;
+        log("Reloaded!");
+    }, gun.ammo?.reload || 1000);
 }
 
 // update loop

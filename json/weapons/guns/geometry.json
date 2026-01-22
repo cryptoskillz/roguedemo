@@ -9,11 +9,11 @@
         },
         "colour": "yellow",
         "ammo": {
-            "active": false,
+            "active": true,
             "timer": 0,
             "max": 100,
             "amount": 100,
-            "reload"
+            "reload": 1000
         },
         "geometry": {
             "shape": "random",

@@ -10,9 +10,10 @@
         "colour": "yellow",
         "ammo": {
             "active": false,
-            "magazines": 10,
-            "maxMagazine": 100,
-            "magazineSizs": 100
+            "timer": 0,
+            "max": 100,
+            "amount": 100,
+            "reload": 1000
         },
         "geometry": {
             "shape": "circle",
