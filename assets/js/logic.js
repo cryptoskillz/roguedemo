@@ -1040,11 +1040,9 @@ function updateRoomTransitions(doors, roomLocked) {
 function update() {
     if (gameState !== STATES.PLAY) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
-
     // Player Movement
     const roomLocked = enemies.length > 0;
     const doors = roomData.doors || {};
-
     updateRestart();
     updateRoomLock();
     updateBombDropping();
@@ -1059,8 +1057,6 @@ function update() {
 async function draw() {
     await updateUI();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-
     drawShake()
     drawDoors()
     drawPlayer()
@@ -1108,16 +1104,50 @@ function drawPlayer() {
 }
 
 function drawBullets() {
-    // 5. --- BULLETS & ENEMIES ---
-    bullets.forEach(b => {
-        ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx));
-        ctx.fillStyle = b.colour || 'yellow';
-        const s = b.size || 5;
-        ctx.beginPath();
-        if (b.shape === 'triangle') { ctx.moveTo(s, 0); ctx.lineTo(-s, s); ctx.lineTo(-s, -s); ctx.closePath(); }
-        else if (b.shape === 'square') ctx.rect(-s, -s, s * 2, s * 2);
-        else ctx.arc(0, 0, s, 0, Math.PI * 2);
-        ctx.fill(); ctx.restore();
+    // Bullet Logic
+    bullets.forEach((b, i) => {
+        if (b.homing && enemies.length > 0) {
+            let nearest = null;
+            let minDist = Infinity;
+            enemies.forEach(en => {
+                let d = Math.hypot(b.x - en.x, b.y - en.y);
+                if (d < minDist) {
+                    minDist = d;
+                    nearest = en;
+                }
+            });
+            if (nearest) {
+                let desiredAngle = Math.atan2(nearest.y - b.y, nearest.x - b.x);
+                let currentAngle = Math.atan2(b.vy, b.vx);
+                let speed = Math.hypot(b.vx, b.vy);
+                let diff = desiredAngle - currentAngle;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                let steerAmount = 0.1;
+                if (Math.abs(diff) < steerAmount) currentAngle = desiredAngle;
+                else currentAngle += Math.sign(diff) * steerAmount;
+                b.vx = Math.cos(currentAngle) * speed;
+                b.vy = Math.sin(currentAngle) * speed;
+            }
+        }
+        if (b.curve) {
+            let speed = Math.hypot(b.vx, b.vy);
+            let angle = Math.atan2(b.vy, b.vx);
+            angle += b.curve; // curve as angle delta per frame
+            b.vx = Math.cos(angle) * speed;
+            b.vy = Math.sin(angle) * speed;
+        }
+        b.x += b.vx;
+        b.y += b.vy;
+
+        if (gun.Bullet?.wallBounce) {
+            if (b.x < 0) { b.x = 0; b.vx = -b.vx; }
+            if (b.x > canvas.width) { b.x = canvas.width; b.vx = -b.vx; }
+            if (b.y < 0) { b.y = 0; b.vy = -b.vy; }
+            if (b.y > canvas.height) { b.y = canvas.height; b.vy = -b.vy; }
+        }
+        b.life--;
+        if (b.life <= 0) bullets.splice(i, 1);
     });
 
 }
