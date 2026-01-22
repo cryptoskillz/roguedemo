@@ -10,7 +10,7 @@
         "colour": "yellow",
         "ammo": {
             "active": true,
-            "type": "reload",
+            "type": "recharge",
             "resetTimer": 1000,
             "amount": 10,
             "maxAmount": 50
