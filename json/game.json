@@ -1,4 +1,5 @@
 {
-    "perfectGoal": 3,
-    "NoRooms": 11
+    "perfectGoal": 5,
+    "NoRooms": 11,
+    "music": false
 }

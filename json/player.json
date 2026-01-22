@@ -1,6 +1,6 @@
 {
     "hp": 10,
-    "speed": 10,
+    "speed": 20,
     "size": 20,
     "luck": 0,
     "roomX": 0,

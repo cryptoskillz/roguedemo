@@ -17,6 +17,11 @@ const debugSelect = document.getElementById('debug-select');
 const debugForm = document.getElementById('debug-form');
 const debugPanel = document.getElementById('debug-panel');
 
+// Global audio variable
+const introMusic = new Audio('assets/music/tron.mp3');
+introMusic.loop = true;
+introMusic.volume = 0.4;
+
 // --- Game State ---
 let player = {
     x: 300, y: 200, speed: 4, hp: 3, roomX: 0, roomY: 0,
@@ -66,6 +71,52 @@ let enemyTemplates = {};
 let bossIntroEndTime = 0;
 let gameLoopStarted = false;
 let keyUsedForRoom = false;
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+const SFX = {
+    // A quick high-to-low "pew"
+    shoot: (vol = 0.05) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square'; // Classic NES sound
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    },
+
+    // A low-frequency crunch for hits/explosions
+    explode: (vol = 0.1) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 0.2);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+    },
+
+    playerHit: (vol = 0.2) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        // Starts at 200Hz and drops to 50Hz for a "oof" feeling
+        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    }
+};
+
 
 async function updateUI() {
     if (player.hp < 0) {
@@ -279,9 +330,9 @@ const CHEATS_ENABLED = false;
 const DEBUG_WINDOW_ENABLED = true;
 
 // configurations
-// configurations
 async function initGame(isRestart = false) {
     if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
+
     gameState = isRestart ? STATES.PLAY : STATES.START;
     overlayEl.style.display = 'none';
     welcomeEl.style.display = isRestart ? 'none' : 'flex';
@@ -289,14 +340,13 @@ async function initGame(isRestart = false) {
     bullets = [];
     bombs = [];
 
-    //check if debug mode is enabled and if so show the room cords
+    // ... [Previous debug and player reset logic remains the same] ...
     if (DEBUG_WINDOW_ENABLED) {
         roomEl.style.display = 'block';
     } else {
         roomEl.style.display = 'none';
     }
 
-    // Reset player
     player.hp = 3;
     player.speed = 4;
     player.inventory.keys = 0;
@@ -322,37 +372,56 @@ async function initGame(isRestart = false) {
 
         gameData = gData;
         roomManifest = mData;
+        if (gameData.music) {
 
-        // Ensure player maintains inventory structure if not present in player.json
+            // --- 1. INSTANT AUDIO SETUP ---
+            if (!window.introMusic) {
+                window.introMusic = new Audio('/assets/music/tron.mp3');
+                window.introMusic.loop = true;
+                window.introMusic.volume = 0.4;
+            }
+
+            // This attempts to play immediately. 
+            // If the browser blocks it, the 'keydown' listener below will catch it.
+            window.introMusic.play().catch(() => {
+                console.log("Autoplay blocked: Waiting for first user interaction to start music.");
+            });
+
+            // Fallback: Start music on the very first key press or click if autoplay failed
+            const startAudio = () => {
+                if (window.introMusic.paused) window.introMusic.play();
+                window.removeEventListener('keydown', startAudio);
+                window.removeEventListener('mousedown', startAudio);
+            };
+            window.addEventListener('keydown', startAudio);
+            window.addEventListener('mousedown', startAudio);
+
+        }
+
         if (pData.inventory === undefined) pData.inventory = { keys: 0 };
         Object.assign(player, pData);
 
-        //2. load the bomb and gun data
+        // 2. load the bomb and gun data
         const [bData, gunData] = await Promise.all([
             fetch(`/json/weapons/bombs/${player.bombType}.json?t=` + Date.now()).then(res => res.json()),
             fetch(`/json/weapons/guns/${player.gunType}.json?t=` + Date.now()).then(res => res.json()),
-
-        ])
+        ]);
         bomb = bData;
         gun = gunData;
 
-        // 2. Pre-load ALL room templates
+        // 3. Pre-load ALL room templates
         roomTemplates = {};
         const templatePromises = [];
-
-        // Always load start and boss
         templatePromises.push(fetch('/json/rooms/start/room.json?t=' + Date.now()).then(res => res.json()).then(data => roomTemplates["start"] = data));
         templatePromises.push(fetch('/json/rooms/boss1/room.json?t=' + Date.now()).then(res => res.json()).then(data => roomTemplates["boss"] = data));
 
-        // Load all from manifest
         roomManifest.rooms.forEach(id => {
             templatePromises.push(fetch(`/json/rooms/${id}/room.json?t=` + Date.now()).then(res => res.json()).then(data => roomTemplates[id] = data));
         });
 
         await Promise.all(templatePromises);
-        console.log("All room templates loaded:", Object.keys(roomTemplates));
 
-        // 3. Pre-load ALL enemy templates
+        // 4. Pre-load ALL enemy templates
         enemyTemplates = {};
         const enemyManifest = await fetch('json/enemies/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ enemies: [] }));
         const ePromises = enemyManifest.enemies.map(id =>
@@ -361,21 +430,17 @@ async function initGame(isRestart = false) {
                 .then(data => enemyTemplates[id] = data)
         );
         await Promise.all(ePromises);
-        console.log("All enemy templates loaded:", Object.keys(enemyTemplates));
 
-        // 4. Generate Level
+        // 5. Generate Level
         if (DEBUG_START_BOSS) {
-            console.log("DEBUG MODE: Starting in Boss Room");
             bossCoord = "0,0";
             goldenPath = ["0,0"];
             bossIntroEndTime = Date.now() + 2000;
-            // Create a minimal level map for debug
             levelMap["0,0"] = { roomData: JSON.parse(JSON.stringify(roomTemplates["boss"])), cleared: false };
         } else {
             generateLevel(gameData.NoRooms || 11);
         }
 
-        // Set initial room from levelMap
         const startEntry = levelMap["0,0"];
         roomData = startEntry.roomData;
         visitedRooms["0,0"] = startEntry;
@@ -387,10 +452,8 @@ async function initGame(isRestart = false) {
 
         if (!gameLoopStarted) {
             gameLoopStarted = true;
-            draw(); // Start loop only once
+            draw();
         }
-
-
 
     } catch (err) {
         console.warn("Could not load configurations", err);
@@ -400,7 +463,6 @@ async function initGame(isRestart = false) {
         }
     }
 }
-
 // Initial Start
 initGame();
 
@@ -716,6 +778,14 @@ function tryUse() {
 
     if (gameState !== STATES.PLAY) return;
 
+    // Start the Tron music if it hasn't started yet
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    if (!Music.isPlaying) {
+        Music.start();
+    }
+
     const roomLocked = enemies.length > 0;
     const doors = roomData.doors || {};
     if (roomLocked) return; // keep your existing rule: can't unlock while enemies alive
@@ -791,6 +861,8 @@ function tryUse() {
 function update() {
     if (gameState !== STATES.PLAY) return;
 
+
+
     const currentCoord = `${player.roomX}, ${player.roomY}`;
     const roomLocked = enemies.length > 0;
     const doors = roomData.doors || {};
@@ -815,6 +887,7 @@ function update() {
         player.inventory.bombs--;
         keys['KeyB'] = false;
         dropBomb();
+        SFX.explode(0.2); // BOMB SOUND
         updateUI();
     }
 
@@ -839,11 +912,13 @@ function update() {
         }
     }
 
-    // --- 4. SHOOTING LOGIC (With JSON Recoil + Modes) ---
+    // --- 4. SHOOTING LOGIC (With SFX + Recoil) ---
     const shootingKeys = keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight'];
     if (shootingKeys) {
         const fireDelay = (gun.Bullet?.fireRate ?? 0.3) * 1000;
         if (Date.now() - (player.lastShot || 0) > fireDelay) {
+
+            SFX.shoot(0.05); // PLAY SHOOT SOUND
 
             let centerAngle = 0;
             if (keys['ArrowUp']) centerAngle = -Math.PI / 2;
@@ -862,7 +937,6 @@ function update() {
             const spread = gun.Bullet?.spreadRate || 0.2;
             const recoilVal = gun.Bullet?.recoil || 0;
 
-            // Apply Recoil based on JSON
             player.x -= Math.cos(centerAngle) * (recoilVal * count);
             player.y -= Math.sin(centerAngle) * (recoilVal * count);
             player.x = Math.max(BOUNDARY, Math.min(canvas.width - BOUNDARY, player.x));
@@ -968,6 +1042,7 @@ function update() {
             if (Math.hypot(b.x - en.x, b.y - en.y) < en.size) {
                 const explode = gun.Bullet?.Explode;
                 if (explode && explode.active && !b.isShard) {
+                    SFX.explode(0.08); // HIT/SHARD SOUND
                     const numShards = explode.shards || 8;
                     for (let s = 0; s < numShards; s++) {
                         const shardAngle = (Math.PI * 2 / numShards) * s;
@@ -991,7 +1066,14 @@ function update() {
             }
         });
 
-        if (Math.hypot(player.x - en.x, player.y - en.y) < player.size + en.size) playerHit(en, true, true, true);
+        //if (Math.hypot(player.x - en.x, player.y - en.y) < player.size + en.size) playerHit(en, true, true, true);
+        if (Math.hypot(player.x - en.x, player.y - en.y) < player.size + en.size) {
+            // Check if player is actually taking damage (to avoid sound spamming every frame)
+            if (!player.isInvulnerable) {
+                SFX.playerHit(0.3);
+            }
+            playerHit(en, true, true, true);
+        }
     });
 
     // --- 6. TRANSITIONS ---
@@ -1003,6 +1085,8 @@ function update() {
     }
     if (player.hp <= 0) gameOver();
 }
+
+
 function playerHit(en, invuln = false, knockback = false, shakescreen = false) {
     //check if player should be made invulerable
     if (invuln) {
