@@ -876,37 +876,35 @@ function tryUse() {
 function update() {
     if (gameState !== STATES.PLAY) return;
 
-    // --- 0. AUDIO CONTEXT & MUSIC TOGGLE ---
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // Toggle Music with 'M' (with a 300ms debounce to prevent flickering)
+    // --- 0. MUSIC TOGGLE (M) ---
     if (keys['KeyM'] && Date.now() - (lastMKeyTime || 0) > 300) {
         musicMuted = !musicMuted;
         if (musicMuted) introMusic.pause();
         else introMusic.play();
         lastMKeyTime = Date.now();
-        console.log(musicMuted ? "Music: OFF" : "Music: ON");
     }
 
     const currentCoord = `${player.roomX}, ${player.roomY}`;
     const roomLocked = enemies.length > 0;
     const doors = roomData.doors || {};
 
-    // --- 1. ROOM CLEARING LOGIC ---
+    // --- 1. ROOM CLEARING ---
     if (!roomLocked && !roomData.cleared) {
         roomData.cleared = true;
         if (visitedRooms[currentCoord]) visitedRooms[currentCoord].cleared = true;
     }
 
-    // --- 2. INPUT HANDLERS ---
-    if (keys['Escape']) gameMenu(); // Open menu with Escape
+    // --- 2. INPUT ---
+    if (keys['Escape']) gameMenu();
     tryUse();
 
     if (keys['KeyB'] && player.inventory?.bombs > 0) {
         player.inventory.bombs--;
         keys['KeyB'] = false;
         dropBomb();
-        SFX.explode(0.2); // Play bomb chiptune
+        SFX.explode(0.2);
         updateUI();
     }
 
@@ -920,7 +918,6 @@ function update() {
             const playerPos = (dir === 'top' || dir === 'bottom') ? player.x : player.y;
             const inDoorRange = playerPos > doorRef - DOOR_SIZE && playerPos < doorRef + DOOR_SIZE;
             const canPass = door.active && !door.locked && !roomLocked;
-
             if (dx !== 0) {
                 const limit = dx < 0 ? BOUNDARY : canvas.width - BOUNDARY;
                 if ((dx < 0 ? player.x > limit : player.x < limit) || (inDoorRange && canPass)) player.x += dx * player.speed;
@@ -931,41 +928,30 @@ function update() {
         }
     }
 
-    // --- 4. SHOOTING LOGIC (With SFX + JSON Recoil) ---
+    // --- 4. SHOOTING (ARC BEHIND LOGIC) ---
     const shootingKeys = keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight'];
     if (shootingKeys) {
         const fireDelay = (gun.Bullet?.fireRate ?? 0.3) * 1000;
         if (Date.now() - (player.lastShot || 0) > fireDelay) {
+            SFX.shoot(0.05);
 
-            SFX.shoot(0.05); // Play shoot chiptune
-
+            // ALWAYS determine angle based on keys, NOT the enemy
             let centerAngle = 0;
             if (keys['ArrowUp']) centerAngle = -Math.PI / 2;
             else if (keys['ArrowDown']) centerAngle = Math.PI / 2;
             else if (keys['ArrowLeft']) centerAngle = Math.PI;
             else if (keys['ArrowRight']) centerAngle = 0;
 
-            // Homing Target Selection
-            if (gun.Bullet?.homing && enemies.length > 0) {
-                let nearest = enemies.reduce((a, b) =>
-                    Math.hypot(player.x - a.x, player.y - a.y) < Math.hypot(player.x - b.x, player.y - b.y) ? a : b
-                );
-                centerAngle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
-            }
-
             const count = gun.Bullet?.number || 1;
             const spread = gun.Bullet?.spreadRate || 0.2;
             const recoilVal = gun.Bullet?.recoil || 0;
 
-            // Apply Recoil (Push player back)
+            // Recoil pushes away from where we are firing
             player.x -= Math.cos(centerAngle) * (recoilVal * count);
             player.y -= Math.sin(centerAngle) * (recoilVal * count);
-
-            // Boundary Safety (Keep player in room after recoil)
             player.x = Math.max(BOUNDARY, Math.min(canvas.width - BOUNDARY, player.x));
             player.y = Math.max(BOUNDARY, Math.min(canvas.height - BOUNDARY, player.y));
 
-            // Fire Bullet Loop
             for (let i = 0; i < count; i++) {
                 let finalAngle = centerAngle + (count > 1 ? (i - (count - 1) / 2) * spread : 0);
                 const speed = gun.Bullet?.speed || 7;
@@ -977,9 +963,7 @@ function update() {
         }
     }
 
-    // --- 5. BULLETS, PARTICLES, & ENEMIES ---
-
-    // A. Update Existing Particles (Fade Out)
+    // --- 5. BULLETS, SWARM HOMING, & PARTICLES ---
     if (typeof particles !== 'undefined') {
         for (let i = particles.length - 1; i >= 0; i--) {
             particles[i].life -= 0.05;
@@ -987,13 +971,43 @@ function update() {
         }
     }
 
-    // B. Update Bullets & Spawn Trail Particles
     bullets.forEach((b, i) => {
+        // SWARM HOMING LOGIC
+        if (gun.Bullet?.homing && enemies.length > 0) {
+            let nearest = enemies.reduce((prev, curr) => {
+                let d1 = Math.hypot(b.x - prev.x, b.y - prev.y);
+                let d2 = Math.hypot(b.x - curr.x, b.y - curr.y);
+                return d1 < d2 ? prev : curr;
+            });
+
+            // Each bullet targets a slightly different spot for a swarm look
+            let offsetX = Math.sin(i * 0.8) * 25;
+            let offsetY = Math.cos(i * 0.8) * 25;
+            let targetX = nearest.x + offsetX;
+            let targetY = nearest.y + offsetY;
+
+            let desiredAngle = Math.atan2(targetY - b.y, targetX - b.x);
+            let currentAngle = Math.atan2(b.vy, b.vx);
+            let speed = Math.hypot(b.vx, b.vy);
+
+            let diff = desiredAngle - currentAngle;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+
+            // Turning speed: Controls how wide the "arc" is. 
+            // 0.08 = Huge looping arcs, 0.2 = Tight tracking
+            let steerLimit = 0.1;
+            currentAngle += Math.max(-steerLimit, Math.min(steerLimit, diff));
+
+            b.vx = Math.cos(currentAngle) * speed;
+            b.vy = Math.sin(currentAngle) * speed;
+        }
+
+        // Particles
         const pSettings = gun.Bullet?.particles;
         if (pSettings?.active && Math.random() < (pSettings.frequency || 0.5)) {
             particles.push({
-                x: b.x,
-                y: b.y,
+                x: b.x, y: b.y,
                 color: b.colour || 'yellow',
                 life: pSettings.life || 0.5,
                 size: (b.size || 5) * (pSettings.sizeMult || 0.5)
@@ -1005,7 +1019,7 @@ function update() {
         if (b.life <= 0) bullets.splice(i, 1);
     });
 
-    // C. Enemy AI & Collision
+    // --- 6. ENEMIES ---
     enemies.forEach((en, ei) => {
         let angle = Math.atan2(player.y - en.y, player.x - en.x);
         en.x += Math.cos(angle) * en.speed;
@@ -1013,30 +1027,28 @@ function update() {
 
         bullets.forEach((b, bi) => {
             if (Math.hypot(b.x - en.x, b.y - en.y) < en.size) {
-                SFX.explode(0.08); // Play hit sound
+                SFX.explode(0.08);
                 en.hp -= (b.damage || 1);
                 bullets.splice(bi, 1);
                 if (en.hp <= 0) enemies.splice(ei, 1);
             }
         });
 
-        // Player Collision
         if (Math.hypot(player.x - en.x, player.y - en.y) < player.size + en.size) {
-            if (!player.isInvulnerable) SFX.playerHit(0.3); // Play hurt sound
+            if (!player.isInvulnerable) SFX.playerHit(0.3);
             playerHit(en, true, true, true);
         }
     });
 
-    // --- 6. TRANSITIONS & GAME OVER ---
+    // --- 7. TRANSITIONS ---
     if (!roomLocked) {
         if (player.x < 10 && doors.left?.active) changeRoom(-1, 0);
         if (player.x > canvas.width - 10 && doors.right?.active) changeRoom(1, 0);
         if (player.y < 10 && doors.top?.active) changeRoom(0, -1);
         if (player.y > canvas.height - 10 && doors.bottom?.active) changeRoom(0, 1);
     }
-
     if (player.hp <= 0) {
-        introMusic.pause(); // Kill music on death
+        introMusic.pause();
         gameOver();
     }
 }
