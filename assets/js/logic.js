@@ -898,6 +898,34 @@ function fireBullet(direction, speed, vx, vy, angle) {
 
     bulletsInRoom++;
     bulletsInRoom++;
+
+    // --- RECOIL ---
+    const recoil = gun.Bullet?.recoil || 0;
+    if (recoil > 0) {
+        if (direction === 0) {
+            // Mouse aiming - approximate recoil? Or just skip? 
+            // For now, let's skip mouse recoil or calculate reverse vector
+            const len = Math.hypot(vx, vy);
+            if (len > 0) {
+                player.x -= (vx / len) * recoil;
+                player.y -= (vy / len) * recoil;
+            }
+        } else if (direction === 1) { // North
+            player.y += recoil;
+        } else if (direction === 2) { // East
+            player.x -= recoil;
+        } else if (direction === 3) { // South
+            player.y -= recoil;
+        } else if (direction === 4) { // West
+            player.x += recoil;
+        }
+
+        // Wall collision check for player after recoil
+        if (player.x < 50) player.x = 50;
+        if (player.x > canvas.width - 50) player.x = canvas.width - 50;
+        if (player.y < 50) player.y = 50;
+        if (player.y > canvas.height - 50) player.y = canvas.height - 50;
+    }
 }
 
 function reloadWeapon() {
