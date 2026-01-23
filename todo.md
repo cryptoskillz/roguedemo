@@ -1,7 +1,10 @@
 bugs
+    animated bullets are not working
+    show portal when you beat the boss
+    show the game won screen when you go through the portal
+    enemies should be invul when your first enter the room
     add back all bullet tyoes stupid ai keeps removng it
     explode seems over powered
-    fixed front locked
     if you get hit perfect bonus will reset 
     add the enemy knockback modifier to the player
     get invulTime from player file
