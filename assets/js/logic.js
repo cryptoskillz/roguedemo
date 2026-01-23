@@ -1097,14 +1097,27 @@ function drawPlayer() {
 function drawBulletsAndShards() {
     // 5. --- BULLETS & ENEMIES ---
     bullets.forEach(b => {
-        ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx));
+        ctx.save(); ctx.translate(b.x, b.y);
+
+        // Rotation: Velocity + Spin
+        let rot = Math.atan2(b.vy, b.vx);
+        if (b.animated) rot += b.spinAngle || 0;
+        ctx.rotate(rot);
+
         ctx.fillStyle = b.colour || 'yellow';
+        ctx.strokeStyle = b.colour || 'yellow';
+        ctx.lineWidth = 2;
+
         const s = b.size || 5;
         ctx.beginPath();
         if (b.shape === 'triangle') { ctx.moveTo(s, 0); ctx.lineTo(-s, s); ctx.lineTo(-s, -s); ctx.closePath(); }
         else if (b.shape === 'square') ctx.rect(-s, -s, s * 2, s * 2);
         else ctx.arc(0, 0, s, 0, Math.PI * 2);
-        ctx.fill(); ctx.restore();
+
+        if (b.filled) ctx.fill();
+        else ctx.stroke();
+
+        ctx.restore();
     });
 }
 
@@ -1156,6 +1169,11 @@ function updateBulletsAndShards(aliveEnemies) {
 
         b.x += b.vx;
         b.y += b.vy;
+
+        if (b.animated) {
+            if (b.spinAngle === undefined) b.spinAngle = 0;
+            b.spinAngle += 0.2;
+        }
 
         // --- PARTICLES ---
         if (gun.Bullet?.particles?.active && Math.random() < (gun.Bullet.particles.frequency || 0.5)) {
