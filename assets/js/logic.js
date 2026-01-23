@@ -1129,7 +1129,7 @@ function drawPlayer() {
     const timeSinceShot = now - (player.lastShot || 0);
     const pct = Math.min(timeSinceShot / fireDelay, 1);
 
-    if (pct < 1) { // Only draw if reloading
+    if (pct < 1 && gun.Bullet?.fireRate > 4) { // Only draw if reloading AND long cooldown
         const barW = 40;
         const barH = 5;
         const barX = player.x - barW / 2;
