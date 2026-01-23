@@ -1,33 +1,16 @@
 bugs
-    filled bullets are not working
-    animated bullets are not working
     show portal when you beat the boss
     show the game won screen when you go through the portal
-    enemies should be invul when your first enter the room
-    add back all bullet tyoes stupid ai keeps removng it
-    explode seems over powered
-    if you get hit perfect bonus will reset 
-    add the enemy knockback modifier to the player
-    get invulTime from player file
-    move bomb to player hit
     room count at the end is off (maybe same room type in generation)
- add a muzzle flash or a small particle effect that triggers whenever fireBullet is called?
-when homing is on with number of bullets it is only firing 1.
-
-items folder
-    store lcation etc in json and the draw cords
-
 
 logic
-    when bomb hits you you shoudl go white with invul, the same as happens when you get shot
     reload gun / bomb when they pick up a new item
-    get the drawr cordes for bomnbs, player, items, guns and bombs from the json files
+    if you get hit perfect bonus will reset 
 
 bombs
     bombs can get be dropped, thrown and kicked with items you pick as well as default settings
     bombs are in the invetroy and can be picked up, when you press the space bar they can be dropped normal bombs can blow open doors and secret doors (in walls etc)golden bombs can blow open red doors with enemies still in the room 
     add collision to bombs
-    add canShoot to bombs
     add remoteControl to bombs
    
 
@@ -41,7 +24,6 @@ player
     iron man mode (ooe hit dead, all modifiers reset)
     if speed is over 2 x starting speed show a blur effect
     if you stay in a room for too long show a ghost demon
-    animaton when you die
     draw the weapon in the player draw
 
 
@@ -67,7 +49,6 @@ key binding
     i = inventory
     m = shows full map
     s = stats
-    p = perfect
     
 
 next up 
