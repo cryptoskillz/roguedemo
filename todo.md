@@ -1,6 +1,5 @@
 bugs
     dotn show portal until there are no enemies left in boos room
-    show the game won screen when you go through the portal
     room count at the end is off (maybe same room type in generation)
 
 logic

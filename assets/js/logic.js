@@ -89,7 +89,9 @@ let enemyTemplates = {};
 let bossIntroEndTime = 0;
 let gameLoopStarted = false;
 let keyUsedForRoom = false;
+
 let portal = { active: false, x: 0, y: 0 };
+let isInitializing = false;
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -344,6 +346,13 @@ function generateLevel(length) {
             }
         }
 
+        // Check if template exists
+        if (!template) {
+            console.error(`Missing template for coord: ${coord}. Start: ${!!roomTemplates["start"]}, Boss: ${!!roomTemplates["boss"]}, BossCoord: ${bossCoord}`);
+            template = roomTemplates["start"]; // Emergency fallback
+            if (!template) return; // Critical failure logic handled by try/catch bubbling
+        }
+
         // Deep copy template
         const roomInstance = JSON.parse(JSON.stringify(template));
         levelMap[coord] = {
@@ -401,6 +410,9 @@ let lastMKeyTime = 0;
 
 // configurations
 async function initGame(isRestart = false) {
+    if (isInitializing) return;
+    isInitializing = true;
+
     if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
     // Attempt to start music immediately
     introMusic.play().catch(() => log("Waiting for interaction to play music..."));
@@ -568,6 +580,8 @@ async function initGame(isRestart = false) {
             gameLoopStarted = true;
             draw();
         }
+    } finally {
+        isInitializing = false;
     }
 }
 // Initial Start
