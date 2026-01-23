@@ -63,7 +63,7 @@ let hitsInRoom = 0;
 let perfectStreak = 0;
 let gameData = { perfectGoal: 3 };
 
-const STATES = { START: 0, PLAY: 1, GAMEOVER: 2, GAMEMENU: 3 };
+const STATES = { START: 0, PLAY: 1, GAMEOVER: 2, GAMEMENU: 3, WIN: 4 };
 let gameState = STATES.START;
 
 let visitedRooms = {}; // Track state of each coordinate
@@ -89,6 +89,7 @@ let enemyTemplates = {};
 let bossIntroEndTime = 0;
 let gameLoopStarted = false;
 let keyUsedForRoom = false;
+let portal = { active: false, x: 0, y: 0 };
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -400,6 +401,7 @@ async function initGame(isRestart = false) {
     if (uiEl) uiEl.style.display = isRestart ? 'block' : 'none';
     bullets = [];
     bombs = [];
+    if (typeof portal !== 'undefined') portal.active = false;
 
     // ... [Previous debug and player reset logic remains the same] ...
     if (DEBUG_WINDOW_ENABLED) {
@@ -1004,6 +1006,7 @@ function update() {
 
     // 4. Transitions
     updateRoomTransitions(doors, roomLocked);
+    updatePortal();
 
     // 5. Game Over Check
     if (player.hp < 1) gameState = STATES.GAMEOVER;
@@ -1064,8 +1067,36 @@ async function draw() {
     drawMinimap();
     drawTutorial();
     drawBossIntro();
+    drawPortal();
     drawDebugLogs();
     requestAnimationFrame(() => { update(); draw(); });
+}
+
+function drawPortal() {
+    if (!portal.active) return;
+    const time = Date.now() / 500;
+
+    ctx.save();
+    ctx.translate(portal.x, portal.y);
+
+    // Outer glow
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "#8e44ad";
+
+    // Portal shape
+    ctx.fillStyle = "#8e44ad";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 30, 50, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Swirl effect
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 20 + Math.sin(time) * 5, 40 + Math.cos(time) * 5, time, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
 }
 
 function updateMusicToggle() {
@@ -1542,10 +1573,32 @@ function updateEnemies() {
                 if (en.hp <= 0) {
                     en.isDead = true;
                     en.deathTimer = 30;
+                    log(`Enemy died: ${en.type}`); // DEBUG LOG
+
+                    // Check if Boss
+                    if (en.type === 'boss') {
+                        portal.active = true;
+                        portal.x = 400; // Center X
+                        portal.y = 300; // Center Y
+                        log("BOSS DEFEATED! Portal Spawned.");
+                        SFX.explode(0.5); // Big Boom
+                    }
                 }
             }
         });
     });
+}
+
+function updatePortal() {
+    if (!portal.active) return;
+
+    const dist = Math.hypot(player.x - portal.x, player.y - portal.y);
+    if (dist < 30) {
+        // WIN GAME
+        gameState = STATES.WIN;
+        updateUI();
+        gameOver();
+    }
 }
 
 function drawEnemies() {
@@ -1754,10 +1807,21 @@ function updateMovementAndDoors(doors, roomLocked) {
 }
 
 function gameOver() {
-    gameState = STATES.GAMEOVER;
+    // Determine state if not already set (default to GAMEOVER if just called independently)
+    if (gameState !== STATES.WIN) gameState = STATES.GAMEOVER;
+
     overlayEl.style.display = 'flex';
     statsEl.innerText = "Rooms cleared: " + (Math.abs(player.roomX) + Math.abs(player.roomY));
-    document.querySelector('#overlay h1').innerText = "Game Over";
+
+    const h1 = document.querySelector('#overlay h1');
+    if (gameState === STATES.WIN) {
+        h1.innerText = "VICTORY!";
+        h1.style.color = "#f1c40f"; // Gold
+    } else {
+        h1.innerText = "Game Over";
+        h1.style.color = "red";
+    }
+
     overlayEl.querySelector('#continueBtn').style.display = 'none';
 }
 
