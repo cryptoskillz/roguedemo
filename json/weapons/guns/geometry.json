@@ -9,7 +9,7 @@
         },
         "colour": "yellow",
         "ammo": {
-            "active": true,
+            "active": false,
             "type": "recharge",
             "resetTimer": 1000,
             "amount": 10,

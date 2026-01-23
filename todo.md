@@ -42,11 +42,9 @@ player
 
 
 bullets  
-    added ammo, if it is active it should count count
    if a bullet hits you it will cause no damage but disapear
    there will be a mr glass item where your own bullets hurt you 
    bullet co sine
-   fix the curve attr
 
 
 
