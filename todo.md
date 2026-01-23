@@ -8,8 +8,18 @@ logic
     if you get hit perfect bonus will reset 
 
 bombs
-    bombs can get be dropped, thrown and kicked with items you pick as well as default settings
-    bombs are in the invetroy and can be picked up, when you press the space bar they can be dropped normal bombs can blow open doors and secret doors (in walls etc)golden bombs can blow open red doors with enemies still in the room 
+    move the doors to a object
+    add a countdown timer to bombs
+    add a fuse to bombs
+    make the bombs not go through walls
+    make the bombs not go through enemies 
+    make the bombs not go through other player 
+    make the bombs not go through other bombs
+    make bombs destroy the bullets
+    make bombs pick up / dropable with space bar
+    make bombs throwable with the space bar 
+    thrown and kicked with items you pick as well as default settings
+    bombs are in the invetroy and can be picked up, when you press the space bar they 
     add collision to bombs
     add remoteControl to bombs
    
@@ -25,6 +35,7 @@ player
     if speed is over 2 x starting speed show a blur effect
     if you stay in a room for too long show a ghost demon
     draw the weapon in the player draw
+    add different players to the menu
 
 
 bullets  
