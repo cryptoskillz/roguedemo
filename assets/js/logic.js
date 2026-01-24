@@ -1032,6 +1032,7 @@ function update() {
     // 2. World Logic
     updateRoomLock();
     updateBombDropping();
+    updateBombsPhysics(); // Bomb Physics (Push/Slide)
     updateMovementAndDoors(doors, roomLocked);
 
     // 3. Combat Logic
@@ -1551,6 +1552,33 @@ function updateRestart() {
 }
 
 
+function updateBombsPhysics() {
+    bombs.forEach(b => {
+        if (b.exploding) return; // Don't move exploding bombs
+
+        // Apply Velocity
+        if (Math.abs(b.vx) > 0.1 || Math.abs(b.vy) > 0.1) {
+            b.x += b.vx;
+            b.y += b.vy;
+
+            // Friction
+            b.vx *= 0.9;
+            b.vy *= 0.9;
+
+            // Stop if too slow
+            if (Math.abs(b.vx) < 0.1) b.vx = 0;
+            if (Math.abs(b.vy) < 0.1) b.vy = 0;
+
+            // Wall Collisions (Bounce/Stop)
+            const r = b.baseR || 15;
+            if (b.x < BOUNDARY + r) { b.x = BOUNDARY + r; b.vx *= -0.5; }
+            if (b.x > canvas.width - BOUNDARY - r) { b.x = canvas.width - BOUNDARY - r; b.vx *= -0.5; }
+            if (b.y < BOUNDARY + r) { b.y = BOUNDARY + r; b.vy *= -0.5; }
+            if (b.y > canvas.height - BOUNDARY - r) { b.y = canvas.height - BOUNDARY - r; b.vy *= -0.5; }
+        }
+    });
+}
+
 function updateEnemies() {
     const now = Date.now();
     enemies.forEach((en, ei) => {
@@ -1899,6 +1927,7 @@ function updateBombDropping() {
                 damage: bomb.damage,
                 colour: bomb.colour,
                 solid: bomb.solid, // Added solid property
+                moveable: bomb.moveable, // Added moveable property
 
                 // Handle nested door properties
                 openLockedDoors: bomb.doors?.openLockedDoors ?? bomb.openLockedDoors,
@@ -1908,6 +1937,8 @@ function updateBombDropping() {
                 // Interaction
                 canShoot: bomb.canShoot, // Renamed from shootable to match JSON and logic
                 canInteract: bomb.canInteract, // Pass through full object for future use
+
+                vx: 0, vy: 0, // Physics velocity
 
                 exploding: false, didDamage: false, didDoorCheck: false
             });
@@ -1941,38 +1972,56 @@ function updateMovementAndDoors(doors, roomLocked) {
                 const limit = dx < 0 ? BOUNDARY : canvas.width - BOUNDARY;
                 const nextX = player.x + dx * player.speed;
                 let collided = false;
+                let hitMoveable = false;
 
                 // Bomb Collision (Horizontal)
                 bombs.forEach(b => {
                     if (b.solid && !b.exploding) {
                         const dist = Math.hypot(nextX - b.x, player.y - b.y);
-                        if (dist < player.size + (b.baseR || 15)) collided = true;
+                        if (dist < player.size + (b.baseR || 15)) {
+                            collided = true;
+                            // Check if moveable
+                            if (b.moveable) {
+                                // Add impulse instead of setting position
+                                b.vx += dx * 1.5;
+                                hitMoveable = true;
+                            }
+                        }
                     }
                 });
 
                 if (!collided && ((dx < 0 ? player.x > limit : player.x < limit) || (inDoorRange && canPass))) {
                     player.x = nextX;
-                } else if (collided) {
-                    player.x -= dx * 5; // Knockback
+                } else if (collided && !hitMoveable) {
+                    player.x -= dx * 5; // Knockback only if not pushing
                     player.x = Math.max(BOUNDARY + player.size, Math.min(canvas.width - BOUNDARY - player.size, player.x));
                 }
             } else {
                 const limit = dy < 0 ? BOUNDARY : canvas.height - BOUNDARY;
                 const nextY = player.y + dy * player.speed;
                 let collided = false;
+                let hitMoveable = false;
 
                 // Bomb Collision (Vertical)
                 bombs.forEach(b => {
                     if (b.solid && !b.exploding) {
                         const dist = Math.hypot(player.x - b.x, nextY - b.y);
-                        if (dist < player.size + (b.baseR || 15)) collided = true;
+                        if (dist < player.size + (b.baseR || 15)) {
+                            collided = true;
+                            // Check if moveable
+                            if (b.moveable) {
+                                // Add impulse
+                                b.vy += dy * 1.5;
+                                hitMoveable = true;
+                            }
+                        }
                     }
                 });
 
                 if (!collided && ((dy < 0 ? player.y > limit : player.y < limit) || (inDoorRange && canPass))) {
                     player.y = nextY;
-                } else if (collided) {
-                    player.y -= dy * 5; // Knockback
+                } else if (collided && !hitMoveable) {
+                    player.y -= dy * 5; // Knockback only if not pushing
                     player.y = Math.max(BOUNDARY + player.size, Math.min(canvas.height - BOUNDARY - player.size, player.y));
                 }
             }

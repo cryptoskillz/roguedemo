@@ -8,7 +8,7 @@
     "fireRate": 0.1,
     "canShoot": false,
     "timer": 3000,
-    "maxDrop": 3,
+    "maxDrop": 100,
     "solid": true,
     "moveable": true,
     "remoteDenoate": {

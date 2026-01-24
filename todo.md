@@ -2,9 +2,10 @@ bugs
     if music has been toggled off it shouldnt turn back on on restart / going back to main menu
     room count at the end is off (maybe same room type in generation)
 the enemies get stuck they should work their way around obstacles
+if you renet a room with enemies it should not spawn new ones
 
 next up 
-    bombs
+    bombs*
     player updates
     enemies
     debug window
@@ -30,17 +31,9 @@ logic
 
 bombs
     add a countdown timer to bombs
-    add a fuse to bombs
-    make the bombs not go through walls
-    make the bombs not go through enemies 
-    make the bombs not go through other player 
-    make the bombs not go through other bombs
-    make bombs destroy the bullets
     make bombs pick up / dropable with space bar
     make bombs throwable with the space bar 
     thrown and kicked with items you pick as well as default settings
-    bombs are in the invetroy and can be picked up, when you press the space bar they 
-    add collision to bombs
     add remoteControl to bombs
 
 level 1
@@ -135,6 +128,7 @@ rooms
         rooms that revers the controls
 
 items
+    golden path shows on map for a few seconds giving a clue how to solve infitte maze later .
 
 
 modifiers
