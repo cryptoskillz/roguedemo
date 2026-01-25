@@ -1071,6 +1071,7 @@ function update() {
     updateRestart();
     updateMusicToggle(); // <--- Added this
     updateRemoteDetonation(); // Remote Bombs - Check BEFORE Use consumes space
+    updateBombInteraction(); // Kick/Interact with Bombs
     if (keys["Space"]) updateUse();
     if (keys["KeyP"]) {
         keys["KeyP"] = false; // Prevent repeated triggers
@@ -1527,6 +1528,42 @@ function updateRemoteDetonation() {
         SFX.explode(0.3);
         if (keys["Space"]) keys["Space"] = false;
     }
+}
+
+function updateBombInteraction() {
+    if (!keys["Space"]) return;
+
+    let kicked = false;
+    // Find closest kickable bomb
+    let closestB = null;
+    let minD = Infinity;
+
+    bombs.forEach(b => {
+        if (b.canInteract?.active && b.canInteract.type === 'kick') {
+            const d = Math.hypot(b.x - player.x, b.y - player.y);
+            const kickRange = b.canInteract.distance || 60; // Default range
+
+            if (d < kickRange && d < minD) {
+                minD = d;
+                closestB = b;
+            }
+        }
+    });
+
+    if (closestB) {
+        // Calculate kick angle (from player to bomb)
+        const angle = Math.atan2(closestB.y - player.y, closestB.x - player.x);
+        const force = 15; // Kick strength (could be configurable)
+
+        // Apply velocity (physics must be enabled on bomb)
+        closestB.vx = Math.cos(angle) * force;
+        closestB.vy = Math.sin(angle) * force;
+
+        log("Bomb Kicked!");
+        kicked = true;
+    }
+
+    if (kicked) keys["Space"] = false; // Consume input
 }
 
 

@@ -8,13 +8,13 @@
     "fireRate": 0.1,
     "canShoot": true,
     "timer": {
-        "active": true,
+        "active": false,
         "show": true,
         "time": 3000
     },
     "maxDrop": 100,
     "solid": true,
-    "moveable": true,
+    "moveable": false,
     "physics": {
         "friction": 0.9,
         "mass": 1.5,
