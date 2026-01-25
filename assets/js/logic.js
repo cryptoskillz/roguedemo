@@ -1112,9 +1112,15 @@ function fireBullet(direction, speed, vx, vy, angle) {
             bulletShape = possibleShapes[Math.floor(Math.random() * possibleShapes.length)];
         }
 
+        // Calculate Spawn Offset (Barrel Tip)
+        const barrelLength = player.size + 10;
+        const angle = Math.atan2(velY, velX);
+        const startX = player.x + Math.cos(angle) * barrelLength;
+        const startY = player.y + Math.sin(angle) * barrelLength;
+
         return {
-            x: player.x,
-            y: player.y,
+            x: startX,
+            y: startY,
             vx: velX,
             vy: velY,
             life: gun.Bullet?.range || 60,

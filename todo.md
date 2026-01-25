@@ -52,10 +52,10 @@ player
         peashooter shows peashooter
         gun for each direction you fire
    bullet co sine
+   shield
 
 
 bullets  
-    make the bullets start at the tip of the barrel
 
 
 enemies
