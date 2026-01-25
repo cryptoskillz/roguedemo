@@ -41,7 +41,7 @@
         "pierce": true,
         "reverseFire": false,
         "frontLocked": false,
-        "NoBullets": true,
+        "NoBullets": false,
         "critChance": 0.2,
         "critDamage": 2.0,
         "freezeChance": 0.15,

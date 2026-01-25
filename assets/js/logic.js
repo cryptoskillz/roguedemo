@@ -1272,6 +1272,9 @@ function update() {
     // 0. Global Inputs (Restart/Menu from non-play states)
     if (handleGlobalInputs()) return;
 
+    // Music Toggle (Global) - Allow toggling in Start, Play, etc.
+    updateMusicToggle();
+
     // 1. If already dead, stop all logic
     if (gameState === STATES.GAMEOVER || gameState === STATES.WIN) return;
 
@@ -1293,7 +1296,7 @@ function update() {
 
     // 1. Inputs & Music
     updateRestart();
-    updateMusicToggle(); // <--- Added this
+    // updateMusicToggle(); // Moved up
     updateRemoteDetonation(); // Remote Bombs - Check BEFORE Use consumes space
     updateBombInteraction(); // Kick/Interact with Bombs
     if (keys["Space"]) updateUse();
