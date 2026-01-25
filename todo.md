@@ -32,10 +32,7 @@ logic
 
 bombs
     add a countdown timer to bombs
-    make bombs pick up / dropable with space bar
-    make bombs throwable with the space bar 
     thrown and kicked with items you pick as well as default settings
-    add remoteControl to bombs
 
 level 1
 

@@ -811,24 +811,56 @@ function changeRoom(dx, dy) {
 }
 
 async function dropBomb() {
-    //check the bomb interval and see if enough time has passed before we can drop another
+    // Parse Timer Config
+    let timerDuration = 1000;
+    let timerShow = false;
+    if (typeof bomb.timer === 'object') {
+        timerDuration = bomb.timer.time || 1000;
+        timerShow = !!bomb.timer.show;
+        if (bomb.timer.active === false) timerDuration = Infinity;
+    } else {
+        timerDuration = bomb.timer || 1000;
+    }
 
-    const baseR = bomb.size || 20;         // visible bomb radius
-    const maxR = bomb.radius || 120;      // explosion max radius
-    const timer = bomb.timer || 1000;
-
-    // direction behind player (use your lastMoveX/lastMoveY logic)
-    const dirX = player.lastMoveX ?? 0;
-    const dirY = player.lastMoveY ?? 1;
+    const baseR = bomb.size || 20;
+    const maxR = bomb.radius || 120;
     const gap = 6;
     const backDist = player.size + baseR + gap;
 
+    // Default to 1 (Down) if no movement yet
+    const lastX = (player.lastMoveX === undefined && player.lastMoveY === undefined) ? 0 : (player.lastMoveX || 0);
+    const lastY = (player.lastMoveX === undefined && player.lastMoveY === undefined) ? 1 : (player.lastMoveY || 0);
+
+    const dropX = player.x - (lastX * backDist);
+    const dropY = player.y - (lastY * backDist);
+
+    // Check if drop position overlaps with an existing bomb
+    let canDrop = true;
+    for (const b of bombs) {
+        const dist = Math.hypot(dropX - b.x, dropY - b.y);
+        if (dist < (b.baseR || 15) * 2) {
+            canDrop = false;
+            break;
+        }
+    }
+    // Also check walls
+    if (dropX < BOUNDARY || dropX > canvas.width - BOUNDARY || dropY < BOUNDARY || dropY > canvas.height - BOUNDARY) {
+        canDrop = false;
+    }
+
+    if (!canDrop) return false;
+
+    // Check Delay
     const bombDelay = (bomb?.fireRate !== undefined ? bomb?.fireRate : 0.3) * 1000;
     if (Date.now() - (player.lastBomb || 0) > bombDelay) {
-        bombsInRoom++; // for perfecr calcs later
+
+        // Log for debug
+        log(`Dropping Bomb. Show: ${timerShow}, Duration: ${timerDuration}, Active: ${bomb.timer?.active}`);
+
+        bombsInRoom++;
         bombs.push({
-            x: player.x - dirX * backDist,
-            y: player.y - dirY * backDist,
+            x: dropX,
+            y: dropY,
 
             baseR,
             maxR,
@@ -838,20 +870,21 @@ async function dropBomb() {
             canDamagePlayer: !!bomb.canDamagePlayer,
             remoteDenoate: bomb.remoteDenoate,
             canInteract: bomb.canInteract,
+            timerShow: timerShow,
 
-
-            explodeAt: Date.now() + timer,
+            explodeAt: Date.now() + timerDuration,
             exploding: false,
             explosionStartAt: 0,
             explosionDuration: bomb.explosionDuration || 300,
             explosionColour: bomb.explosionColour || bomb.colour || "white",
             didDamage: false,
             id: crypto.randomUUID ? crypto.randomUUID() : String(Math.random()),
-            triggeredBy: null, // optional debug
+            triggeredBy: null,
         });
         player.lastBomb = Date.now();
-
+        return true;
     }
+    return false;
 }
 
 function fireBullet(direction, speed, vx, vy, angle) {
@@ -1901,6 +1934,16 @@ function drawBombs(doors) {
             // Unexploded bomb glow
             ctx.fillStyle = b.colour; ctx.shadowBlur = 10; ctx.shadowColor = b.colour;
             ctx.beginPath(); ctx.arc(b.x, b.y, b.baseR, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+
+            // Draw Timer Countdown
+            if (b.timerShow && b.explodeAt !== Infinity) {
+                const remaining = Math.max(0, Math.ceil((b.explodeAt - now) / 1000));
+                ctx.fillStyle = "black";
+                ctx.font = "bold 14px Arial"; // Slightly larger
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(remaining, b.x, b.y + 1); // +1 for visual centering
+            }
         }
     }
 }
