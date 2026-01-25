@@ -2181,15 +2181,17 @@ function updateEnemies() {
                         bossKilled = true;
 
                         // Reset all visited rooms (except current boss room) to force respawns
-                        if (key !== `${player.roomX},${player.roomY}`) {
-                            // 1. Remove from visitedRooms to reset Fog of War (and prevent minimap render)
-                            delete visitedRooms[key];
+                        Object.keys(visitedRooms).forEach(key => {
+                            if (key !== `${player.roomX},${player.roomY}`) {
+                                // 1. Remove from visitedRooms to reset Fog of War (and prevent minimap render)
+                                delete visitedRooms[key];
 
-                            // 2. Mark as uncleared in the persistent LevelMap so spawnEnemies() triggers on re-entry
-                            if (levelMap[key]) {
-                                levelMap[key].cleared = false;
+                                // 2. Mark as uncleared in the persistent LevelMap so spawnEnemies() triggers on re-entry
+                                if (levelMap[key]) {
+                                    levelMap[key].cleared = false;
+                                }
                             }
-                        }
+                        });
                     }
 
                     // Optional: Visual cue?
