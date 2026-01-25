@@ -1,6 +1,8 @@
 {
     "name": "Player 1",
     "Description": "The runt of the litter",
+    "locked": false,
+    "shape": "circle",
     "hp": 10,
     "speed": 10,
     "size": 20,

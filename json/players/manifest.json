@@ -1,0 +1,12 @@
+{
+    "players": [
+        {
+            "name": "Player 1",
+            "file": "circle.json"
+        },
+        {
+            "name": "Player 2",
+            "file": "square.json"
+        }
+    ]
+}

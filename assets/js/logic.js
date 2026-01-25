@@ -46,6 +46,8 @@ let player = {
     inventory: { keys: 0 },
     size: 20
 };
+let availablePlayers = [];
+let selectedPlayerIndex = 0;
 let bullets = [];
 let particles = [];
 let enemies = [];
@@ -157,7 +159,50 @@ function handleGlobalInputs() {
             return true;
         }
     }
+
+    // Player Selection (Only in Menu)
+    const now = Date.now();
+    if (gameState === STATES.START || gameState === STATES.GAMEMENU) {
+        if (keys['ArrowRight']) {
+            if (now - lastInputTime > 200) {
+                selectedPlayerIndex = (selectedPlayerIndex + 1) % availablePlayers.length;
+                updateWelcomeScreen();
+                lastInputTime = now;
+            }
+        }
+        if (keys['ArrowLeft']) {
+            if (now - lastInputTime > 200) {
+                selectedPlayerIndex = (selectedPlayerIndex - 1 + availablePlayers.length) % availablePlayers.length;
+                updateWelcomeScreen();
+                lastInputTime = now;
+            }
+        }
+    }
+
     return false;
+}
+
+let lastInputTime = 0;
+
+function updateWelcomeScreen() {
+    const p = availablePlayers[selectedPlayerIndex];
+    if (!p) return;
+
+    // Update Welcome UI dynamically
+    let html = `<h1>rogue demo</h1>
+        <div id="player-select-ui" style="margin: 20px; padding: 10px; border: 2px solid #555;">
+            <h2 style="color: ${p.locked ? 'gray' : '#0ff'}">${p.name} ${p.locked ? '(LOCKED)' : ''}</h2>
+            <p>${p.Description || "No description"}</p>
+            <p style="font-size: 0.8em; color: #aaa;">Speed: ${p.speed} | HP: ${p.hp}</p>
+            <div style="margin-top: 10px; font-size: 1.2em;">
+                <span>&lt;</span> 
+                <span style="margin: 0 20px;">${selectedPlayerIndex + 1} / ${availablePlayers.length}</span> 
+                <span>&gt;</span>
+            </div>
+        </div>
+        <p>press M to toggle music<br>${p.locked ? '<span style="color:red; font-size:1.5em; font-weight:bold;">LOCKED</span>' : 'press any key to start'}</p>`;
+
+    welcomeEl.innerHTML = html;
 }
 
 async function updateUI() {
@@ -472,16 +517,43 @@ async function initGame(isRestart = false) {
 
     try {
         // 1. Load basic configs
-        const [pData, gData, mData] = await Promise.all([
-            fetch('/json/player.json?t=' + Date.now()).then(res => res.json()),
+        const [manData, gData, mData] = await Promise.all([
+            fetch('/json/players/manifest.json?t=' + Date.now()).then(res => res.json()),
             fetch('/json/game.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ perfectGoal: 3, NoRooms: 11 })),
             fetch('json/rooms/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] }))
         ]);
 
         gameData = gData;
         roomManifest = mData;
-        if (gameData.music) {
 
+        // Load all players
+        availablePlayers = [];
+        if (manData && manData.players) {
+            const playerPromises = manData.players.map(p =>
+                fetch(`/json/players/${p.file}?t=` + Date.now())
+                    .then(res => res.json())
+                    .then(data => ({ ...data, file: p.file })) // Keep file ref if needed
+            );
+            availablePlayers = await Promise.all(playerPromises);
+        }
+
+        // Default to first player
+        if (availablePlayers.length > 0) {
+            player = JSON.parse(JSON.stringify(availablePlayers[0]));
+        } else {
+            console.error("No players found!");
+            player = { hp: 3, speed: 4, inventory: { keys: 0 }, gunType: 'geometry', bombType: 'normal' }; // Fallback
+        }
+
+        // Load player specific assets
+        const [gunData, bombData] = await Promise.all([
+            fetch(`/json/weapons/guns/${player.gunType}.json?t=` + Date.now()).then(res => res.json()),
+            fetch(`/json/weapons/bombs/${player.bombType}.json?t=` + Date.now()).then(res => res.json())
+        ]);
+        gun = gunData;
+        bomb = bombData;
+
+        if (gameData.music) {
             // --- 1. INSTANT AUDIO SETUP ---
             if (!window.introMusic) {
                 window.introMusic = new Audio('/assets/music/tron.mp3');
@@ -489,7 +561,7 @@ async function initGame(isRestart = false) {
                 window.introMusic.volume = 0.4;
             }
 
-            // This attempts to play immediately. 
+            // This attempts to play immediately.
             // If the browser blocks it, the 'keydown' listener below will catch it.
             window.introMusic.play().catch(() => {
                 log("Autoplay blocked: Waiting for first user interaction to start music.");
@@ -503,19 +575,10 @@ async function initGame(isRestart = false) {
             };
             window.addEventListener('keydown', startAudio);
             window.addEventListener('mousedown', startAudio);
-
         }
 
-        if (pData.inventory === undefined) pData.inventory = { keys: 0 };
-        Object.assign(player, pData);
-
-        // 2. load the bomb and gun data
-        const [bData, gunData] = await Promise.all([
-            fetch(`/json/weapons/bombs/${player.bombType}.json?t=` + Date.now()).then(res => res.json()),
-            fetch(`/json/weapons/guns/${player.gunType}.json?t=` + Date.now()).then(res => res.json()),
-        ]);
-        bomb = bData;
-        gun = gunData;
+        // Init Menu UI
+        updateWelcomeScreen();
         // Initialize Ammo
         if (gun.Bullet?.ammo?.active) {
             player.ammoMode = gun.Bullet?.ammo?.type || 'finite'; // 'finite', 'reload', 'recharge'
@@ -605,16 +668,68 @@ initGame();
 window.addEventListener('keydown', e => {
     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
     if (gameState === STATES.START) {
-        gameState = STATES.PLAY;
-        welcomeEl.style.display = 'none';
-        uiEl.style.display = 'block';
-
-        // If starting primarily in Boss Room (Debug Mode), reset intro timer
-        if (roomData.isBoss) {
-            bossIntroEndTime = Date.now() + 2000;
+        // Allow Menu Navigation keys to pass through to handleGlobalInputs
+        if (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyM') {
+            log("Keydown Menu Key:", e.code);
+            keys[e.code] = true;
+            return;
         }
 
-        spawnEnemies();
+        // Check Lock
+        const p = availablePlayers[selectedPlayerIndex];
+
+        if (p && p.locked) {
+            log("Player Locked - Cannot Start");
+            return;
+        }
+
+        // Apply Selected Player Stats
+        if (p) {
+            // Apply stats but keep runtime properties like x/y if needed (though start resets them)
+            // Actually initGame reset player.x/y already.
+            const defaults = { x: 300, y: 200, roomX: 0, roomY: 0 };
+            player = { ...defaults, ...JSON.parse(JSON.stringify(p)) };
+            if (!player.inventory) player.inventory = { keys: 0, bombs: 0 };
+        }
+
+        // Async Load Assets then Start
+        (async () => {
+            try {
+                const [gData, bData] = await Promise.all([
+                    fetch(`/json/weapons/guns/${player.gunType}.json?t=` + Date.now()).then(res => res.json()),
+                    fetch(`/json/weapons/bombs/${player.bombType}.json?t=` + Date.now()).then(res => res.json())
+                ]);
+                gun = gData;
+                bomb = bData;
+
+                // Initialize Ammo for new gun
+                if (gun.Bullet?.ammo?.active) {
+                    player.ammoMode = gun.Bullet?.ammo?.type || 'finite';
+                    player.maxMag = gun.Bullet?.ammo?.amount || 100;
+                    player.reloadTime = gun.Bullet?.ammo?.resetTimer !== undefined ? gun.Bullet?.ammo?.resetTimer : (gun.Bullet?.ammo?.reload || 1000);
+                    player.ammo = player.maxMag;
+                    player.reloading = false;
+                    player.reserveAmmo = (player.ammoMode === 'reload') ? ((gun.Bullet?.ammo?.maxAmount || 0) - player.maxMag) : (player.ammoMode === 'recharge' ? Infinity : 0);
+                    if (player.reserveAmmo < 0) player.reserveAmmo = 0;
+                }
+
+                // Start Game
+                gameState = STATES.PLAY;
+                welcomeEl.style.display = 'none';
+                uiEl.style.display = 'block';
+
+                // If starting primarily in Boss Room (Debug Mode), reset intro timer
+                if (roomData.isBoss) {
+                    bossIntroEndTime = Date.now() + 2000;
+                }
+
+                spawnEnemies();
+                renderDebugForm();
+                updateUI();
+            } catch (err) {
+                console.error("Error starting game assets:", err);
+            }
+        })();
         return;
     }
     keys[e.code] = true;
@@ -2464,4 +2579,5 @@ if (typeof window !== 'undefined') {
     Object.defineProperty(window, 'levelMap', { get: () => levelMap });
     Object.defineProperty(window, 'goldenPath', { get: () => goldenPath });
     Object.defineProperty(window, 'visitedRooms', { get: () => visitedRooms });
+    Object.defineProperty(window, 'debugLogs', { get: () => debugLogs });
 }

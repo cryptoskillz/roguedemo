@@ -1,0 +1,33 @@
+{
+    "name": "Player 2",
+    "Description": "hes a real square",
+    "locked": true,
+    "shape": "square",
+    "hp": 10,
+    "speed": 10,
+    "size": 20,
+    "physics": {
+        "strength": 45
+    },
+    "luck": 0,
+    "roomX": 0,
+    "roomY": 0,
+    "x": 300,
+    "y": 200,
+    "invuln": false,
+    "invulnUntil": 0,
+    "invulTimer": 100,
+    "invulnColor": "white",
+    "lastShot": 0,
+    "lastBomb": 0,
+    "speedCount": 0,
+    "speedTotalCount": 0,
+    "perfectCount": 0,
+    "perfectTotalCount": 0,
+    "bombType": "golden",
+    "gunType": "geometry",
+    "inventory": {
+        "keys": 5,
+        "bombs": 115
+    }
+}
