@@ -140,6 +140,21 @@ const SFX = {
 
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    },
+
+    // Dry fire click
+    click: (vol = 0.1) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.05);
+
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.05);
     }
 };
 
@@ -1095,8 +1110,15 @@ async function dropBomb() {
 }
 
 function fireBullet(direction, speed, vx, vy, angle) {
-    // 1. Safety check
+    // 1. Safety check / No Bullets Mode
     if (gun.Bullet?.NoBullets) {
+        // "if no bullets and you press fire you should get a broken gun sound"
+        // Rate limit the click sound slightly so it's not a buzz
+        const now = Date.now();
+        if (now - (player.lastClick || 0) > 200) {
+            SFX.click(); // Assuming SFX.click exists, otherwise I'll need to add it or use a fallback
+            player.lastClick = now;
+        }
         return;
     }
 
@@ -1462,46 +1484,44 @@ function drawDoors() {
 function drawPlayer() {
     const now = Date.now();
     // 4. --- PLAYER ---
+
     // Gun Rendering (Barrels)
+    if (!gun.Bullet?.NoBullets) {
+        // Helper to draw a single barrel at a given angle
+        const drawBarrel = (angle, color = "#555") => {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(angle);
+            ctx.fillStyle = color;
+            ctx.fillRect(0, -4, player.size + 10, 8); // Extend 10px beyond center
+            ctx.restore();
+        };
 
-    // Helper to draw a single barrel at a given angle
-    const drawBarrel = (angle, color = "#555") => {
-        ctx.save();
-        ctx.translate(player.x, player.y);
-        ctx.rotate(angle);
-        ctx.fillStyle = color;
-        ctx.fillRect(0, -4, player.size + 10, 8); // Extend 10px beyond center
-        ctx.restore();
-    };
+        // 1. Main Barrel (Based on movement)
+        let aimAngle = 0;
+        if (player.lastMoveX || player.lastMoveY) {
+            aimAngle = Math.atan2(player.lastMoveY, player.lastMoveX);
+        }
+        drawBarrel(aimAngle);
 
-    // 1. Main Barrel (Based on movement)
-    let aimAngle = 0;
-    if (player.lastMoveX || player.lastMoveY) {
-        aimAngle = Math.atan2(player.lastMoveY, player.lastMoveX);
-    }
+        // 2. Reverse Fire
+        if (gun.Bullet?.reverseFire) {
+            drawBarrel(aimAngle + Math.PI);
+        }
 
-    // Front Locked? (If gun has frontLocked, maybe force angle? ignoring for now as per plan to stick to movement)
-    // Draw Main
-    drawBarrel(aimAngle);
+        // 3. Multi-Directional
+        if (gun.Bullet?.multiDirectional?.active) {
+            const md = gun.Bullet.multiDirectional;
+            if (md.fireNorth) drawBarrel(-Math.PI / 2);
+            if (md.fireEast) drawBarrel(0);
+            if (md.fireSouth) drawBarrel(Math.PI / 2);
+            if (md.fireWest) drawBarrel(Math.PI);
 
-    // 2. Reverse Fire
-    if (gun.Bullet?.reverseFire) {
-        drawBarrel(aimAngle + Math.PI);
-    }
-
-    // 3. Multi-Directional (Cardinal Directions)
-    if (gun.Bullet?.multiDirectional?.active) {
-        const md = gun.Bullet.multiDirectional;
-        // North (-PI/2), East (0), South (PI/2), West (PI)
-        if (md.fireNorth) drawBarrel(-Math.PI / 2);
-        if (md.fireEast) drawBarrel(0);
-        if (md.fireSouth) drawBarrel(Math.PI / 2);
-        if (md.fireWest) drawBarrel(Math.PI);
-
-        // 360 Mode (Visual: Draw 8 barrels every 45 degrees)
-        if (md.fire360) {
-            for (let i = 0; i < 8; i++) {
-                drawBarrel(i * (Math.PI / 4));
+            // 360 Mode
+            if (md.fire360) {
+                for (let i = 0; i < 8; i++) {
+                    drawBarrel(i * (Math.PI / 4));
+                }
             }
         }
     }
@@ -1515,9 +1535,6 @@ function drawPlayer() {
         ctx.fillRect(player.x - player.size, player.y - player.size, player.size * 2, player.size * 2);
     } else if (player.shape === 'triangle') {
         // Draw Triangle centered
-        // Top point: (x, y - size)
-        // Bottom Right: (x + size, y + size)
-        // Bottom Left: (x - size, y + size)
         ctx.moveTo(player.x, player.y - player.size);
         ctx.lineTo(player.x + player.size, player.y + player.size);
         ctx.lineTo(player.x - player.size, player.y + player.size);
@@ -2154,26 +2171,24 @@ function updateEnemies() {
                                 levelMap[key].cleared = false;
                             }
                         }
-                    });
+                    }
 
-        // Optional: Visual cue?
-        // maybe shake screen or flash red
-    }
+                    // Optional: Visual cue?
+                    // maybe shake screen or flash red
                 }
             }
         });
     });
 
-// SPAWN PORTAL IF BOSS IS DEAD AND NO ENEMIES LEFT
-const currentCoord = `${player.roomX},${player.roomY}`;
-if (currentCoord === bossCoord && enemies.length === 0 && !portal.active) {
-    // Check if boss was actually defeated (simple check: if room is cleared/enemies empty in boss room)
-    // Since enemies are cleared on death, length 0 means we won.
-    portal.active = true;
-    portal.x = canvas.width / 2;
-    portal.y = canvas.height / 2;
-    log("Room Clear! Spawning Portal.");
-}
+    // SPAWN PORTAL IF BOSS IS DEAD AND NO ENEMIES LEFT
+    // Only spawn portal in the BOSS ROOM
+    const currentCoord = `${player.roomX},${player.roomY}`;
+    if (bossKilled && currentCoord === bossCoord && enemies.length === 0 && !portal.active) {
+        portal.active = true;
+        portal.x = canvas.width / 2;
+        portal.y = canvas.height / 2;
+        log("Room Clear! Spawning Portal.");
+    }
 }
 
 function updatePortal() {
