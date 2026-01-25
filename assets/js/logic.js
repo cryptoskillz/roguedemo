@@ -1948,103 +1948,15 @@ function drawBombs(doors) {
     }
 }
 
+// --- 3. BOMB DROPPING ---
 function updateBombDropping() {
-
-    // --- 3. BOMB DROPPING ---
     if (keys['KeyB'] && player.inventory?.bombs > 0) {
-        const now = Date.now();
-        // Uses the fireRate (0.5) from your bomb JSON
-        if (bomb && now - (player.lastBombTime || 0) > (bomb.fireRate * 1000)) {
-            // Check max drop limit
-            const maxDrop = bomb.maxDrop || 100;
-            if (bombs.length >= maxDrop) return;
-
-            player.inventory.bombs--;
-            player.lastBombTime = now;
-
-            // Drop behind the player to avoid trapping
-            // Drop behind the player to avoid trapping
-            // Default to 1 (Down) if no movement yet, so bomb drops Up (Y - 45)
-            const dropDist = 45;
-            const lastX = (player.lastMoveX === undefined && player.lastMoveY === undefined) ? 0 : (player.lastMoveX || 0);
-            const lastY = (player.lastMoveX === undefined && player.lastMoveY === undefined) ? 1 : (player.lastMoveY || 0);
-
-            const dropX = player.x - (lastX * dropDist);
-            const dropY = player.y - (lastY * dropDist);
-
-            // Check if drop position overlaps with an existing bomb
-            let canDrop = true;
-            for (const b of bombs) {
-                const dist = Math.hypot(dropX - b.x, dropY - b.y);
-                // 30 base radius (approx) + buffer
-                if (dist < (b.baseR || 15) * 2) {
-                    canDrop = false;
-                    break;
-                }
+        // dropBomb handles delay checks, overlap checks, and valid position checks
+        dropBomb().then(dropped => {
+            if (dropped) {
+                player.inventory.bombs--;
             }
-            // Also check walls
-            if (dropX < BOUNDARY || dropX > canvas.width - BOUNDARY || dropY < BOUNDARY || dropY > canvas.height - BOUNDARY) {
-                canDrop = false;
-            }
-
-            if (!canDrop) {
-                log("Cannot drop bomb here - blocked");
-                return;
-            }
-
-            // Calculate explosion time based on config
-            let explodeTime = now;
-            let timerDuration = 3000; // default
-
-            // Check if bomb.timer is object or number
-            if (typeof bomb.timer === 'object' && bomb.timer !== null) {
-                if (bomb.timer.active) {
-                    timerDuration = bomb.timer.time || 3000;
-                    explodeTime += timerDuration;
-                } else {
-                    // Timer inactive - won't explode automatically
-                    explodeTime += 999999999;
-                }
-            } else {
-                // Legacy number support
-                timerDuration = bomb.timer || 3000;
-                explodeTime += timerDuration;
-            }
-
-            bombs.push({
-                x: dropX, y: dropY,
-                explodeAt: explodeTime,
-                // Handle nested explosion properties with fallbacks
-                explosionDuration: bomb.explosion?.explosionDuration ?? bomb.explosionDuration,
-                baseR: bomb.size || 15,
-                maxR: bomb.explosion?.radius ?? bomb.radius,
-                explosionColour: bomb.explosion?.explosionColour ?? bomb.explosionColour,
-                canDamagePlayer: bomb.explosion?.canDamagePlayer ?? bomb.canDamagePlayer,
-
-                // Base properties
-                damage: bomb.damage,
-                colour: bomb.colour,
-                solid: bomb.solid, // Added solid property
-                moveable: bomb.moveable, // Added moveable property
-
-                // Handle nested door properties
-                openLockedDoors: bomb.doors?.openLockedDoors ?? bomb.openLockedDoors,
-                openRedDoors: bomb.doors?.openRedDoors ?? bomb.openRedDoors,
-                openSecretRooms: bomb.doors?.openSecretRooms ?? bomb.openSecretRooms,
-
-                // Interaction
-                canShoot: bomb.canShoot, // Renamed from shootable to match JSON and logic
-                canInteract: bomb.canInteract, // Pass through full object for future use
-                remoteDenoate: bomb.remoteDenoate, // Pass remote detonation config
-
-                vx: 0, vy: 0, // Physics velocity
-                physics: bomb.physics, // Store physics config
-
-                exploding: false, didDamage: false, didDoorCheck: false
-            });
-            SFX.shoot(0.1);
-            updateUI();
-        }
+        });
     }
 }
 
