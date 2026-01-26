@@ -1031,6 +1031,7 @@ function changeRoom(dx, dy) {
         if (roomData.isBoss) freezeDelay = 2000;
 
         roomStartTime = Date.now() + freezeDelay; // Start timer after freeze
+        log(`Room Start Time Reset: ${roomStartTime} (Delay: ${freezeDelay})`);
 
         // GHOST FOLLOW LOGIC
         // If ghost was chasing and follow is on, fast-forward the timer so he appears immediately
@@ -1435,6 +1436,10 @@ function update() {
 
     // 4. Transitions
     updateRoomTransitions(doors, roomLocked);
+
+    // Shield Regen
+    updateShield();
+
     updatePortal();
     updateGhost(); // Check for ghost spawn
 }
@@ -1554,12 +1559,31 @@ function updateRoomTransitions(doors, roomLocked) {
 
     // --- 8. ROOM TRANSITIONS ---
     // --- 8. ROOM TRANSITIONS ---
-    const t = 15;
+    // Increased threshold to account for larger player sizes (Triangle=20)
+    const t = 50;
+
+    // Debug Door Triggers
+    if (player.x < t + 10 && doors.left?.active) {
+        // log(`Left Door Check: X=${Math.round(player.x)} < ${t}? Locked=${doors.left.locked}, RoomLocked=${roomLocked}`);
+    }
+
     // Allow transition if room is unlocked OR if the specific door is forced open (red door blown)
-    if (player.x < t && doors.left?.active && !doors.left?.locked && (!roomLocked || doors.left?.forcedOpen)) changeRoom(-1, 0);
-    else if (player.x > canvas.width - t && doors.right?.active && !doors.right?.locked && (!roomLocked || doors.right?.forcedOpen)) changeRoom(1, 0);
-    else if (player.y < t && doors.top?.active && !doors.top?.locked && (!roomLocked || doors.top?.forcedOpen)) changeRoom(0, -1);
-    else if (player.y > canvas.height - t && doors.bottom?.active && !doors.bottom?.locked && (!roomLocked || doors.bottom?.forcedOpen)) changeRoom(0, 1);
+    if (player.x < t && doors.left?.active) {
+        if (!doors.left.locked && (!roomLocked || doors.left.forcedOpen)) changeRoom(-1, 0);
+        else log("Left Door Blocked: Locked or Room Locked");
+    }
+    else if (player.x > canvas.width - t && doors.right?.active) {
+        if (!doors.right.locked && (!roomLocked || doors.right.forcedOpen)) changeRoom(1, 0);
+        else log("Right Door Blocked: Locked or Room Locked");
+    }
+    else if (player.y < t && doors.top?.active) {
+        if (!doors.top.locked && (!roomLocked || doors.top.forcedOpen)) changeRoom(0, -1);
+        else log("Top Door Blocked: Locked or Room Locked");
+    }
+    else if (player.y > canvas.height - t && doors.bottom?.active) {
+        if (!doors.bottom.locked && (!roomLocked || doors.bottom.forcedOpen)) changeRoom(0, 1);
+        else log("Bottom Door Blocked: Locked or Room Locked");
+    }
 }
 
 function isRoomLocked() {
@@ -1574,9 +1598,21 @@ function isRoomLocked() {
         // Only ghosts remain
         const ghostConfig = gameData.ghost || { spawn: true, roomGhostTimer: 10000 };
         const now = Date.now();
+        const elapsed = now - roomStartTime;
+        const limit = ghostConfig.roomGhostTimer * 2;
+
+        // Debug once per second (approx) to avoid spam
+        if (Math.random() < 0.01) {
+            // log(`Ghost Lock Check: Elapsed ${Math.round(elapsed)} vs Limit ${limit}`);
+        }
+
         // Lock if time > 2x ghost timer
-        if (now - roomStartTime > (ghostConfig.roomGhostTimer * 2)) {
+        if (elapsed > limit) {
             isLocked = true;
+            if (Math.random() < 0.05) {
+                log(`LOCKED! Elapsed: ${Math.round(elapsed)} > Limit: ${limit}`);
+                log(`Diagnostics: Now=${now}, Start=${roomStartTime}, ConfigTimer=${ghostConfig.roomGhostTimer}`);
+            }
         }
     }
     return isLocked;
@@ -1686,6 +1722,26 @@ function drawPlayer() {
         // Default Circle
         ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
         ctx.fill();
+    }
+
+    // --- SHIELD RENDERING ---
+    if (player.shield?.active && player.shield.hp > 0) {
+        ctx.save();
+        ctx.beginPath();
+        // Outer ring
+        ctx.arc(player.x, player.y, player.size + 8, 0, Math.PI * 2);
+        ctx.strokeStyle = player.shield.colour || "blue";
+        ctx.lineWidth = 3;
+
+        // Opacity based on HP health
+        ctx.globalAlpha = 0.4 + (0.6 * (player.shield.hp / player.shield.maxHp));
+        ctx.stroke();
+
+        // Inner fill (faint)
+        ctx.fillStyle = player.shield.colour || "blue";
+        ctx.globalAlpha = 0.1;
+        ctx.fill();
+        ctx.restore();
     }
 
     // --- RELOAD / COOLDOWN BAR ---
@@ -1808,12 +1864,7 @@ function updateBulletsAndShards(aliveEnemies) {
                 // Hit Player
                 if (b.canDamagePlayer) {
                     if (!player.invuln && Date.now() > (player.invulnUntil || 0)) {
-                        player.hp -= (b.damage || 1);
-                        SFX.playerHit();
-                        // Trigger I-Frames
-                        player.invulnUntil = Date.now() + (player.invulTimer || 1000);
-                        updateUI();
-
+                        takeDamage(b.damage || 1);
                         // Remove bullet
                         bullets.splice(i, 1);
                         return;
@@ -2440,7 +2491,54 @@ function updateGhost() {
     }
 }
 
+// --- DAMAGE & SHIELD LOGIC ---
+function takeDamage(amount) {
+    // 1. Check Shield
+    if (player.shield?.active && player.shield.hp > 0) {
+        player.shield.hp -= amount;
+        SFX.click(0.5); // Shield hit sound (reuse click or new sound)
+
+        // Overflow damage?
+        if (player.shield.hp < 0) {
+            // Optional: Surplus damage hits player?
+            // For now, let's say shield break absorbs the full blow but breaks
+            player.shield.hp = 0;
+            SFX.explode(0.2); // Shield break sound
+        }
+
+        // Reset Regen Timer
+        player.shield.lastHit = Date.now();
+        return; // Damage absorbed
+    }
+
+    // 2. Health Damage
+    player.hp -= amount;
+    SFX.playerHit();
+
+    // Trigger I-Frames
+    player.invulnUntil = Date.now() + (player.invulTimer || 1000);
+    updateUI();
+}
+
+function updateShield() {
+    if (!player.shield?.active || !player.shield.regenActive) return;
+
+    const now = Date.now();
+    const regenDelay = player.shield.regenTimer || 1000;
+    const lastHit = player.shield.lastHit || 0;
+
+    // Only regen if we haven't been hit recently AND HP is not full
+    if (now - lastHit > 2000 && player.shield.hp < player.shield.maxHp) {
+        // Regen tick
+        if (!player.shield.lastRegen || now - player.shield.lastRegen > regenDelay) {
+            player.shield.hp = Math.min(player.shield.hp + (player.shield.regen || 1), player.shield.maxHp);
+            player.shield.lastRegen = now;
+        }
+    }
+}
+
 function drawEnemies() {
+
     enemies.forEach(en => {
         ctx.save();
 
@@ -2485,26 +2583,14 @@ function drawEnemies() {
 function playerHit(en, invuln = false, knockback = false, shakescreen = false) {
     if (invuln) {
         const now = Date.now();
-        const isInvuln = player.invuln || now < (player.invulnUntil || 0);
-
-        if (!isInvuln) {
-            player.hp -= en.damage || 1;
-            player.invulnUntil = now + 1000;
-            SFX.playerHit(0.2);
-            log(`Player hit! HP: ${player.hp}, Damage: ${en.damage || 1}`);
-
-            // If the player dies from this hit, the next update() call will catch it
-            if (typeof updateUI === "function") updateUI();
-
-            // Check for game over immediately after taking damage
-            if (player.hp <= 0) {
-                log("Player HP <= 0, triggering game over");
-                player.hp = 0;
-                gameOver();
-            }
-        }
+        if (player.invuln || now < (player.invulnUntil || 0)) return;
+        // invul timer set inside takeDamage now
     }
 
+    // Damage
+    takeDamage(en.damage || 1);
+
+    // Knockback
     if (knockback) {
         let dx = player.x - en.x;
         let dy = player.y - en.y;
