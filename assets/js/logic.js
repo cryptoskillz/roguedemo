@@ -1438,6 +1438,12 @@ function update() {
     }
 
     // 2. World Logic
+    // FORCE ROOM FREEZE IMMUNITY
+    // Ensure player immunity matches room freeze (prevents resets)
+    if (Date.now() < roomFreezeUntil) {
+        player.invulnUntil = Math.max(player.invulnUntil || 0, roomFreezeUntil);
+    }
+
     updateRoomLock();
     updateBombDropping();
     updateBombsPhysics(); // Bomb Physics (Push/Slide)
@@ -1721,7 +1727,7 @@ function drawPlayer() {
     }
 
     const isInv = player.invuln || now < (player.invulnUntil || 0);
-    ctx.fillStyle = isInv ? 'rgba(255,255,255,0.7)' : (player.colour || '#5dade2');
+    ctx.fillStyle = isInv ? (player.invulColour || 'rgba(255,255,255,0.7)') : (player.colour || '#5dade2');
 
     ctx.beginPath();
     if (player.shape === 'square') {
@@ -2541,6 +2547,16 @@ function updateGhost() {
 
 // --- DAMAGE & SHIELD LOGIC ---
 function takeDamage(amount) {
+    // 0. GLOBAL IMMUNITY CHECK (Room Freeze / I-Frames)
+    // Applies to BOTH Shield and HP
+    const now = Date.now();
+    const until = player.invulnUntil || 0;
+
+    if (now < until) {
+        log(`BLOCKED DAMAGE! (Shield/HP Safe). Rem Invul: ${until - now}ms`);
+        return;
+    }
+
     // 1. Check Shield
     if (player.shield?.active && player.shield.hp > 0) {
         player.shield.hp -= amount;
@@ -2629,11 +2645,12 @@ function drawEnemies() {
         }
 
         // Visual Feedback: White for hit, Blue for frozen, Red for normal
+        // Improved: Use invulColour if frozen/invulnerable
         if (en.hitTimer > 0) {
-            ctx.fillStyle = "white";
+            ctx.fillStyle = en.invulColour || "white";
             en.hitTimer--; // Countdown the hit flash
-        } else if (en.frozen) {
-            ctx.fillStyle = "#85c1e9"; // Light Blue
+        } else if (en.frozen || en.invulnerable) {
+            ctx.fillStyle = en.invulColour || "#85c1e9"; // Use invulColour (white) if set, else fallback
         } else {
             ctx.fillStyle = en.color || "#e74c3c";
         }
@@ -2653,9 +2670,15 @@ function playerHit(en, checkInvuln = true, applyKnockback = false, shakescreen =
     // If checkInvuln is true (default), we verify I-frames
     if (checkInvuln) {
         const now = Date.now();
+        const until = player.invulnUntil || 0;
+        const diff = until - now;
+
         // Check I-Frames
-        if (false || now < (player.invulnUntil || 0)) { // Removed player.invuln (deprecated), now purely time based
+        if (now < until) {
+            // log(`Invuln Active! Rem: ${diff}ms`);
             return; // No damage taken
+        } else {
+            // log(`Hit Allowed. Invuln Expired by ${-diff}ms`);
         }
     }
 
@@ -2670,6 +2693,8 @@ function playerHit(en, checkInvuln = true, applyKnockback = false, shakescreen =
 
     // Default solid to true if undefined
     const isSolid = (player.solid !== undefined) ? player.solid : true;
+
+    // log(`Collision Check: Solid=${isSolid}, Apply=${applyKnockback}`);
 
     if (applyKnockback && isSolid) {
         let dx = player.x - en.x;

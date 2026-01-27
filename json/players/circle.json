@@ -31,7 +31,7 @@
     "x": 300,
     "y": 200,
     "solid": true,
-    "invulHitTimer": 10000,
+    "invulHitTimer": 1000,
     "invulColour": "#ffffff",
     "lastShot": 0,
     "lastBomb": 0,

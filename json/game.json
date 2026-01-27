@@ -9,6 +9,6 @@
         "roomFollow": true
     },
     "room": {
-        "freezeTimer": 10000
+        "freezeTimer": 2000
     }
 }
