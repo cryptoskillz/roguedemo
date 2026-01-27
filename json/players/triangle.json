@@ -33,7 +33,7 @@
     "invuln": false,
     "invulnUntil": 0,
     "invulTimer": 100,
-    "invulnColor": "white",
+    "invulColour": "#ffffff",
     "lastShot": 0,
     "lastBomb": 0,
     "speedCount": 0,

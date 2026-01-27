@@ -11,5 +11,6 @@
     "hitColor": "#ffffff",
     "deathType": "fadeaway",
     "deathDuration": 30,
+    "invulColour": "#ffffff",
     "special": true
 }

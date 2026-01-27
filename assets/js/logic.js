@@ -98,6 +98,7 @@ let keyUsedForRoom = false;
 let portal = { active: false, x: 0, y: 0 };
 let isInitializing = false;
 let ghostSpawned = false;
+let roomFreezeUntil = 0; // Timestamp for room freeze expiration
 let ghostEntry = null;
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1029,12 +1030,24 @@ function changeRoom(dx, dy) {
 
         spawnPlayer(dx, dy, roomData);
 
-        // Remove freeze period for start room (0,0)
-        let freezeDelay = (player.roomX === 0 && player.roomY === 0) ? 0 : 1000;
-        if (roomData.isBoss) freezeDelay = 2000;
+        // REMOVE OLD FREEZE LOGIC
+        // let freezeDelay = (player.roomX === 0 && player.roomY === 0) ? 0 : 1000;
+        // if (roomData.isBoss) freezeDelay = 2000;
 
-        roomStartTime = Date.now() + freezeDelay; // Start timer after freeze
-        log(`Room Start Time Reset: ${roomStartTime} (Delay: ${freezeDelay})`);
+        // NEW ROOM FREEZE MECHANIC
+        // "freezeTimer" config (default 2000ms), applies to Player Invuln AND Enemy Freeze
+        const freezeDuration = (gameData.room && gameData.room.freezeTimer) ? gameData.room.freezeTimer : 2000;
+
+        // Skip freeze only for very first start room if desired (optional, maybe keep it consistent)
+        // const actualDuration = (player.roomX === 0 && player.roomY === 0) ? 0 : freezeDuration;
+        const actualDuration = freezeDuration; // Use config consistently
+
+        const now = Date.now();
+        roomFreezeUntil = now + actualDuration;
+        player.invulnUntil = roomFreezeUntil;
+        roomStartTime = roomFreezeUntil; // Ghost timer starts AFTER freeze ends
+
+        log(`Room Freeze Active: ${actualDuration}ms (Enemies Frozen, Player Invulnerable)`);
 
         // GHOST FOLLOW LOGIC
         // If ghost was chasing and follow is on, fast-forward the timer so he appears immediately
@@ -1708,7 +1721,7 @@ function drawPlayer() {
     }
 
     const isInv = player.invuln || now < (player.invulnUntil || 0);
-    ctx.fillStyle = isInv ? 'rgba(255,255,255,0.7)' : (player.color || '#5dade2');
+    ctx.fillStyle = isInv ? 'rgba(255,255,255,0.7)' : (player.colour || '#5dade2');
 
     ctx.beginPath();
     if (player.shape === 'square') {
@@ -2294,12 +2307,21 @@ function updateBombsPhysics() {
 
 function updateEnemies() {
     const now = Date.now();
+    const isRoomFrozen = now < roomFreezeUntil;
+
     enemies.forEach((en, ei) => {
         // 1. Skip if dead
         if (en.isDead) {
             en.deathTimer--;
             if (en.deathTimer <= 0) enemies.splice(ei, 1);
             return;
+        }
+
+        // ROOM FREEZE OVERRIDE
+        if (isRoomFrozen) {
+            en.frozen = true;
+            en.invulnerable = true;
+            // Visuals: Maybe draw them blue or static? handled in drawEnemies by frozen flag
         }
 
         // 2. Frozen/Movement Logic
@@ -2335,7 +2357,7 @@ function updateEnemies() {
                     en.y = nextY;
                 }
             }
-        } else if (now > en.freezeEnd) {
+        } else if (!isRoomFrozen && now > en.freezeEnd) { // Only wake up if room is NOT frozen by game event
             en.frozen = false;
             en.invulnerable = false; // Clear invulnerability when they wake up
         }
@@ -2542,7 +2564,10 @@ function takeDamage(amount) {
     SFX.playerHit();
 
     // Trigger I-Frames
-    player.invulnUntil = Date.now() + (player.invulTimer || 1000);
+    // Use config timer, default 1000
+    const iFrameDuration = player.invulHitTimer || 1000;
+    player.invulnUntil = Date.now() + iFrameDuration;
+
     updateUI();
 }
 
@@ -2619,18 +2644,34 @@ function drawEnemies() {
         ctx.restore();
     });
 }
-function playerHit(en, invuln = false, knockback = false, shakescreen = false) {
-    if (invuln) {
+// function playerHit(en, invuln = false, knockback = false, shakescreen = false) {
+// Refactored for Solidity vs Invulnerability Separation
+// Refactored for Solidity vs Invulnerability Separation
+function playerHit(en, checkInvuln = true, applyKnockback = false, shakescreen = false) {
+
+    // 1. DAMAGE CHECK (Invulnerability)
+    // If checkInvuln is true (default), we verify I-frames
+    if (checkInvuln) {
         const now = Date.now();
-        if (player.invuln || now < (player.invulnUntil || 0)) return;
-        // invul timer set inside takeDamage now
+        // Check I-Frames
+        if (false || now < (player.invulnUntil || 0)) { // Removed player.invuln (deprecated), now purely time based
+            return; // No damage taken
+        }
     }
 
-    // Damage
+    // Apply Damage
     takeDamage(en.damage || 1);
 
-    // Knockback
-    if (knockback) {
+    // 2. PHYSICS CHECK (Solidity)
+    // Only apply knockback if explicitly requested (usually on collision)
+    // AND if the player is solid OR the enemy is forceful enough to push nonsolid?
+    // User requested: "invuln makes you not solid" -> "change invuln to solid"
+    // Interpretation: If player.solid is FALSE, they do not get knocked back by enemies (pass through).
+
+    // Default solid to true if undefined
+    const isSolid = (player.solid !== undefined) ? player.solid : true;
+
+    if (applyKnockback && isSolid) {
         let dx = player.x - en.x;
         let dy = player.y - en.y;
 
@@ -2649,13 +2690,12 @@ function playerHit(en, invuln = false, knockback = false, shakescreen = false) {
         const needed = targetDist - len;
 
         if (needed > 0) {
-            log(`Knockback applied! Needed: ${needed}, NX: ${nx}, NY: ${ny}`);
+            // Push player away
             player.x += nx * needed;
             player.y += ny * needed;
-        } else {
-            log(`No knockback needed. TargetDist: ${targetDist}, Len: ${len}`);
         }
 
+        // Clamp to bounds
         player.x = Math.max(BOUNDARY + player.size, Math.min(canvas.width - BOUNDARY - player.size, player.x));
         player.y = Math.max(BOUNDARY + player.size, Math.min(canvas.height - BOUNDARY - player.size, player.y));
     }
@@ -2666,6 +2706,8 @@ function playerHit(en, invuln = false, knockback = false, shakescreen = false) {
         screenShake.endAt = Date.now() + (en.shakeDuration || 200);
     }
 }
+
+
 
 function drawBombs(doors) {
     const now = Date.now();
