@@ -1,8 +1,8 @@
 {
-    "name": "golden",
-    "description": "The Most powerful or all the bombs",
+    "name": "red",
+    "description": "A red bomb",
     "size": 30,
-    "colour": "#ffff00",
+    "colour": "#ff0000",
     "range": 70,
     "damage": 2,
     "fireRate": 0.1,
@@ -11,7 +11,7 @@
     "maxDrop": 3,
     "solid": true,
     "remoteDenoate": {
-        "active": true,
+        "active": false,
         "key": "space"
     },
     "explosion": {
@@ -21,7 +21,7 @@
         "canDamagePlayer": true
     },
     "doors": {
-        "openLockedDoors": true,
+        "openLockedDoors": false,
         "openRedDoors": true,
         "openSecretRooms": true
     },

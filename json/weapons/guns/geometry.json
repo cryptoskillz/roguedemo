@@ -7,7 +7,7 @@
             "life": 0.5,
             "sizeMult": 0.5
         },
-        "colour": "yellow",
+        "colour": "#000000",
         "ammo": {
             "active": false,
             "type": "finite",

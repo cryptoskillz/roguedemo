@@ -4,6 +4,7 @@
         "gun_geometry",
         "bomb_normal",
         "bomb_golden",
-        "item_homing"
+        "bomb_red",
+        "modifier_homing"
     ]
 }

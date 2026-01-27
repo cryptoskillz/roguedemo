@@ -3240,14 +3240,29 @@ function drawItems() {
         ctx.translate(item.x, item.y + (Math.sin((Date.now() / 200) + (item.floatOffset || 0)) * 5)); // Float effect
 
         // Draw Glow
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = item.data.rarity === 'legendary' ? 'gold' :
+        const rarityColor = item.data.rarity === 'legendary' ? 'gold' :
             (item.data.rarity === 'uncommon' ? '#3498db' : 'white');
+
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = item.data.colour || item.data.color || rarityColor;
 
         // Draw Icon (Circle for now, maybe use rarity color)
         ctx.fillStyle = ctx.shadowColor;
         ctx.beginPath();
-        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+
+        if (item.data.type === 'gun') {
+            // Square
+            ctx.rect(-10, -10, 20, 20);
+        } else if (item.data.type === 'modifier') {
+            // Triangle
+            ctx.moveTo(0, -15);
+            ctx.lineTo(15, 10);
+            ctx.lineTo(-15, 10);
+            ctx.closePath();
+        } else {
+            // Bomb / Default (Circle)
+            ctx.arc(0, 0, 15, 0, Math.PI * 2);
+        }
         ctx.fill();
 
         // Draw Text

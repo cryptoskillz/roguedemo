@@ -1,6 +1,7 @@
 {
     "bombs": [
         "normal",
-        "golden"
+        "golden",
+        "red"
     ]
 }

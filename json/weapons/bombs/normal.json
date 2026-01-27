@@ -1,6 +1,6 @@
 {
-    "name": "golden",
-    "description": "The Most powerful or all the bombs",
+    "name": "normal",
+    "description": "A standard bomb",
     "size": 30,
     "colour": "#ffff00",
     "range": 70,
@@ -11,7 +11,7 @@
     "maxDrop": 3,
     "solid": true,
     "remoteDenoate": {
-        "active": true,
+        "active": false,
         "key": "space"
     },
     "explosion": {
@@ -22,7 +22,7 @@
     },
     "doors": {
         "openLockedDoors": true,
-        "openRedDoors": true,
+        "openRedDoors": false,
         "openSecretRooms": true
     },
     "canInteract": {
