@@ -2933,7 +2933,9 @@ function gameOver() {
     if (gameState !== STATES.WIN) gameState = STATES.GAMEOVER;
 
     overlayEl.style.display = 'flex';
-    statsEl.innerText = "Rooms cleared: " + (Math.abs(player.roomX) + Math.abs(player.roomY));
+    // Fix: Count unique visited rooms instead of displacement
+    const roomsCount = Object.keys(visitedRooms).length || 1;
+    statsEl.innerText = "Rooms Visited: " + roomsCount;
 
     const h1 = document.querySelector('#overlay h1');
     if (gameState === STATES.WIN) {

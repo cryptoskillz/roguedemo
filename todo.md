@@ -3,13 +3,7 @@ bugs
     room count at the end is off (maybe same room type in generation)
     the enemies get stuck they should work their way around obstacles
     shield regens on new game
-    invuln timer is not working
-    invuln makes you not solid
-    "invulnUntil": 10000 does not work
-    add solid to player
-    maybe move invuln to game and rename to InvulverableEnterRoom
-    rename invuln to Invulnerable and invulnerabeHitTimer to InvulnerableEnd
-    change invuln to solid
+    solid false does make you invul when you are hit    
 
 
 
