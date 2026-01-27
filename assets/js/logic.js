@@ -57,6 +57,7 @@ let groundItems = []; // Items sitting on the floor
 
 let bomb = {}
 let gun = {}
+let activeModifiers = []; // Store active modifier configs
 let bombsInRoom = 0;
 let screenShake = { power: 0, endAt: 0 };
 
@@ -3321,6 +3322,15 @@ async function pickupItem(item, index) {
             }
 
             gun = config;
+
+            // RE-APPLY ACTIVE MODIFIERS
+            if (activeModifiers.length > 0) {
+                log(`Re-applying ${activeModifiers.length} modifiers...`);
+                activeModifiers.forEach(modConfig => {
+                    applyModifierToGun(gun, modConfig);
+                });
+            }
+
             if (location.includes("/")) {
                 const parts = location.split('/');
                 const filename = parts[parts.length - 1].replace(".json", "");
@@ -3354,6 +3364,17 @@ async function pickupItem(item, index) {
             }
             log(`Equipped Bomb: ${config.name}`);
         }
+        else if (type === 'modifier') {
+            // APPLY MODIFIER
+            const target = config.modify; // "gun" or "bomb"
+
+            if (target === 'gun') {
+                // Store for future guns
+                activeModifiers.push(config);
+                applyModifierToGun(gun, config);
+            }
+            log(`Applied Modifier: ${config.name || "Unknown"}`);
+        }
 
         // Remove from floor 
         // (Optional: Drop CURRENT item? For now, just destroy old)
@@ -3363,5 +3384,31 @@ async function pickupItem(item, index) {
     } catch (e) {
         console.error("Failed to load weapon config", e);
         log("Error equipping item");
+    }
+}
+
+function applyModifierToGun(gunObj, modConfig) {
+    const mods = modConfig.modifiers;
+    for (const key in mods) {
+        let val = mods[key];
+        // Type conversion
+        if (val === "true") val = true;
+        else if (val === "false") val = false;
+        else if (!isNaN(val)) val = parseFloat(val);
+
+        // Check Gun Root
+        if (gunObj[key] !== undefined) {
+            gunObj[key] = val;
+        }
+        // Check Bullet (Most likely)
+        else if (gunObj.Bullet && gunObj.Bullet[key] !== undefined) {
+            gunObj.Bullet[key] = val;
+        }
+        // Handle special deep keys if flat (e.g. homing)
+        else if (key === 'homing') {
+            // Ensure homing exists or force it
+            if (!gunObj.Bullet) gunObj.Bullet = {};
+            gunObj.Bullet.homing = val;
+        }
     }
 }
