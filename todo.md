@@ -2,6 +2,8 @@ bugs
     if music has been toggled off it shouldnt turn back on on restart / going back to main menu
     room count at the end is off (maybe same room type in generation)
     the enemies get stuck they should work their way around obstacles
+    shield regens on new game
+    solid false does make you invul when you are hit    
 
 
 
@@ -11,6 +13,26 @@ next up
     enemies
     rooms
     levels
+
+items
+    hp+
+    shield+
+    speed+
+    luck+
+    gemotery cannon
+    red bombs
+    golden bombs
+    bomb+
+    randomstat+
+    homing bullets
+    piercing bullets
+    bullet damage player
+    shoot bombs
+    bullet wall bounce
+    critdamage+
+    critchance+
+    freezechance+
+    bullet explode
 
 
 levels
@@ -118,8 +140,7 @@ rooms
     backwards
         rooms that revers the controls
 
-items
-    golden path shows on map for a few seconds giving a clue how to solve infitte maze later .
+
 
 
 modifiers

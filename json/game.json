@@ -3,10 +3,12 @@
     "NoRooms": 11,
     "music": false,
     "soundEffects": true,
-    "enterRoomFreezeTime": 1000,
     "ghost": {
         "spawn": true,
         "roomGhostTimer": 10000,
         "roomFollow": true
+    },
+    "room": {
+        "freezeTimer": 100
     }
 }
