@@ -16,7 +16,7 @@
         "bounciness": 0.1
     },
     "shield": {
-        "active": true,
+        "active": false,
         "colour": "blue",
         "hp": 10,
         "maxHp": 10,
@@ -40,7 +40,7 @@
     "perfectCount": 0,
     "perfectTotalCount": 0,
     "bombType": "golden",
-    "gunType": "geometry",
+    "gunType": "peashooter",
     "inventory": {
         "keys": 5,
         "bombs": 115

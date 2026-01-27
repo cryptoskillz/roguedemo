@@ -3,5 +3,11 @@
     "drawType": "arc",
     "playerDraw": "arc",
     "location": "weapons/bombs/golden.json",
-    "type": "bomb"
+    "type": "bomb",
+    "starter": false,
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "legendary"
 }

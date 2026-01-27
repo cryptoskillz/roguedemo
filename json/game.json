@@ -5,7 +5,7 @@
     "soundEffects": true,
     "ghost": {
         "spawn": true,
-        "roomGhostTimer": 10000,
+        "roomGhostTimer": 100000,
         "roomFollow": true
     },
     "room": {

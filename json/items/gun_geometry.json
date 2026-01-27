@@ -1,5 +1,11 @@
 {
-    "name": "gun_geometry",
-    "location": "weapons/guns/gun_geometry.json",
-    "type": "gun"
+    "name": "geometry",
+    "location": "weapons/guns/geometry.json",
+    "type": "gun",
+    "starter": false,
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "uncommon"
 }

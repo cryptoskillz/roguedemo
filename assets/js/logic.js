@@ -53,6 +53,7 @@ let particles = [];
 let enemies = [];
 let bombs = [];
 let keys = {};
+let groundItems = []; // Items sitting on the floor
 
 let bomb = {}
 let gun = {}
@@ -565,14 +566,48 @@ async function initGame(isRestart = false) {
 
     try {
         // 1. Load basic configs
-        const [manData, gData, mData] = await Promise.all([
+        const [manData, gData, mData, itemMan] = await Promise.all([
             fetch('/json/players/manifest.json?t=' + Date.now()).then(res => res.json()),
             fetch('/json/game.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ perfectGoal: 3, NoRooms: 11 })),
-            fetch('json/rooms/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] }))
+            fetch('json/rooms/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] })),
+            fetch('json/items/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ items: [] }))
         ]);
 
         gameData = gData;
         roomManifest = mData;
+
+        // LOAD STARTING ITEMS
+        groundItems = [];
+        if (itemMan && itemMan.items) {
+            log("Loading Items Manifest:", itemMan.items.length);
+            const itemPromises = itemMan.items.map(i =>
+                fetch(`json/items/${i}.json?t=` + Date.now()).then(r => r.json()).catch(e => {
+                    console.error("Failed to load item:", i, e);
+                    return null;
+                })
+            );
+            const allItems = await Promise.all(itemPromises);
+
+            // Filter starters
+            // User: "starter: false" means it spawns in the room. "starter: true" means player already has it.
+            const starters = allItems.filter(i => i && i.starter === false);
+            log(`Found ${allItems.length} total items. Spawning ${starters.length} floor items.`);
+
+            // Spawn them in a row
+            starters.forEach((item, idx) => {
+                groundItems.push({
+                    x: 250 + (idx * 80),
+                    y: 350,
+                    data: item,
+                    roomX: 0,
+                    roomY: 0,
+                    floatOffset: Math.random() * 100
+                });
+            });
+            log(`Spawned ${starters.length} starter items.`);
+        } else {
+            log("No item manifest found!");
+        }
 
         // Load all players
         availablePlayers = [];
@@ -1418,6 +1453,10 @@ function update() {
     if (gameState !== STATES.PLAY) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
+    updateItems(); // Check for item pickups
+
+    //const now = Date.now(); // Check for item pickups
+
     //const now = Date.now();
     // const aliveEnemies = enemies.filter(en => !en.isDead);
     // const roomLocked = aliveEnemies.length > 0;
@@ -1498,6 +1537,7 @@ async function draw() {
     drawPlayer()
     drawBulletsAndShards()
     drawBombs(doors)
+    drawItems() // Draw ground items
     drawEnemies()
     if (screenShake.power > 0) ctx.restore();
 
@@ -3185,4 +3225,143 @@ if (typeof window !== 'undefined') {
     Object.defineProperty(window, 'goldenPath', { get: () => goldenPath });
     Object.defineProperty(window, 'visitedRooms', { get: () => visitedRooms });
     Object.defineProperty(window, 'debugLogs', { get: () => debugLogs });
+}
+// --- ITEM LOGIC ---
+
+function drawItems() {
+    const currentCoord = `${player.roomX},${player.roomY}`;
+
+    groundItems.forEach(item => {
+        // Only draw if in the same room
+        if (`${item.roomX},${item.roomY}` !== currentCoord) return;
+
+        ctx.save();
+        ctx.translate(item.x, item.y + (Math.sin((Date.now() / 200) + (item.floatOffset || 0)) * 5)); // Float effect
+
+        // Draw Glow
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = item.data.rarity === 'legendary' ? 'gold' :
+            (item.data.rarity === 'uncommon' ? '#3498db' : 'white');
+
+        // Draw Icon (Circle for now, maybe use rarity color)
+        ctx.fillStyle = ctx.shadowColor;
+        ctx.beginPath();
+        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw Text
+        ctx.fillStyle = "white";
+        ctx.font = "10px monospace";
+        ctx.textAlign = "center";
+
+        // Clean name (remove 'gun_' prefix for display)
+        let name = item.data.name || "Item";
+        if (name.startsWith("gun_")) name = name.replace("gun_", "");
+        if (name.startsWith("bomb_")) name = name.replace("bomb_", "");
+
+        ctx.fillText(name.toUpperCase(), 0, -25);
+
+        // Interact Prompt
+        const dist = Math.hypot(player.x - item.x, player.y - item.y);
+        if (dist < 40) {
+            ctx.fillStyle = "#f1c40f"; // Gold
+            ctx.font = "bold 12px monospace";
+            ctx.fillText("SPACE", 0, 30);
+        }
+
+        ctx.restore();
+    });
+}
+
+function updateItems() {
+    const currentCoord = `${player.roomX},${player.roomY}`;
+
+    // Check for pickup
+    // Iterate reverse to safe splice
+    for (let i = groundItems.length - 1; i >= 0; i--) {
+        const item = groundItems[i];
+        if (`${item.roomX},${item.roomY}` !== currentCoord) continue;
+
+        const dist = Math.hypot(player.x - item.x, player.y - item.y);
+        if (dist < 40) {
+            if (keys['Space']) {
+                keys['Space'] = false; // Consume input
+                pickupItem(item, i);
+            }
+        }
+    }
+}
+
+async function pickupItem(item, index) {
+    const type = item.data.type; // gun or bomb
+    const location = item.data.location; // e.g. weapons/guns/peashooter.json
+
+    log(`Picking up ${item.data.name}...`);
+
+    try {
+        const res = await fetch(`json/${location}?t=${Date.now()}`);
+        const config = await res.json();
+
+        if (type === 'gun') {
+            // Drop Helper
+            const oldName = player.gunType;
+            if (oldName) {
+                groundItems.push({
+                    x: player.x, y: player.y,
+                    roomX: player.roomX, roomY: player.roomY,
+                    floatOffset: Math.random() * 100,
+                    data: {
+                        name: "gun_" + oldName,
+                        type: "gun",
+                        location: `weapons/guns/${oldName}.json`,
+                        rarity: "common",
+                        starter: false
+                    }
+                });
+            }
+
+            gun = config;
+            if (location.includes("/")) {
+                const parts = location.split('/');
+                const filename = parts[parts.length - 1].replace(".json", "");
+                player.gunType = filename;
+            }
+            log(`Equipped Gun: ${config.name}`);
+        }
+        else if (type === 'bomb') {
+            // Drop Helper
+            const oldName = player.bombType;
+            if (oldName) {
+                groundItems.push({
+                    x: player.x, y: player.y,
+                    roomX: player.roomX, roomY: player.roomY,
+                    floatOffset: Math.random() * 100,
+                    data: {
+                        name: "bomb_" + oldName,
+                        type: "bomb",
+                        location: `weapons/bombs/${oldName}.json`,
+                        rarity: "common",
+                        starter: false
+                    }
+                });
+            }
+
+            bomb = config;
+            if (location.includes("/")) {
+                const parts = location.split('/');
+                const filename = parts[parts.length - 1].replace(".json", "");
+                player.bombType = filename;
+            }
+            log(`Equipped Bomb: ${config.name}`);
+        }
+
+        // Remove from floor 
+        // (Optional: Drop CURRENT item? For now, just destroy old)
+        groundItems.splice(index, 1);
+        SFX.click(0.5); // Pickup sound
+
+    } catch (e) {
+        console.error("Failed to load weapon config", e);
+        log("Error equipping item");
+    }
 }

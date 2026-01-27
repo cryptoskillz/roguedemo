@@ -1,8 +1,9 @@
 {
     "items": [
         "gun_peashooter",
-        "bomb_rename",
+        "gun_geometry",
+        "bomb_normal",
         "bomb_golden",
-        "gun_geometry"
+        "item_homing"
     ]
 }

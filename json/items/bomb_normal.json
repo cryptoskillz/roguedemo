@@ -3,5 +3,11 @@
     "drawType": "arc",
     "playerDraw": "arc",
     "location": "weapons/bombs/normal.json",
-    "type": "bomb"
+    "type": "bomb",
+    "starter": true,
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "common"
 }

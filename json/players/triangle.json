@@ -1,6 +1,6 @@
 {
-    "name": "Player 2",
-    "Description": "hes a real square",
+    "name": "Player 3",
+    "Description": "It's a triangle",
     "color": "#e74c3c",
     "locked": false,
     "shape": "triangle",
@@ -41,7 +41,7 @@
     "perfectCount": 0,
     "perfectTotalCount": 0,
     "bombType": "golden",
-    "gunType": "geometry",
+    "gunType": "peashooter",
     "inventory": {
         "keys": 5,
         "bombs": 115

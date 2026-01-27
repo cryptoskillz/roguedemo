@@ -1,10 +1,12 @@
 bugs
     if music has been toggled off it shouldnt turn back on on restart / going back to main menu
-    room count at the end is off (maybe same room type in generation)
     the enemies get stuck they should work their way around obstacles
-    shield regens on new game
-    solid false does make you invul when you are hit    
-
+    solid false does make you invul when you are hit  
+    check freezeDuration works below 1 second.  
+    if ghost appears and hyou leave a room with enemies when you go back only the ghost remaims 
+    ghost does not seem to be following you he seems to be stuck frozen in the room
+    when you reenter the guardian room it shows the intro 
+    ghost time should not start until the enemies are dead
 
 
 next up 

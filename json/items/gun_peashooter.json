@@ -1,5 +1,11 @@
 {
     "name": "peashooter",
     "location": "weapons/guns/peashooter.json",
-    "type": "gun"
+    "type": "gun",
+    "starter": true,
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "common"
 }
