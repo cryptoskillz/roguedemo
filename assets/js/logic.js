@@ -505,13 +505,13 @@ const DOOR_THICKNESS = 15;
 const DEBUG_START_BOSS = false; // TOGGLE THIS FOR DEBUGGING
 const DEBUG_PLAYER = true;
 const CHEATS_ENABLED = false;
-const DEBUG_WINDOW_ENABLED = false;
+const DEBUG_WINDOW_ENABLED = true;
 const DEBUG_SPAWN_ALL_ITEMS = false; // Master Switch (Overrides others if true)
 const DEBUG_SPAWN_GUNS = false;
 const DEBUG_SPAWN_BOMBS = false;
 const DEBUG_SPAWN_INVENTORY = false;
 const DEBUG_SPAWN_MODS_PLAYER = false;
-const DEBUG_SPAWN_MODS_BULLET = true;
+const DEBUG_SPAWN_MODS_BULLET = false;
 
 let musicMuted = false;
 let lastMKeyTime = 0;

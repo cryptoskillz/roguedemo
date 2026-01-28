@@ -1,0 +1,13 @@
+{
+    "name": "2 way gun",
+    "description": "the 2 way gun",
+    "location": "weapons/guns/2way.json",
+    "type": "gun",
+    "starter": false,
+    "consumed": true,
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "common"
+}

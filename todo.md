@@ -19,7 +19,8 @@ bugs
     360 modifier does not work
     items should moce away from doors as they cannot be picked up
     mini map does not show up on debug mode, should be an item to show it
-    explode modifier does not work     
+    explode modifier does not work  
+    update game.json vars to implemnt various switches   
 
 
 next up 
@@ -35,6 +36,75 @@ items
     luck+
     randomstat+
     kick bombs
+
+    guns
+        max ammo
+        ammo
+        reload time
+        chrage time
+
+     bombs
+        size
+        explode time
+        explode radius
+        explode damage
+        explode on impact
+        explode on enemy
+        explode on player
+        explode on wall
+        explode on floor
+        explode on ceiling
+        explode on nothing
+        explode on everything
+        range
+        damage
+        inrease timer
+        decrease timer
+        solid
+        remote detonate
+        remote detomate all
+        can shoot
+        can kick
+        kick explore on impact
+        kick distance
+        explode radius
+        expldoe duration
+        max drop
+
+
+
+     player
+        speed
+        size
+        strength
+        mass
+        drag
+        friction
+        elasticity
+        bounciness
+        luck
+        solid
+        invuln
+        invulnUntil
+        invulTimer
+        invulColour
+        shield hp
+        shield maxHp
+        shield regenActive
+        shield regen
+        shield regenTimer
+
+
+
+
+    shield
+
+
+        
+     
+
+
+     inventory   
     
 
 
@@ -116,6 +186,10 @@ debug window
     add a export json option
     move the cords into this 
     go to room (renders it in)
+    move it left
+    move the log to below the debug window
+    add spawn items 
+
 
 
 

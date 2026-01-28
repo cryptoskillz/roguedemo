@@ -1,0 +1,13 @@
+{
+    "name": "360 gun",
+    "description": "the 360 gun",
+    "location": "weapons/guns/360.json",
+    "type": "gun",
+    "starter": false,
+    "consumed": true,
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "common"
+}

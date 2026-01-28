@@ -1,0 +1,9 @@
+{
+    "name": "Wall Bounce",
+    "description": "bullets that bounce off walls",
+    "location": "weapons/modifiers/bullets/wallbounce.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

@@ -1,0 +1,9 @@
+{
+    "name": "4 way fire",
+    "description": "bullets that fire in forward, right, back, and left directions",
+    "location": "weapons/modifiers/bullets/4way.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

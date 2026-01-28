@@ -1,0 +1,13 @@
+{
+    "name": "4 way gun",
+    "description": "the 4 way gun",
+    "location": "weapons/guns/4way.json",
+    "type": "gun",
+    "starter": false,
+    "consumed": true,
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "common"
+}
