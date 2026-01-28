@@ -13,6 +13,8 @@ bugs
     rooom bonus item drop
     speedy item drop
     perfect item drop
+    angry enemies do not restart on new game
+    enemies should move through ghost enemies and try not stay inside them 
     
 
 
@@ -28,13 +30,7 @@ items
     speed+
     luck+
     randomstat+
-    piercing bullets
-    bullet damage player
-    shoot bombs
-    bullet wall bounce
-    critdamage+
-    critchance+
-    freezechance+
+    kick bombs
     bullet explode
 
 

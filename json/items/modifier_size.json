@@ -1,0 +1,9 @@
+{
+    "name": "size boost",
+    "description": "boosts bullet size",
+    "location": "weapons/modifiers/bullets/size.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

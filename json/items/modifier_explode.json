@@ -1,0 +1,9 @@
+{
+    "name": "explode",
+    "description": "bullets that explode on impact",
+    "location": "weapons/modifiers/bullets/explode.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

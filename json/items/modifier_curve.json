@@ -1,0 +1,9 @@
+{
+    "name": "curve",
+    "description": "bullets that curve",
+    "location": "weapons/modifiers/bullets/curve.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

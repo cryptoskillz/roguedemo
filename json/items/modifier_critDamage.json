@@ -1,0 +1,9 @@
+{
+    "name": "Critical Damage",
+    "description": "bullets that deal more damage on critical hits",
+    "location": "weapons/modifiers/bullets/critDamage.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

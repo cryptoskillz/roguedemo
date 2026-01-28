@@ -1,0 +1,9 @@
+{
+    "name": "speed boost",
+    "description": "boosts bullet speed",
+    "location": "weapons/modifiers/bullets/speed.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

@@ -1,0 +1,9 @@
+{
+    "name": "Critical Chance",
+    "description": "bullets that deal more damage on critical hits",
+    "location": "weapons/modifiers/bullets/critChance.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

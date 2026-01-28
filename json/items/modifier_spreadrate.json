@@ -1,0 +1,9 @@
+{
+    "name": "spread rate boost",
+    "description": "boosts bullet spread rate",
+    "location": "weapons/modifiers/bullets/spreadrate.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

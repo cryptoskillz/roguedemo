@@ -1,0 +1,9 @@
+{
+    "name": "damage boost",
+    "description": "boosts bullet damage",
+    "location": "weapons/modifiers/bullets/damage.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

@@ -1,5 +1,5 @@
 {
-    "name": "fire rate -0.1",
+    "name": "Fire Rate -0.1",
     "description": "decreases fire rate by 0.1",
     "location": "weapons/modifiers/bullets/decreasefirerate.json",
     "type": "modifier",

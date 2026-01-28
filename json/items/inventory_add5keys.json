@@ -1,0 +1,9 @@
+{
+    "name": "Key +5",
+    "description": "Adds 5 keys to your inventory",
+    "location": "weapons/inventory/key/add5.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "legendary"
+}

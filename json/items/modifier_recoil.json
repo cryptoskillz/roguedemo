@@ -1,0 +1,9 @@
+{
+    "name": "Recoil",
+    "description": "Increase the recoil of the gun",
+    "location": "weapons/modifiers/bullets/recoil.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

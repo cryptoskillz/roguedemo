@@ -1,0 +1,7 @@
+{
+    "modify": "gun",
+    "colour": "#000000",
+    "modifiers": {
+        "speed": "+1"
+    }
+}

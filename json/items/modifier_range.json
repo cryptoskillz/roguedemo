@@ -1,0 +1,9 @@
+{
+    "name": "range boost",
+    "description": "boosts bullet range",
+    "location": "weapons/modifiers/bullets/range.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}

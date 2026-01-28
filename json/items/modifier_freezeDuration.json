@@ -1,0 +1,9 @@
+{
+    "name": "Freeze Duration",
+    "description": "bullets that freeze enemies for longer",
+    "location": "weapons/modifiers/bullets/freezeDuration.json",
+    "type": "modifier",
+    "starter": false,
+    "consumed": true,
+    "rarity": "uncommon"
+}
