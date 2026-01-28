@@ -33,7 +33,7 @@
         "range": 100,
         "curve": 0,
         "spreadRate": 1,
-        "number": 1,
+        "number": 5,
         "recoil": 0,
         "homing": false,
         "fireRate": 0.5,

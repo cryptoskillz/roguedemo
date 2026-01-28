@@ -615,13 +615,26 @@ async function initGame(isRestart = false) {
             log(`Found ${allItems.length} total items. Spawning ${starters.length} floor items.`);
 
             // Spawn them in a row
+            // Spawn them in a grid within safe margins
+            const marginX = canvas.width * 0.2;
+            const marginY = canvas.height * 0.2;
+            const safeW = canvas.width - (marginX * 2);
+            const itemSpacing = 80;
+            const cols = Math.floor(safeW / itemSpacing);
+
             starters.forEach((item, idx) => {
+                const c = idx % cols;
+                const r = Math.floor(idx / cols);
+
                 groundItems.push({
-                    x: 250 + (idx * 80),
-                    y: 350,
+                    x: marginX + (c * itemSpacing) + (itemSpacing / 2),
+                    y: marginY + (r * itemSpacing) + (itemSpacing / 2),
                     data: item,
                     roomX: 0,
                     roomY: 0,
+                    // Add physics properties immediately
+                    vx: 0, vy: 0,
+                    solid: true, moveable: true, friction: 0.9, size: 15,
                     floatOffset: Math.random() * 100
                 });
             });
@@ -3405,8 +3418,19 @@ async function pickupItem(item, index) {
             // Drop Helper
             const oldName = player.gunType;
             if (oldName) {
+                // CLAMP DROP POSITION (20% margin)
+                const marginX = canvas.width * 0.2;
+                const marginY = canvas.height * 0.2;
+                let dropX = player.x;
+                let dropY = player.y;
+
+                if (dropX < marginX) dropX = marginX;
+                if (dropX > canvas.width - marginX) dropX = canvas.width - marginX;
+                if (dropY < marginY) dropY = marginY;
+                if (dropY > canvas.height - marginY) dropY = canvas.height - marginY;
+
                 groundItems.push({
-                    x: player.x, y: player.y,
+                    x: dropX, y: dropY,
                     roomX: player.roomX, roomY: player.roomY,
                     vx: (Math.random() - 0.5) * 5, // Random pop
                     vy: (Math.random() - 0.5) * 5,
@@ -3447,8 +3471,19 @@ async function pickupItem(item, index) {
             // Drop Helper
             const oldName = player.bombType;
             if (oldName) {
+                // CLAMP DROP POSITION (20% margin)
+                const marginX = canvas.width * 0.2;
+                const marginY = canvas.height * 0.2;
+                let dropX = player.x;
+                let dropY = player.y;
+
+                if (dropX < marginX) dropX = marginX;
+                if (dropX > canvas.width - marginX) dropX = canvas.width - marginX;
+                if (dropY < marginY) dropY = marginY;
+                if (dropY > canvas.height - marginY) dropY = canvas.height - marginY;
+
                 groundItems.push({
-                    x: player.x, y: player.y,
+                    x: dropX, y: dropY,
                     roomX: player.roomX, roomY: player.roomY,
                     vx: (Math.random() - 0.5) * 5,
                     vy: (Math.random() - 0.5) * 5,
@@ -3499,8 +3534,13 @@ async function pickupItem(item, index) {
             }
             if (mods.hp !== undefined) {
                 const val = parseFloat(mods.hp);
+                const maxHp = player.maxHp || 3;
                 if (!isNaN(val)) {
-                    const maxHp = player.maxHp || 3;
+                    // Prevent pickup if healing and already full
+                    if (val > 0 && player.hp >= maxHp) {
+                        log("Health Full!");
+                        return; // Cancel pickup (item stays on ground)
+                    }
                     player.hp = Math.min(player.hp + val, maxHp);
                     log(`HP: ${val > 0 ? '+' : ''}${val} (Max: ${maxHp})`);
                 }

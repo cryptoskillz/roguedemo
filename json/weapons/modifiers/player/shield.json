@@ -1,6 +1,10 @@
 {
-    "colour": "#000000",
-    "description": "the Basic shield",
+    "name": "Shield",
+    "description": "The Basic Shield",
     "modify": "player",
-    "shield.regenActive": false
+    "colour": "#0000ff",
+    "modifiers": {
+        "shield.active": true,
+        "shield.regenActive": false
+    }
 }
