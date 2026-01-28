@@ -506,7 +506,12 @@ const DEBUG_START_BOSS = false; // TOGGLE THIS FOR DEBUGGING
 const DEBUG_PLAYER = true;
 const CHEATS_ENABLED = false;
 const DEBUG_WINDOW_ENABLED = false;
-const DEBUG_SPAWN_ALL_ITEMS = true;
+const DEBUG_SPAWN_ALL_ITEMS = false; // Master Switch (Overrides others if true)
+const DEBUG_SPAWN_GUNS = false;
+const DEBUG_SPAWN_BOMBS = false;
+const DEBUG_SPAWN_INVENTORY = false;
+const DEBUG_SPAWN_MODS_PLAYER = false;
+const DEBUG_SPAWN_MODS_BULLET = true;
 
 let musicMuted = false;
 let lastMKeyTime = 0;
@@ -614,7 +619,40 @@ async function initGame(isRestart = false) {
             // Filter starters
             // Legacy: Previously spawned all 'starter:false' items.
             // NOW: Only spawn if DEBUG flag is set.
-            const starters = DEBUG_SPAWN_ALL_ITEMS ? allItems : [];
+            // Filter starters
+            // Legacy: Previously spawned all 'starter:false' items.
+            // NOW: Spawn based on granular DEBUG flags.
+            const starters = allItems.filter(i => {
+                if (!i) return false;
+
+                // 1. Explicitly enabled by ALL flag
+                if (DEBUG_SPAWN_ALL_ITEMS) return true;
+
+                // 2. Category Checks
+                const isGun = i.type === 'gun';
+                const isBomb = i.type === 'bomb';
+                const isMod = i.type === 'modifier';
+                const loc = (i.location || "").toLowerCase();
+
+                // Inventory (Keys/Bombs/Consumables) - often identified by path or lack of "modifier" type?
+                // Actually user defines them as type="modifier" usually. 
+                // Let's look for "inventory" in path.
+                const isInventory = isMod && loc.includes('inventory');
+
+                // Player Mods (Stats, Shields)
+                const isPlayerMod = isMod && loc.includes('modifiers/player') && !isInventory;
+
+                // Bullet Mods (Homing, FireRate, etc)
+                const isBulletMod = isMod && loc.includes('modifiers/bullets');
+
+                if (DEBUG_SPAWN_GUNS && isGun) return true;
+                if (DEBUG_SPAWN_BOMBS && isBomb) return true;
+                if (DEBUG_SPAWN_INVENTORY && isInventory) return true;
+                if (DEBUG_SPAWN_MODS_PLAYER && isPlayerMod) return true;
+                if (DEBUG_SPAWN_MODS_BULLET && isBulletMod) return true;
+
+                return false;
+            });
             log(`Found ${allItems.length} total items. Spawning ${starters.length} floor items.`);
 
             // Spawn them in a row
@@ -1792,27 +1830,42 @@ function spawnRoomRewards(dropConfig) {
                 for (let i = 0; i < count; i++) {
                     const item = candidates[Math.floor(Math.random() * candidates.length)];
 
-                    // Drop Logic (Clamp to Safe Zone)
+                    // Drop Logic (Clamp to Safe Zone & Prevent Overlap)
                     const marginX = canvas.width * 0.2;
                     const marginY = canvas.height * 0.2;
                     const safeW = canvas.width - (marginX * 2);
                     const safeH = canvas.height - (marginY * 2);
 
-                    const dropX = marginX + Math.random() * safeW;
-                    const dropY = marginY + Math.random() * safeH;
+                    let dropX, dropY;
+                    let valid = false;
+                    const minDist = 40; // Avoid overlapping items
+
+                    for (let attempt = 0; attempt < 10; attempt++) {
+                        dropX = marginX + Math.random() * safeW;
+                        dropY = marginY + Math.random() * safeH;
+
+                        // Check collision with existing items in this room
+                        const overlap = groundItems.some(existing => {
+                            if (existing.roomX !== player.roomX || existing.roomY !== player.roomY) return false;
+                            const dx = dropX - existing.x;
+                            const dy = dropY - existing.y;
+                            return Math.hypot(dx, dy) < minDist;
+                        });
+
+                        if (!overlap) {
+                            valid = true;
+                            break;
+                        }
+                    }
 
                     groundItems.push({
-                        x: dropX,
-                        y: dropY,
+                        x: dropX, y: dropY,
                         data: item,
-                        roomX: player.roomX,
-                        roomY: player.roomY,
+                        roomX: player.roomX, roomY: player.roomY,
                         vx: (Math.random() - 0.5) * 5,
                         vy: (Math.random() - 0.5) * 5,
                         friction: 0.9,
-                        solid: true,
-                        moveable: true,
-                        size: 15,
+                        solid: true, moveable: true, size: 15,
                         floatOffset: Math.random() * 100
                     });
                 }
