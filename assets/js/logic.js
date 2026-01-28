@@ -1782,7 +1782,8 @@ function spawnRoomRewards(dropConfig) {
         if (Math.random() < (conf.dropChance || 0)) {
             // Find items of this rarity
             // Ensure we handle case sensitivity if needed, usually lowercase.
-            const candidates = window.allItemTemplates.filter(i => (i.rarity || 'common').toLowerCase() === rarity.toLowerCase());
+            // Exclude STARTER items (starter: true) from loot pool
+            const candidates = window.allItemTemplates.filter(i => (i.rarity || 'common').toLowerCase() === rarity.toLowerCase() && i.starter === false);
 
             if (candidates.length > 0) {
                 const count = conf.count || 1;
