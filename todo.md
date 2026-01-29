@@ -22,6 +22,7 @@ bugs
     update game.json vars to implemnt various switches   
     use bonuses from game.json to reward the user they should be 100% and these 
     should be considered as special binuses
+    special items should get from a special folder in items
 
 
 next up 

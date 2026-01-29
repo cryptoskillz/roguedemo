@@ -29,79 +29,91 @@
         "key": {
             "common": {
                 "count": 1,
-                "dropChance": 0.1
+                "dropChance": 1
             },
             "uncommon": {
                 "count": 1,
-                "dropChance": 0
+                "dropChance": 0.1
             },
             "rare": {
                 "count": 1,
-                "dropChance": 0
+                "dropChance": 0.1
             },
             "legendary": {
-                "count": 1,
-                "dropChance": 1
+                "count": 0,
+                "dropChance": 0
+            },
+            "special": {
+                "item": ""
             }
         },
         "room": {
             "common": {
                 "count": 1,
-                "dropChance": 0.1
+                "dropChance": 1
             },
             "uncommon": {
-                "count": 1,
-                "dropChance": 0
+                "count": 0,
+                "dropChance": 0.1
             },
             "rare": {
-                "count": 1,
-                "dropChance": 0
+                "count": 0,
+                "dropChance": 0.1
             },
             "legendary": {
                 "count": 1,
                 "dropChance": 1
+            },
+            "special": {
+                "item": ""
             }
         },
         "perfect": {
             "common": {
                 "count": 1,
-                "dropChance": 0.1
+                "dropChance": 1
             },
             "uncommon": {
                 "count": 1,
-                "dropChance": 0
+                "dropChance": 0.4
             },
             "rare": {
-                "count": 1,
+                "count": 0,
                 "dropChance": 0
             },
             "legendary": {
                 "count": 1,
-                "dropChance": 1
+                "dropChance": 0.1
+            },
+            "special": {
+                "item": ""
             }
         },
         "speedy": {
             "common": {
                 "count": 1,
-                "dropChance": 0.1
+                "dropChance": 1
             },
             "uncommon": {
                 "count": 1,
-                "dropChance": 0
+                "dropChance": 0.4
             },
             "rare": {
-                "count": 1,
+                "count": 0,
                 "dropChance": 0
             },
             "legendary": {
                 "count": 1,
-                "dropChance": 1
+                "dropChance": 0.1
+            },
+            "special": {
+                "item": ""
             }
         },
         "ghost": {
             "common": {
                 "count": 1,
-                "dropChance": 0.1
+                "dropChance": 0
             },
             "uncommon": {
                 "count": 1,
@@ -114,7 +126,10 @@
             "legendary": {
                 "count": 1,
                 "dropChance": 1
+            },
+            "special": {
+                "item": ""
             }
-        },
+        }
     }
 }
