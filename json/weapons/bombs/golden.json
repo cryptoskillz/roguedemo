@@ -37,7 +37,7 @@
         "key": "space"
     },
     "canInteract": {
-        "active": true,
+        "active": false,
         "type": "kick",
         "distance": 100,
         "explodeOnImpact": true

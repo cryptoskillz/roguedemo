@@ -2,6 +2,7 @@
     "bombs": [
         "normal",
         "golden",
-        "red"
+        "red",
+        "remote"
     ]
 }

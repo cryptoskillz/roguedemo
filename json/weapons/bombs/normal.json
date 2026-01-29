@@ -7,9 +7,19 @@
     "damage": 2,
     "fireRate": 0.1,
     "canShoot": false,
-    "timer": 3000,
+    "timer": {
+        "active": true,
+        "show": true,
+        "time": 3000
+    },
     "maxDrop": 3,
     "solid": true,
+    "moveable": true,
+    "physics": {
+        "friction": 0.9,
+        "mass": 1.5,
+        "restitution": 0.5
+    },
     "remoteDenoate": {
         "active": false,
         "key": "space"
@@ -26,7 +36,7 @@
         "openSecretRooms": true
     },
     "canInteract": {
-        "active": true,
+        "active": false,
         "type": "kick",
         "distance": 100,
         "explodeOnImpact": false

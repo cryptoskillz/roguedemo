@@ -44,6 +44,6 @@
     "gunType": "peashooter",
     "inventory": {
         "keys": 1,
-        "bombs": 1
+        "bombs": 10
     }
 }

@@ -1,6 +1,5 @@
 bugs
-    if music has been toggled off it shouldnt turn back on on restart / going back to main menu*
-    the enemies get stuck they should work their way around obstacles this is showign right now with bombs
+  
     solid false does make you invul when you are hit  
     check freezeDuration works below 1 second.  
     if ghost appears and hyou leave a room with enemies when you go back only the ghost remaims 

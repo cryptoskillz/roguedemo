@@ -1368,6 +1368,32 @@ async function dropBomb() {
             id: crypto.randomUUID ? crypto.randomUUID() : String(Math.random()),
             triggeredBy: null,
         });
+
+        // --- NUDGE LOGIC ---
+        // If we spawned inside an enemy, push it out!
+        const lastBomb = bombs[bombs.length - 1];
+        enemies.forEach(en => {
+            if (en.isDead) return;
+            const dx = lastBomb.x - en.x;
+            const dy = lastBomb.y - en.y;
+            const dist = Math.hypot(dx, dy);
+            // Check overlap
+            if (dist < (lastBomb.baseR || 15) + en.size) {
+                // Push Away
+                const pushForce = 5.0; // Strong nudge
+                if (dist > 0) {
+                    lastBomb.vx += (dx / dist) * pushForce;
+                    lastBomb.vy += (dy / dist) * pushForce;
+                } else {
+                    // Perfectly centered? Randomize
+                    lastBomb.vx += (Math.random() - 0.5) * pushForce;
+                    lastBomb.vy += (Math.random() - 0.5) * pushForce;
+                }
+                log("Bomb nuked away from enemy overlap!");
+            }
+        });
+
+        SFX.click(0.1);
         player.lastBomb = Date.now();
         return true;
     }
@@ -2557,38 +2583,80 @@ function updateEnemies() {
         }
 
         // 2. Frozen/Movement Logic
+        // 2. Frozen/Movement Logic
         if (!en.frozen) {
-            let ang = Math.atan2(player.y - en.y, player.x - en.x);
-            let nextX = en.x + Math.cos(ang) * en.speed;
-            let nextY = en.y + Math.sin(ang) * en.speed;
+            // --- STEERING BEHAVIORS ---
+            // 1. Seek Player (Base desire)
+            let dx = player.x - en.x;
+            let dy = player.y - en.y;
+            const distToPlayer = Math.hypot(dx, dy);
 
-            // Simple check against solid bombs
-            // Collision Check Helper
-            const isBlocked = (tx, ty) => {
-                let blocked = false;
-                for (const b of bombs) {
-                    if (b.solid && !b.exploding) {
-                        if (Math.hypot(tx - b.x, ty - b.y) < en.size + (b.baseR || 15)) {
-                            return true;
+            let dirX = 0;
+            let dirY = 0;
+
+            if (distToPlayer > 0) {
+                dirX = dx / distToPlayer;
+                dirY = dy / distToPlayer;
+            }
+
+            // 2. Avoid Obstacles (Bombs)
+            // Push away from bombs that are close
+            const AVOID_WEIGHT = 4.0; // Strong repulsion
+            const DETECT_RADIUS = 50; // How early to start turning
+
+            for (const b of bombs) {
+                if (b.solid && !b.exploding) {
+                    const bdx = en.x - b.x;
+                    const bdy = en.y - b.y;
+                    const bDist = Math.hypot(bdx, bdy);
+                    const minDist = en.size + (b.baseR || 15);
+                    const checkDist = minDist + DETECT_RADIUS;
+
+                    if (bDist < checkDist) {
+                        // Calculate repulsion force
+                        // The closer we are, the stronger the push
+                        // Prevent divide by zero
+                        const pushFactor = (checkDist - bDist) / checkDist; // 0 to 1
+
+                        if (bDist > 0) {
+                            dirX += (bdx / bDist) * pushFactor * AVOID_WEIGHT;
+                            dirY += (bdy / bDist) * pushFactor * AVOID_WEIGHT;
                         }
                     }
                 }
-                return false;
-            };
+            }
 
-            if (!isBlocked(nextX, nextY)) {
-                en.x = nextX;
-                en.y = nextY;
-            } else {
-                // Try sliding X
-                if (!isBlocked(nextX, en.y)) {
+            // 3. Normalize and Apply Speed
+            const finalMag = Math.hypot(dirX, dirY);
+            if (finalMag > 0) {
+                const vx = (dirX / finalMag) * en.speed;
+                const vy = (dirY / finalMag) * en.speed;
+
+                // 4. Hard Collision Check (Fallback)
+                // Even with steering, we might hit a wall if trapped.
+                // Maintain the slide logic for the final step.
+                const isBlocked = (tx, ty) => {
+                    for (const b of bombs) {
+                        if (b.solid && !b.exploding) {
+                            if (Math.hypot(tx - b.x, ty - b.y) < en.size + (b.baseR || 15)) return true;
+                        }
+                    }
+                    return false;
+                };
+
+                const nextX = en.x + vx;
+                const nextY = en.y + vy;
+
+                if (!isBlocked(nextX, nextY)) {
                     en.x = nextX;
-                }
-                // Try sliding Y
-                else if (!isBlocked(en.x, nextY)) {
                     en.y = nextY;
+                } else {
+                    // Try sliding
+                    if (!isBlocked(nextX, en.y)) en.x = nextX;
+                    else if (!isBlocked(en.x, nextY)) en.y = nextY;
                 }
             }
+
         } else if (!isRoomFrozen && now > en.freezeEnd) { // Only wake up if room is NOT frozen by game event
             en.frozen = false;
             en.invulnerable = false; // Clear invulnerability when they wake up

@@ -9,6 +9,7 @@
         "bomb_normal",
         "bomb_golden",
         "bomb_red",
+        "bomb_remote",
         "modifier_addhp",
         "modifier_addmaxhp",
         "modifier_shield",
