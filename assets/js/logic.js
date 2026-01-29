@@ -2674,6 +2674,24 @@ function updateEnemies() {
         // 3. Player Collision
         const distToPlayer = Math.hypot(player.x - en.x, player.y - en.y);
         if (distToPlayer < en.size + player.size) {
+
+            // --- THORNS LOGIC: Damage enemy on contact ---
+            // Damage is half of the current gun's per-bullet damage
+            const baseDmg = gun.Bullet?.damage || 1;
+            const thornsDmg = baseDmg / 2;
+
+            if (thornsDmg > 0) {
+                en.hp -= thornsDmg;
+                en.hitTimer = 5; // Visual flash
+
+                if (en.hp <= 0 && !en.isDead) {
+                    en.isDead = true;
+                    en.deathTimer = 30; // Fade out
+                    log(`Enemy killed by contact damage (Thorns): ${en.type}`);
+                    if (en.type === 'boss') SFX.explode(0.5);
+                }
+            }
+
             playerHit(en, true, true, true);
         }
 
@@ -2796,10 +2814,11 @@ function updateGhost() {
     // DELAY: If enemies are still alive (locking the room), hold the timer at zero.
     // This allows the player to fight without the ghost timer ticking down.
     // Check purely for combat enemies to avoid circular dependency with isRoomLocked()
+    // EXCEPTION: If ghostEntry is set (ghost is following), we IGNORE this check and spawn immediately.
     const aliveEnemies = enemies.filter(en => !en.isDead);
     const combatMock = aliveEnemies.filter(en => en.type !== 'ghost');
 
-    if (combatMock.length > 0) {
+    if (!ghostEntry && combatMock.length > 0) {
         roomStartTime = now;
         return;
     }

@@ -1,23 +1,25 @@
 bugs
-    reload gun when you enter a new room should not reset
-    if an enemy hits you do they take damage?
+    angry enemies do not restart on new game
+    enemies should move through ghost enemies and try not stay inside them 
+    items should moce away from doors when they are pushed as they cannot be picked up
+    when you reenter the guardian room it shows the intro 
+
     rooom bonus item drop
     speedy item drop
     perfect item drop
-    angry enemies do not restart on new game
-    enemies should move through ghost enemies and try not stay inside them 
     360 modifier does not work
-    items should moce away from doors when they are pushed as they cannot be picked up
     explode modifier does not work  
     update game.json vars to implemnt various switches   
     use bonuses from game.json to reward the user they should be 100% and these 
     should be considered as special binuses
     special items should get from a special folder in items
-    when you reenter the guardian room it shows the intro 
     dont spawn items on top of one another*
 
 
+ghost
 
+if you go through multiple room and back track you will see multiple ghosts
+if you leave a room and come back the ghost should be the same place + closer to you basedo on the speed the ghost moves. 
 
 level plan
 
@@ -82,7 +84,7 @@ server
 
 items
     solid false
-    coin item
+    coin item :
     start room in a 10000 chance to drop a legendary item 
     room bonus
     key bonus
