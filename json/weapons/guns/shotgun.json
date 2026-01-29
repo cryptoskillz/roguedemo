@@ -9,8 +9,8 @@
         },
         "colour": "#fff000",
         "ammo": {
-            "active": false,
-            "type": "finite",
+            "active": true,
+            "type": "recharge",
             "resetTimer": 1000,
             "amount": 10,
             "maxAmount": 50

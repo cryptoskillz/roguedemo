@@ -270,7 +270,7 @@ async function updateUI() {
     //console.log(gun);
     if (gun.Bullet?.ammo?.active) {
         if (player.reloading) {
-            ammoEl.innerText = player.ammoMode === 'recharge' ? "RECHARGING..." : "RELOADING...";
+            ammoEl.innerText = player.ammoMode === 'recharge' ? player.ammo : "RELOADING...";
             ammoEl.style.color = "red";
         } else {
             if ((player.ammo <= 0 && player.ammoMode === 'finite') ||
