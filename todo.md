@@ -28,9 +28,22 @@ next up
     debug window
     enemies
     rooms
+    server
     levels
 
+server
+    store game data
+    store permaant unlocks 
+    store permant modiifers
+
 items
+    room bonus
+    key bonus
+    speedy bonus
+    perfect bonus
+    inventory screen
+    inventory screen should show the items that are unlocked
+    only drop items that are unlocked
     shield+
     speed+
     luck+

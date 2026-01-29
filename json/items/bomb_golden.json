@@ -7,6 +7,10 @@
     "type": "bomb",
     "starter": false,
     "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
     "modifier": {
         "active": false,
         "modify": ""
