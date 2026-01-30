@@ -1,8 +1,4 @@
 bugs
-    explode modifier does not work  
-    update game.json vars to implemnt various switches   
-    should be considered as special binuses
-    special items should get from a special folder in items
     if you hit a frozen enemy when you enter a room you can cause it damage
    
 
@@ -171,6 +167,8 @@ logic
     reload gun / bomb when they pick up a new item
     if you get hit perfect bonus will reset 
     show gun name in the UI
+    update game.json vars to implemnt various switches   
+
 
 bombs
     add an explode on enemy / anything 
