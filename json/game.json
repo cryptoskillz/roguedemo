@@ -30,11 +30,11 @@
             "maxDrop": 1,
             "common": {
                 "count": 1,
-                "dropChance": 1
+                "dropChance": 0.3
             },
             "uncommon": {
                 "count": 1,
-                "dropChance": 0.1
+                "dropChance": 0.2
             },
             "rare": {
                 "count": 1,
@@ -51,20 +51,20 @@
         "startroom": {
             "maxDrop": 1,
             "common": {
-                "count": 1,
-                "dropChance": 1
+                "count": 0,
+                "dropChance": 0
             },
             "uncommon": {
-                "count": 1,
-                "dropChance": 1
+                "count": 0,
+                "dropChance": 0
             },
             "rare": {
-                "count": 1,
-                "dropChance": 1
+                "count": 0,
+                "dropChance": 0
             },
             "legendary": {
                 "count": 1,
-                "dropChance": 1
+                "dropChance": 0.01
             },
             "special": {
                 "item": ""
@@ -133,7 +133,7 @@
                 "dropChance": 1
             },
             "special": {
-                "item": ""
+                "item": "/items/gun_ghost.json"
             }
         }
     }

@@ -2938,7 +2938,6 @@ function updateEnemies() {
                         bossKilled = true;
 
                         // Reset all visited rooms (except current boss room) to force respawns
-                        // Reset all visited rooms (except current boss room) to force respawns
                         Object.keys(visitedRooms).forEach(key => {
                             if (key !== `${player.roomX},${player.roomY}`) {
                                 // 1. Do NOT delete visitedRooms. This keeps the minimap visible (Fog of War cleared).
@@ -2957,6 +2956,51 @@ function updateEnemies() {
                                 }
                             }
                         });
+                    } else if (en.type === 'ghost') {
+                        log("Ghost Defeated!");
+                        // GHOST BONUS
+                        if (gameData.bonuses && gameData.bonuses.ghost) {
+                            // 1. Standard Drops (Common/Uncommon etc)
+                            const dropped = spawnRoomRewards(gameData.bonuses.ghost, "GHOST BONUS");
+                            if (dropped) {
+                                perfectEl.innerText = "GHOST BONUS!";
+                                triggerPerfectText();
+                            }
+
+                            // 2. Special Guaranteed Item
+                            const specialPath = gameData.bonuses.ghost.special?.item;
+                            if (specialPath && specialPath.length > 0) {
+                                (async () => {
+                                    try {
+                                        // Assume path is relative to json root or absolute. 
+                                        // User example: "/items/gun_ghost.json"
+                                        // fetch url: "json" + path
+                                        const url = "json" + (specialPath.startsWith('/') ? specialPath : '/' + specialPath);
+                                        const res = await fetch(`${url}?t=${Date.now()}`);
+                                        if (res.ok) {
+                                            const itemData = await res.json();
+                                            // Spawn it
+                                            groundItems.push({
+                                                x: en.x, y: en.y,
+                                                data: itemData, // The fetched JSON becomes the item data
+                                                roomX: player.roomX, roomY: player.roomY,
+                                                vx: (Math.random() - 0.5) * 5,
+                                                vy: (Math.random() - 0.5) * 5,
+                                                friction: 0.9,
+                                                solid: true, moveable: true, size: 15,
+                                                floatOffset: Math.random() * 100
+                                            });
+                                            log("Spawned Special Ghost Item:", itemData.name);
+                                            spawnFloatingText(en.x, en.y - 40, "SPECIAL DROP!", "#e74c3c");
+                                        } else {
+                                            log("Failed to fetch special ghost item:", url);
+                                        }
+                                    } catch (e) {
+                                        console.error("Error spawning special ghost item:", e);
+                                    }
+                                })();
+                            }
+                        }
                     }
 
                     // Optional: Visual cue?

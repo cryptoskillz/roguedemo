@@ -1,4 +1,5 @@
 bugs
+    kill the ghost for a hell of a gun
     360 modifier does not work
     explode modifier does not work  
     update game.json vars to implemnt various switches   
@@ -57,6 +58,7 @@ the unpicked up items stay in the starting room and the game begins proper at th
 
 level 4 is golcen path maze (it will say room name followed by dejavu)
 level 5 is harder level one
+level 6 ghost chase
 level 6 is crazy rooms
 level 7 is boss rush
 level 8 unlocks permanance (if enable permeane mode you can do the sweet modifiers but the whole game becomes harder as a result)
