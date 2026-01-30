@@ -549,7 +549,7 @@ const DOOR_THICKNESS = 15;
 const DEBUG_START_BOSS = false; // TOGGLE THIS FOR DEBUGGING
 const DEBUG_PLAYER = true;
 const CHEATS_ENABLED = false;
-const DEBUG_WINDOW_ENABLED = true;
+const DEBUG_WINDOW_ENABLED = false;
 const DEBUG_SPAWN_ALL_ITEMS = false; // Master Switch (Overrides others if true)
 const DEBUG_SPAWN_GUNS = false;
 const DEBUG_SPAWN_BOMBS = false;
@@ -1886,7 +1886,7 @@ function updateRoomLock() {
     }
 }
 
-function spawnRoomRewards(dropConfig) {
+function spawnRoomRewards(dropConfig, label = null) {
     if (!window.allItemTemplates) return;
 
     // Iterate rarities (uncommon, common, rare, legendary)
@@ -1946,6 +1946,11 @@ function spawnRoomRewards(dropConfig) {
                         solid: true, moveable: true, size: 15,
                         floatOffset: Math.random() * 100
                     });
+
+                    // If a label was passed (e.g. "KEY BONUS"), show it!
+                    if (label) {
+                        spawnFloatingText(dropX, dropY - 20, label, "#FFD700"); // Gold text
+                    }
                 }
             } else {
                 // log(`No candidates found for rarity: ${rarity}`);

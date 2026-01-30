@@ -1,5 +1,4 @@
 bugs
-    show the pick up item like we see "speedy bonus etc" when you pick up an item [DONE]
     rooom bonus item drop
     speedy item drop
     perfect item drop
@@ -8,6 +7,7 @@ bugs
     update game.json vars to implemnt various switches   
     use bonuses from game.json to reward the user they should be 100% and these 
     should be considered as special binuses
+    // key bonus [DONE]
     special items should get from a special folder in items
     dont spawn items on top of one another*
    
