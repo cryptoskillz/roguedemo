@@ -1246,17 +1246,19 @@ function changeRoom(dx, dy) {
         // Immediate Room Bonus if key used
         // Immediate Room Bonus if key used (First visit only)
         if (keyUsedForRoom && !levelMap[nextCoord].bonusAwarded) {
-            const baseChance = roomData.keyBonus !== undefined ? roomData.keyBonus : 1.0;
-            const finalChance = baseChance + (player.luck || 0);
-            log(`Bonus Roll - Base: ${baseChance}, Luck: ${player.luck}, Final: ${finalChance}`);
-            if (Math.random() < finalChance) {
-                levelMap[nextCoord].bonusAwarded = true; // Mark bonus as awarded
-                perfectEl.innerText = "ROOM BONUS!";
-                perfectEl.style.display = 'block';
-                perfectEl.style.animation = 'none';
-                perfectEl.offsetHeight; /* trigger reflow */
-                perfectEl.style.animation = null;
-                setTimeout(() => perfectEl.style.display = 'none', 2000);
+            // Use game.json bonuses.key config
+            if (gameData.bonuses && gameData.bonuses.key) {
+                const dropped = spawnRoomRewards(gameData.bonuses.key); // Try to spawn rewards
+
+                if (dropped) {
+                    levelMap[nextCoord].bonusAwarded = true; // Mark bonus as awarded
+                    perfectEl.innerText = "KEY BONUS!"; // Renamed from Room Bonus
+                    perfectEl.style.display = 'block';
+                    perfectEl.style.animation = 'none';
+                    perfectEl.offsetHeight; /* trigger reflow */
+                    perfectEl.style.animation = null;
+                    setTimeout(() => perfectEl.style.display = 'none', 2000);
+                }
             }
         }
 
@@ -1887,7 +1889,8 @@ function updateRoomLock() {
 }
 
 function spawnRoomRewards(dropConfig, label = null) {
-    if (!window.allItemTemplates) return;
+    if (!window.allItemTemplates) return false;
+    let anyDropped = false;
 
     // Iterate rarities (uncommon, common, rare, legendary)
     Object.keys(dropConfig).forEach(rarity => {
@@ -1947,6 +1950,8 @@ function spawnRoomRewards(dropConfig, label = null) {
                         floatOffset: Math.random() * 100
                     });
 
+                    anyDropped = true;
+
                     // If a label was passed (e.g. "KEY BONUS"), show it!
                     if (label) {
                         spawnFloatingText(dropX, dropY - 20, label, "#FFD700"); // Gold text
@@ -1957,6 +1962,8 @@ function spawnRoomRewards(dropConfig, label = null) {
             }
         }
     });
+
+    return anyDropped;
 }
 
 function drawShake() {

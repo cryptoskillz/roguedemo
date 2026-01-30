@@ -8,8 +8,10 @@ bugs
     use bonuses from game.json to reward the user they should be 100% and these 
     should be considered as special binuses
     // key bonus [DONE]
+    // key bonus text update and pool link [DONE]
     special items should get from a special folder in items
     dont spawn items on top of one another*
+    if you hit a frozen enemy when you enter a room you can cause it damage
    
 
 ghost
