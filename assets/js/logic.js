@@ -538,6 +538,96 @@ function renderDebugForm() {
         container.appendChild(loadBtn);
         debugForm.appendChild(container);
         return;
+    } else if (type === 'spawnEnemy') {
+        if (!enemyTemplates) {
+            debugForm.innerText = "No enemy templates loaded.";
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.style.padding = "10px";
+
+        const searchInput = document.createElement('input');
+        searchInput.placeholder = "Search enemies...";
+        searchInput.style.width = "100%";
+        searchInput.style.marginBottom = "10px";
+        searchInput.style.background = "#333";
+        searchInput.style.color = "#fff";
+        searchInput.style.border = "1px solid #555";
+
+        const select = document.createElement('select');
+        select.style.width = "100%";
+        select.style.marginBottom = "10px";
+        select.style.background = "#333";
+        select.style.color = "#fff";
+        select.style.border = "1px solid #555";
+        select.size = 10;
+
+        function populate(filter = "") {
+            select.innerHTML = "";
+            Object.keys(enemyTemplates).sort().forEach(key => {
+                const tmpl = enemyTemplates[key];
+                const name = tmpl.name || key || "Unknown";
+                if (filter && !name.toLowerCase().includes(filter.toLowerCase())) return;
+
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.innerText = `[${key}] ${name} (HP: ${tmpl.hp})`;
+                select.appendChild(opt);
+            });
+        }
+        populate();
+
+        searchInput.addEventListener('input', (e) => populate(e.target.value));
+
+        const spawnBtn = document.createElement('button');
+        spawnBtn.innerText = "SPAWN ENEMY";
+        spawnBtn.style.width = "100%";
+        spawnBtn.style.padding = "10px";
+        spawnBtn.style.background = "#e74c3c"; // Red for danger
+        spawnBtn.style.color = "white";
+        spawnBtn.style.border = "none";
+        spawnBtn.style.cursor = "pointer";
+        spawnBtn.style.fontWeight = "bold";
+
+        spawnBtn.onclick = () => {
+            const key = select.value;
+            if (!key) return;
+            const template = enemyTemplates[key];
+
+            // 1. Logic similar to spawnEnemies loop
+            const inst = JSON.parse(JSON.stringify(template));
+            // Find safe spot away from player
+            let safeX, safeY, dist;
+            let attempts = 0;
+            do {
+                safeX = 50 + Math.random() * (canvas.width - 100);
+                safeY = 50 + Math.random() * (canvas.height - 100);
+                dist = Math.hypot(safeX - player.x, safeY - player.y);
+                attempts++;
+            } while (dist < 200 && attempts < 20);
+
+            inst.x = safeX;
+            inst.y = safeY;
+
+            // Bounds check (redundant given above, but safe)
+            inst.x = Math.max(50, Math.min(canvas.width - 50, inst.x));
+            inst.y = Math.max(50, Math.min(canvas.height - 50, inst.y));
+
+            inst.currentHp = inst.hp;
+            inst.isDead = false;
+            inst.roomX = player.roomX;
+            inst.roomY = player.roomY;
+
+            enemies.push(inst);
+            log(`Spawned Enemy: ${inst.name || key}`);
+        };
+
+        container.appendChild(searchInput);
+        container.appendChild(select);
+        container.appendChild(spawnBtn);
+        debugForm.appendChild(container);
+        return;
     }
 
     const target = type === 'player' ? player : roomData;
