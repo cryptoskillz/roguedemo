@@ -48,6 +48,15 @@
         {
             "type": "tank",
             "count": 2
+        },
+        {
+            "type": "grunt_turret",
+            "count": 1,
+            "moveType": {
+                "type": "static",
+                "x": 0,
+                "y": 0
+            }
         }
     ]
 }

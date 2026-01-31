@@ -1338,8 +1338,40 @@ function spawnEnemies() {
             if (template) {
                 for (let i = 0; i < group.count; i++) {
                     const inst = JSON.parse(JSON.stringify(template));
-                    inst.x = Math.random() * (canvas.width - 60) + 30;
-                    inst.y = Math.random() * (canvas.height - 60) + 30;
+
+                    // MERGE moveType from Room Config (Override)
+                    if (group.moveType) {
+                        inst.moveType = { ...(inst.moveType || {}), ...group.moveType };
+                    }
+
+                    // Determine Spawn Position
+                    // User Rule: Use specified X/Y "unless its 0,0 then it will be ignored"
+                    // We check inst.moveType because we just merged it. 
+                    // Or specifically check the group override? User phrasing implies generic behavior.
+
+                    // Helper to check valid coord
+                    const mt = inst.moveType;
+                    let useFixed = false;
+                    let fixedX = 0;
+                    let fixedY = 0;
+
+                    if (mt && typeof mt === 'object') {
+                        if (mt.x !== undefined && mt.y !== undefined) {
+                            if (mt.x !== 0 || mt.y !== 0) {
+                                useFixed = true;
+                                fixedX = mt.x;
+                                fixedY = mt.y;
+                            }
+                        }
+                    }
+
+                    if (useFixed) {
+                        inst.x = fixedX;
+                        inst.y = fixedY;
+                    } else {
+                        inst.x = Math.random() * (canvas.width - 60) + 30;
+                        inst.y = Math.random() * (canvas.height - 60) + 30;
+                    }
                     inst.frozen = true;
                     inst.freezeEnd = freezeUntil;
                     inst.invulnerable = true;
@@ -3101,11 +3133,7 @@ function updateEnemies() {
         if (isRoomFrozen) {
             en.frozen = true;
             en.invulnerable = true;
-            // Visuals: Maybe draw them blue or static? handled in drawEnemies by frozen flag
         } else {
-            // Only unfreeze if we are NOT currently frozen by a bullet/effect
-            // If freezeEnd is set and we are still within it, keep frozen.
-            // If freezeEnd is undefined (room freeze legacy) or expired, unfreeze.
             const isEffectFrozen = en.freezeEnd && now < en.freezeEnd;
             if (!isEffectFrozen) {
                 en.frozen = false;
@@ -3114,311 +3142,195 @@ function updateEnemies() {
         }
 
         // 2. Frozen/Movement Logic
-        // 2. Frozen/Movement Logic
         if (!en.frozen) {
-            // --- STEERING BEHAVIORS ---
-            // 1. Seek Player (Base desire)
-            let dx = player.x - en.x;
-            let dy = player.y - en.y;
-            const distToPlayer = Math.hypot(dx, dy);
-
-            let dirX = 0;
-            let dirY = 0;
-
-            if (distToPlayer > 0) {
-                dirX = dx / distToPlayer;
-                dirY = dy / distToPlayer;
+            // --- STATIC MOVEMENT CHECK ---
+            let isStatic = false;
+            if (en.moveType) {
+                if (en.moveType === 'static') isStatic = true;
+                if (typeof en.moveType === 'object' && en.moveType.type === 'static') isStatic = true;
             }
 
-            // 2. Avoid Obstacles (Bombs)
-            // Push away from bombs that are close
-            const AVOID_WEIGHT = 4.0; // Strong repulsion
-            const DETECT_RADIUS = 50; // How early to start turning
+            if (!isStatic) {
+                // --- STEERING BEHAVIORS ---
+                // 1. Seek Player
+                let dx = player.x - en.x;
+                let dy = player.y - en.y;
+                const distToPlayer = Math.hypot(dx, dy);
+                let dirX = 0, dirY = 0;
 
-            for (const b of bombs) {
-                if (b.solid && !b.exploding) {
-                    const bdx = en.x - b.x;
-                    const bdy = en.y - b.y;
-                    const bDist = Math.hypot(bdx, bdy);
-                    const minDist = en.size + (b.baseR || 15);
-                    const checkDist = minDist + DETECT_RADIUS;
+                if (distToPlayer > 0.1) {
+                    dirX = dx / distToPlayer; dirY = dy / distToPlayer;
+                }
 
-                    if (bDist < checkDist) {
-                        // Calculate repulsion force
-                        // The closer we are, the stronger the push
-                        // Prevent divide by zero
-                        const pushFactor = (checkDist - bDist) / checkDist; // 0 to 1
-
-                        if (bDist > 0) {
-                            dirX += (bdx / bDist) * pushFactor * AVOID_WEIGHT;
-                            dirY += (bdy / bDist) * pushFactor * AVOID_WEIGHT;
+                // 2. Avoid Bombs
+                const AVOID_WEIGHT = 4.0;
+                for (const b of bombs) {
+                    if (b.solid && !b.exploding) {
+                        const bdx = en.x - b.x; const bdy = en.y - b.y;
+                        const bDist = Math.hypot(bdx, bdy);
+                        const safeDist = en.size + (b.baseR || 15) + 50;
+                        if (bDist < safeDist) {
+                            const push = (safeDist - bDist) / safeDist;
+                            if (bDist > 0) { dirX += (bdx / bDist) * push * AVOID_WEIGHT; dirY += (bdy / bDist) * push * AVOID_WEIGHT; }
                         }
                     }
                 }
-            }
 
-            // 3. Separation (Avoid Crowding)
-            const SEP_WEIGHT = 2.5;
-
-            enemies.forEach((other, oi) => {
-                if (ei === oi || other.isDead) return;
-
-                const dx = en.x - other.x;
-                const dy = en.y - other.y;
-                const dist = Math.hypot(dx, dy);
-
-                // Define a "personal space" slightly larger than physical size
-                const minDist = (en.size + other.size) * 0.8;
-                const checkDist = minDist + 20;
-
-                if (dist < checkDist) {
-                    if (dist === 0) {
-                        // Random push if exact overlap
-                        dirX += (Math.random() - 0.5) * SEP_WEIGHT * 5;
-                        dirY += (Math.random() - 0.5) * SEP_WEIGHT * 5;
-                    } else {
-                        const pushFactor = (checkDist - dist) / checkDist; // 1.0 at center, 0.0 at edge
-                        dirX += (dx / dist) * pushFactor * SEP_WEIGHT;
-                        dirY += (dy / dist) * pushFactor * SEP_WEIGHT;
+                // 3. Separation
+                const SEP_WEIGHT = 2.5;
+                enemies.forEach((other, oi) => {
+                    if (ei === oi || other.isDead) return;
+                    const odx = en.x - other.x; const ody = en.y - other.y;
+                    const odist = Math.hypot(odx, ody);
+                    const checkDist = (en.size + other.size) * 0.8 + 20;
+                    if (odist < checkDist) {
+                        if (odist === 0) { dirX += (Math.random() - 0.5) * 5; dirY += (Math.random() - 0.5) * 5; }
+                        else { const push = (checkDist - odist) / checkDist; dirX += (odx / odist) * push * SEP_WEIGHT; dirY += (ody / odist) * push * SEP_WEIGHT; }
                     }
-                }
-            });
+                });
 
-            // 4. Normalize and Apply Speed
-            const finalMag = Math.hypot(dirX, dirY);
-            if (finalMag > 0) {
-                const vx = (dirX / finalMag) * en.speed;
-                const vy = (dirY / finalMag) * en.speed;
+                // 4. Move
+                const finalMag = Math.hypot(dirX, dirY);
+                if (finalMag > 0) {
+                    const vx = (dirX / finalMag) * en.speed;
+                    const vy = (dirY / finalMag) * en.speed;
 
-                // 4. Hard Collision Check (Fallback)
-                // Even with steering, we might hit a wall if trapped.
-                // Maintain the slide logic for the final step.
-                const isBlocked = (tx, ty) => {
-                    for (const b of bombs) {
-                        if (b.solid && !b.exploding) {
-                            if (Math.hypot(tx - b.x, ty - b.y) < en.size + (b.baseR || 15)) return true;
-                        }
-                    }
-                    return false;
-                };
-
-                const nextX = en.x + vx;
-                const nextY = en.y + vy;
-
-                if (!isBlocked(nextX, nextY)) {
-                    en.x = nextX;
-                    en.y = nextY;
-                } else {
-                    // Try sliding
-                    if (!isBlocked(nextX, en.y)) en.x = nextX;
+                    // Collision Check
+                    const isBlocked = (tx, ty) => {
+                        for (const b of bombs) if (b.solid && !b.exploding && Math.hypot(tx - b.x, ty - b.y) < en.size + (b.baseR || 15)) return true;
+                        return false;
+                    };
+                    const nextX = en.x + vx; const nextY = en.y + vy;
+                    if (!isBlocked(nextX, nextY)) { en.x = nextX; en.y = nextY; }
+                    else if (!isBlocked(nextX, en.y)) en.x = nextX;
                     else if (!isBlocked(en.x, nextY)) en.y = nextY;
                 }
-            }
+            } // End !isStatic
 
             // --- GUN LOGIC ---
-            // Load Gun if defined
             if (en.gun && typeof en.gun === 'string' && !en.gunConfig) {
                 if (!en.gunLoading) {
                     en.gunLoading = true;
-                    fetch(en.gun).then(r => r.json()).then(data => {
-                        en.gunConfig = data;
-                        en.gunLoading = false;
-                    }).catch(e => {
-                        log("Error loading enemy gun:", e);
-                        en.gunConfig = { error: true };
-                    });
+                    fetch(en.gun).then(r => r.json()).then(d => { en.gunConfig = d; en.gunLoading = false; }).catch(e => { en.gunConfig = { error: true }; });
                 }
             }
-
-            // Fire Gun
-            if (en.gunConfig && !en.gunConfig.error) {
-                // Check if player is alive
-                if (player.hp > 0) {
-                    const range = en.gunConfig.Bullet?.range || 60; // range is life in frames.
-                    // Visual check: approx 5 * life?
-                    const dist = Math.hypot(player.x - en.x, player.y - en.y);
-
-                    // Let's use a generous engagement distance (e.g. 400px)
-                    if (dist < 500) {
-                        const fireRate = (en.gunConfig.Bullet?.fireRate || 1) * 1000;
-
-                        if (!en.lastShot || now - en.lastShot > fireRate) {
-                            // FIRE!
-                            const angle = Math.atan2(player.y - en.y, player.x - en.x);
-                            const speed = en.gunConfig.Bullet?.speed || 4;
-                            const vx = Math.cos(angle) * speed;
-                            const vy = Math.sin(angle) * speed;
-
-                            // Spawn slightly outside enemy
-                            const spawnX = en.x + Math.cos(angle) * (en.size + 5);
-                            const spawnY = en.y + Math.sin(angle) * (en.size + 5);
-
-                            spawnBullet(spawnX, spawnY, vx, vy, en.gunConfig, "enemy", en);
-                            en.lastShot = now;
-                            // Optional: Sound?
-                            // SFX.shoot(0.02);
-                        }
+            if (en.gunConfig && !en.gunConfig.error && player.hp > 0) {
+                const dist = Math.hypot(player.x - en.x, player.y - en.y);
+                if (dist < 500) {
+                    const fireRate = (en.gunConfig.Bullet?.fireRate || 1) * 1000;
+                    if (!en.lastShot || now - en.lastShot > fireRate) {
+                        const angle = Math.atan2(player.y - en.y, player.x - en.x);
+                        const speed = en.gunConfig.Bullet?.speed || 4;
+                        const vx = Math.cos(angle) * speed; const vy = Math.sin(angle) * speed;
+                        const sx = en.x + Math.cos(angle) * (en.size + 5); const sy = en.y + Math.sin(angle) * (en.size + 5);
+                        spawnBullet(sx, sy, vx, vy, en.gunConfig, "enemy", en);
+                        en.lastShot = now;
                     }
                 }
             }
+        } // End !en.frozen
 
-        } else if (!isRoomFrozen && now > en.freezeEnd) { // Only wake up if room is NOT frozen by game event
-            en.frozen = false;
-            en.invulnerable = false; // Clear invulnerability when they wake up
-        }
-
-        // 3. Player Collision
+        // 3. Player Collision (Thorns)
         const distToPlayer = Math.hypot(player.x - en.x, player.y - en.y);
         if (distToPlayer < en.size + player.size) {
-
-            // --- THORNS LOGIC: Damage enemy on contact ---
-            // Damage is half of the current gun's per-bullet damage
             const baseDmg = gun.Bullet?.damage || 1;
             const thornsDmg = baseDmg / 2;
-
-            // Fix: Don't damage frozen/invulnerable enemies on contact
             if (thornsDmg > 0 && !en.frozen && !en.invulnerable) {
                 en.hp -= thornsDmg;
-                en.hitTimer = 5; // Visual flash
-
-                if (en.hp <= 0 && !en.isDead) {
-                    en.isDead = true;
-                    en.deathTimer = 30; // Fade out
-                    log(`Enemy killed by contact damage (Thorns): ${en.type}`);
-                    if (en.type === 'boss') SFX.explode(0.5);
+                en.hitTimer = 5;
+                if (en.hp <= 0 && !en.isDead) { // Kill check handled by shared block below? No, separate logs usually.
+                    // But shared block is safer. Let's rely on falling through.
                 }
             }
-
             playerHit(en, true, true, true);
         }
 
-        // 4. BULLET COLLISION (Fixed)
+        // 4. BULLET COLLISION
         bullets.forEach((b, bi) => {
-            if (en.invulnerable) return; // Skip collision if invulnerable
-            if (b.ownerType === 'enemy') return; // Friendly Fire Prevention
-
+            if (en.invulnerable) return;
+            if (b.ownerType === 'enemy') return;
             const dist = Math.hypot(b.x - en.x, b.y - en.y);
-            // Check if bullet overlaps enemy radius
             if (dist < en.size + (b.size || 5)) {
-
-                // PIERCING: If piercing is on, don't hit the same enemy twice
                 if (gun.Bullet?.pierce && b.hitEnemies?.includes(ei)) return;
 
-                // CRIT & DAMAGE
                 let finalDamage = b.damage || 1;
-                // Ghost Immunity to Crits
-                if (en.type !== 'ghost' && Math.random() < (gun.Bullet?.critChance || 0)) {
-                    finalDamage *= (gun.Bullet?.critDamage || 2);
-                }
+                if (en.type !== 'ghost' && Math.random() < (gun.Bullet?.critChance || 0)) finalDamage *= (gun.Bullet?.critDamage || 2);
+
                 en.hp -= finalDamage;
-                en.hitTimer = 10; // Trigger white flash in draw()
+                en.hitTimer = 10;
                 SFX.explode(0.08);
 
-                // FREEZE MECHANIC
-                // Ghost Immunity to Freeze
                 if (en.type !== 'ghost' && Math.random() < (gun.Bullet?.freezeChance || 0)) {
                     en.frozen = true;
                     en.freezeEnd = now + (gun.Bullet?.freezeDuration || 1000);
                 }
 
-                // SHARD EXPLOSION ON HIT
-                if (gun.Bullet?.Explode?.active && !b.isShard) {
-                    spawnShards(b);
-                }
+                if (gun.Bullet?.Explode?.active && !b.isShard) spawnShards(b);
 
-                // PIERCING VS REMOVAL
                 if (gun.Bullet?.pierce) {
                     if (!b.hitEnemies) b.hitEnemies = [];
                     b.hitEnemies.push(ei);
+                    b.damage *= 0.5;
+                    if (b.damage <= 0.1) bullets.splice(bi, 1);
                 } else {
                     bullets.splice(bi, 1);
                 }
+            }
+        });
 
-                // CHECK ENEMY DEATH
-                if (en.hp <= 0) {
-                    en.isDead = true;
-                    en.deathTimer = 30;
-                    log(`Enemy died: ${en.type}`); // DEBUG LOG
+        // 5. DEATH CHECK
+        if (en.hp <= 0 && !en.isDead) {
+            en.isDead = true;
+            en.deathTimer = 30;
+            log(`Enemy died: ${en.type}`);
 
-                    // Check if Boss
-                    if (en.type === 'boss') {
-                        log("BOSS DEFEATED! The Curse Strengthens... Resetting Rooms!");
-                        SFX.explode(0.5); // Big Boom
+            if (en.type === 'boss') {
+                log("BOSS DEFEATED! The Curse Strengthens... Resetting Rooms!");
+                SFX.explode(0.5);
+                bossKilled = true;
 
-                        // BOSS KILLED LOGIC
-                        bossKilled = true;
-
-                        // Reset all visited rooms (except current boss room) to force respawns
-                        Object.keys(visitedRooms).forEach(key => {
-                            if (key !== `${player.roomX},${player.roomY}`) {
-                                // 1. Do NOT delete visitedRooms. This keeps the minimap visible (Fog of War cleared).
-                                // delete visitedRooms[key]; 
-
-                                // 2. Mark as uncleared so enemies respawn
-                                if (levelMap[key]) {
-                                    levelMap[key].cleared = false;
-
-                                    // 3. FORCE DOORS OPEN so the player isn't locked in
-                                    if (levelMap[key].roomData && levelMap[key].roomData.doors) {
-                                        Object.values(levelMap[key].roomData.doors).forEach(d => {
-                                            d.forcedOpen = true;
-                                        });
-                                    }
-                                }
-                            }
-                        });
-                    } else if (en.type === 'ghost') {
-                        log("Ghost Defeated!");
-                        // GHOST BONUS
-                        if (gameData.bonuses && gameData.bonuses.ghost) {
-                            // 1. Standard Drops (Common/Uncommon etc)
-                            const dropped = spawnRoomRewards(gameData.bonuses.ghost, "GHOST BONUS");
-                            if (dropped) {
-                                perfectEl.innerText = "GHOST BONUS!";
-                                triggerPerfectText();
-                            }
-
-                            // 2. Special Guaranteed Item
-                            const specialPath = gameData.bonuses.ghost.special?.item;
-                            if (specialPath && specialPath.length > 0) {
-                                (async () => {
-                                    try {
-                                        // Assume path is relative to json root or absolute. 
-                                        // User example: "/items/gun_ghost.json"
-                                        // fetch url: "json" + path
-                                        const url = "json" + (specialPath.startsWith('/') ? specialPath : '/' + specialPath);
-                                        const res = await fetch(`${url}?t=${Date.now()}`);
-                                        if (res.ok) {
-                                            const itemData = await res.json();
-                                            // Spawn it
-                                            groundItems.push({
-                                                x: en.x, y: en.y,
-                                                data: itemData, // The fetched JSON becomes the item data
-                                                roomX: player.roomX, roomY: player.roomY,
-                                                vx: (Math.random() - 0.5) * 5,
-                                                vy: (Math.random() - 0.5) * 5,
-                                                friction: 0.9,
-                                                solid: true, moveable: true, size: 15,
-                                                floatOffset: Math.random() * 100
-                                            });
-                                            log("Spawned Special Ghost Item:", itemData.name);
-                                            spawnFloatingText(en.x, en.y - 40, "SPECIAL DROP!", "#e74c3c");
-                                        } else {
-                                            log("Failed to fetch special ghost item:", url);
-                                        }
-                                    } catch (e) {
-                                        console.error("Error spawning special ghost item:", e);
-                                    }
-                                })();
+                // Clear Rooms
+                Object.keys(visitedRooms).forEach(key => {
+                    if (key !== `${player.roomX},${player.roomY}`) {
+                        if (levelMap[key]) {
+                            levelMap[key].cleared = false;
+                            if (levelMap[key].roomData?.doors) {
+                                Object.values(levelMap[key].roomData.doors).forEach(d => d.forcedOpen = true);
                             }
                         }
                     }
+                });
+            } else if (en.type === 'ghost') {
+                log("Ghost Defeated!");
+                if (gameData.bonuses && gameData.bonuses.ghost) {
+                    spawnRoomRewards(gameData.bonuses.ghost, "GHOST BONUS");
+                    perfectEl.innerText = "GHOST BONUS!";
+                    triggerPerfectText();
 
-                    // Optional: Visual cue?
-                    // maybe shake screen or flash red
+                    const specialPath = gameData.bonuses.ghost.special?.item;
+                    if (specialPath) {
+                        (async () => {
+                            try {
+                                const url = "json" + (specialPath.startsWith('/') ? specialPath : '/' + specialPath);
+                                const res = await fetch(`${url}?t=${Date.now()}`);
+                                if (res.ok) {
+                                    const itemData = await res.json();
+                                    groundItems.push({
+                                        x: en.x, y: en.y,
+                                        data: itemData,
+                                        roomX: player.roomX, roomY: player.roomY,
+                                        vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
+                                        friction: 0.9, solid: true, moveable: true, size: 15, floatOffset: Math.random() * 100
+                                    });
+                                    log("Spawned Special Ghost Item:", itemData.name);
+                                    spawnFloatingText(en.x, en.y - 40, "SPECIAL DROP!", "#e74c3c");
+                                }
+                            } catch (e) { console.error(e); }
+                        })();
+                    }
                 }
             }
-        });
+        }
     });
 
     // SPAWN PORTAL IF BOSS IS DEAD AND NO ENEMIES LEFT

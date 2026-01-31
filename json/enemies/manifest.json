@@ -11,6 +11,7 @@
         "ghost",
         "grunt_star",
         "grunt_hexagon",
-        "grunt_diamond"
+        "grunt_diamond",
+        "grunt_turret"
     ]
 }
