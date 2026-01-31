@@ -457,6 +457,87 @@ function renderDebugForm() {
         container.appendChild(spawnBtn);
         debugForm.appendChild(container);
         return;
+    } else if (type === 'spawnRoom') {
+        if (!roomTemplates) {
+            debugForm.innerText = "No room templates loaded.";
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.style.padding = "10px";
+
+        const select = document.createElement('select');
+        select.style.width = "100%";
+        select.style.marginBottom = "10px";
+        select.style.background = "#333";
+        select.style.color = "#fff";
+        select.style.border = "1px solid #555";
+        select.size = 10;
+
+        // Populate room list
+        Object.keys(roomTemplates).sort().forEach(key => {
+            const tmpl = roomTemplates[key];
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.innerText = `[${key}] ${tmpl.name || "Unnamed"}`;
+            select.appendChild(opt);
+        });
+
+        const loadBtn = document.createElement('button');
+        loadBtn.innerText = "LOAD ROOM";
+        loadBtn.style.width = "100%";
+        loadBtn.style.padding = "10px";
+        loadBtn.style.background = "#e74c3c";
+        loadBtn.style.color = "white";
+        loadBtn.style.border = "none";
+        loadBtn.style.cursor = "pointer";
+        loadBtn.style.fontWeight = "bold";
+
+        loadBtn.onclick = () => {
+            const key = select.value;
+            if (!key) return;
+            const template = roomTemplates[key];
+
+            // 1. Deep Copy
+            const newRoomData = JSON.parse(JSON.stringify(template));
+
+            // 2. Preserve Doors from current map state (so we don't get trapped)
+            const currentEntry = levelMap[`${player.roomX},${player.roomY}`];
+            if (currentEntry && currentEntry.roomData.doors) {
+                newRoomData.doors = JSON.parse(JSON.stringify(currentEntry.roomData.doors));
+            }
+
+            // 3. Update Level Map & Active Data
+            if (currentEntry) {
+                currentEntry.roomData = newRoomData;
+                currentEntry.cleared = false; // Reset cleared status
+            }
+            roomData = newRoomData;
+
+            // 4. Reset State
+            bullets = [];
+            bombs = [];
+            enemies = [];
+            particles = [];
+            groundItems = []; // Clear floor items? Yes, usually.
+
+            // 5. Update Canvas & Time
+            canvas.width = roomData.width || 800;
+            canvas.height = roomData.height || 600;
+            roomStartTime = Date.now();
+            roomNameEl.innerText = roomData.name || "Unknown Room";
+
+            // 6. Spawn Enemies
+            spawnEnemies();
+
+            log(`Loaded Room Template: ${key}`);
+            updateUI();
+        };
+
+        container.appendChild(select);
+        container.appendChild(loadBtn);
+        debugForm.appendChild(container);
+        return;
     }
 
     const target = type === 'player' ? player : roomData;
