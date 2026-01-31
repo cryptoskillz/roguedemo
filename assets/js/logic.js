@@ -17,6 +17,7 @@ const mctx = mapCanvas.getContext('2d');
 const debugSelect = document.getElementById('debug-select');
 const debugForm = document.getElementById('debug-form');
 const debugPanel = document.getElementById('debug-panel');
+const debugLogEl = document.getElementById('debug-log');
 
 // Global audio variable
 const introMusic = new Audio('assets/music/tron.mp3');
@@ -75,11 +76,30 @@ function drawFloatingTexts() {
 }
 
 function log(...args) {
-    if (typeof DEBUG_WINDOW_ENABLED !== 'undefined' && DEBUG_WINDOW_ENABLED) {
+    // Console log always (or maybe conditional too?)
+    // console.log(...args); // Optional: keep console clean if preferred, but usually good to keep.
+
+    if (typeof DEBUG_LOG_ENABLED !== 'undefined' && DEBUG_LOG_ENABLED) {
         const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+
+        // Push to internal array for history/other uses
         debugLogs.push(msg);
         if (debugLogs.length > MAX_DEBUG_LOGS) {
             debugLogs.shift();
+        }
+
+        // Update DOM
+        if (typeof debugLogEl !== 'undefined' && debugLogEl) {
+            const line = document.createElement('div');
+            line.innerText = msg;
+            debugLogEl.appendChild(line);
+            // Auto scroll to bottom
+            debugLogEl.scrollTop = debugLogEl.scrollHeight;
+
+            // Maintain max lines in DOM too
+            while (debugLogEl.childElementCount > MAX_DEBUG_LOGS) {
+                debugLogEl.removeChild(debugLogEl.firstChild);
+            }
         }
     }
 }
@@ -546,16 +566,17 @@ const BOUNDARY = 20;
 const DOOR_SIZE = 50;
 const DOOR_THICKNESS = 15;
 // Load configurations (Async)
-const DEBUG_START_BOSS = false; // TOGGLE THIS FOR DEBUGGING
-const DEBUG_PLAYER = true;
-const CHEATS_ENABLED = false;
-const DEBUG_WINDOW_ENABLED = false;
-const DEBUG_SPAWN_ALL_ITEMS = false; // Master Switch (Overrides others if true)
-const DEBUG_SPAWN_GUNS = false;
-const DEBUG_SPAWN_BOMBS = false;
-const DEBUG_SPAWN_INVENTORY = false;
-const DEBUG_SPAWN_MODS_PLAYER = false;
-const DEBUG_SPAWN_MODS_BULLET = true;
+let DEBUG_START_BOSS = false;
+let DEBUG_PLAYER = true;
+let CHEATS_ENABLED = false;
+let DEBUG_WINDOW_ENABLED = false;
+let DEBUG_LOG_ENABLED = false;
+let DEBUG_SPAWN_ALL_ITEMS = false;
+let DEBUG_SPAWN_GUNS = false;
+let DEBUG_SPAWN_BOMBS = false;
+let DEBUG_SPAWN_INVENTORY = false;
+let DEBUG_SPAWN_MODS_PLAYER = false;
+let DEBUG_SPAWN_MODS_BULLET = true;
 
 let musicMuted = false;
 let lastMKeyTime = 0;
@@ -579,7 +600,7 @@ async function initGame(isRestart = false) {
         // introMusic.pause(); 
     }
 
-    if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
+    // Debug panel setup moved after config load
 
     // MOVED: Music start logic is now handled AFTER game.json is loaded to respect "music": false setting.
 
@@ -594,11 +615,7 @@ async function initGame(isRestart = false) {
     if (typeof portal !== 'undefined') portal.active = false;
 
     // ... [Previous debug and player reset logic remains the same] ...
-    if (DEBUG_WINDOW_ENABLED) {
-        roomEl.style.display = 'block';
-    } else {
-        roomEl.style.display = 'none';
-    }
+    // Room debug display setup moved after config load
 
     player.hp = 3;
     player.speed = 4;
@@ -627,6 +644,30 @@ async function initGame(isRestart = false) {
         ]);
 
         gameData = gData;
+
+        // --- SYNC DEBUG FLAGS FROM CONFIG ---
+        if (gameData.debug) {
+            DEBUG_START_BOSS = gameData.debug.startBoss ?? false;
+            DEBUG_PLAYER = gameData.debug.player ?? true;
+            CHEATS_ENABLED = gameData.debug.cheats ?? false;
+            DEBUG_WINDOW_ENABLED = gameData.debug.windowEnabled ?? false;
+            DEBUG_LOG_ENABLED = gameData.debug.log ?? false;
+
+            if (gameData.debug.spawn) {
+                DEBUG_SPAWN_ALL_ITEMS = gameData.debug.spawn.allItems ?? false;
+                DEBUG_SPAWN_GUNS = gameData.debug.spawn.guns ?? false;
+                DEBUG_SPAWN_BOMBS = gameData.debug.spawn.bombs ?? false;
+                DEBUG_SPAWN_INVENTORY = gameData.debug.spawn.inventory ?? false;
+                DEBUG_SPAWN_MODS_PLAYER = gameData.debug.spawn.modsPlayer ?? false;
+                DEBUG_SPAWN_MODS_BULLET = gameData.debug.spawn.modsBullet ?? true;
+            }
+        }
+
+        // Apply Debug UI state
+        if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
+        if (roomEl) roomEl.style.display = DEBUG_WINDOW_ENABLED ? 'block' : 'none';
+        if (debugLogEl) debugLogEl.style.display = DEBUG_LOG_ENABLED ? 'block' : 'none';
+
         roomManifest = mData;
 
         // LOAD STARTING ITEMS
@@ -3686,22 +3727,8 @@ function drawMinimap() {
 }
 
 function drawDebugLogs() {
-    if (typeof DEBUG_WINDOW_ENABLED !== 'undefined' && DEBUG_WINDOW_ENABLED && debugLogs.length > 0) {
-        ctx.save();
-        ctx.font = "12px 'Courier New'";
-        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        ctx.fillRect(10, canvas.height - 15 - (debugLogs.length * 15), 400, (debugLogs.length * 15) + 5);
-
-        ctx.textAlign = "left";
-        ctx.textBaseline = "bottom";
-        ctx.fillStyle = "#00FF00"; // Hacker green
-
-        debugLogs.forEach((msg, i) => {
-            ctx.fillText(msg, 15, canvas.height - 10 - ((debugLogs.length - 1 - i) * 15));
-        });
-
-        ctx.restore();
-    }
+    // Deprecated: Logs are now drawn to DOM via log() function
+    // Kept empty to satisfy loop calls if any
 }
 
 function drawBossIntro() {
