@@ -29,7 +29,7 @@ let lastMusicToggle = 0;
 
 // --- DEBUG LOGGING ---
 let debugLogs = [];
-const MAX_DEBUG_LOGS = 10;
+const MAX_DEBUG_LOGS = 1000;
 
 // --- FLOATING TEXT SYSTEM ---
 let floatingTexts = [];
