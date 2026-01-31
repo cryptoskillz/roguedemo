@@ -1,6 +1,8 @@
 bugs
     is the player cheat in game.json doing anything?
     is 2way used atall whats the difference beween this and 2way
+    check each enemy in span enemy
+    when you restart with a ghost the ghost is still there
 
 next up 
     enemies
@@ -11,7 +13,12 @@ next up
 
 
 enemies
-    have enemies be able to use bullets
+    enemy move types
+        run away
+        swarm > x enemies
+        pattern
+
+
     have swarm enemies that run away unless there are x of them
     have run away enemies
     last enemy tougher

@@ -1813,57 +1813,7 @@ async function dropBomb() {
     return false;
 }
 
-function fireBullet(direction, speed, vx, vy, angle) {
-    // 1. Safety check / No Bullets Mode
-    if (gun.Bullet?.NoBullets) {
-        // "if no bullets and you press fire you should get a broken gun sound"
-        // Rate limit the click sound slightly so it's not a buzz
-        const now = Date.now();
-        if (now - (player.lastClick || 0) > 200) {
-            SFX.click(); // Assuming SFX.click exists, otherwise I'll need to add it or use a fallback
-            player.lastClick = now;
-        }
-        return;
-    }
 
-    // Ammo Check
-    if (gun.Bullet?.ammo?.active) {
-        if (player.reloading) return; // Cannot fire while reloading
-        if (player.ammo <= 0) {
-            if (player.ammoMode === 'finite') return;
-            if (player.ammoMode === 'reload' && player.reserveAmmo <= 0) return;
-
-            reloadWeapon();
-            return;
-        }
-        player.ammo--;
-        // Check if empty AFTER firing
-        if (player.ammo <= 0) {
-            if (player.reserveAmmo > 0 || player.ammoMode === 'recharge') {
-                reloadWeapon();
-            }
-        }
-    }
-
-    // 2. Spawning Logic
-    // We defer to spawnBullet but we need to calculate the spawn point based on player mechanics
-    const barrelLength = player.size + 10;
-    const startX = player.x + Math.cos(angle) * barrelLength;
-    const startY = player.y + Math.sin(angle) * barrelLength;
-
-    if (direction === 0) {
-        spawnBullet(startX, startY, vx, vy, gun);
-    } // ... rest of logic handled by simpler spawn calls if needed, but original logic had complex if/else
-    // For minimal disruption, let's keep the if-else structure for MULTI-DIRECTIONAL but use spawnBullet
-
-    // However, existing fireBullet logic has complex directional logic. 
-    // To minimize risk, I will define spawnBullet explicitly OUTSIDE and just call it.
-    // BUT since I am REPLACING code, I need to be careful.
-
-    // Let's implement spawnBullet as a global function (or scope it properly) and use it here.
-    // Since this is inside logic.js global scope, I can define it above/below.
-    // For this refactor, I will Replace the 'createBullet' inner helper and the usage.
-}
 
 // Global Helper for spawning bullets (Player OR Enemy)
 function spawnBullet(x, y, vx, vy, weaponSource, ownerType = "player", owner = null) {
@@ -1934,32 +1884,31 @@ function fireBullet(direction, speed, vx, vy, angle) {
         }
     }
 
-    const barrelLength = player.size + 10;
-    // Re-calculate spawn position based on player
-    // Note: 'direction' arg in original code was doing some heavy lifting for multi-directional stuff 
-    // but the 'vx/vy' passed in are already calculated for the main bullet.
-
-    // We simply use the passed vx/vy to determine spawn offset
-    const spawnAngle = Math.atan2(vy, vx);
-    const startX = player.x + Math.cos(spawnAngle) * barrelLength;
-    const startY = player.y + Math.sin(spawnAngle) * barrelLength;
+    // Helper to spawn bullet with correct offset
+    const spawn = (bvx, bvy) => {
+        const barrelLength = player.size + 10;
+        const bAngle = Math.atan2(bvy, bvx);
+        const startX = player.x + Math.cos(bAngle) * barrelLength;
+        const startY = player.y + Math.sin(bAngle) * barrelLength;
+        spawnBullet(startX, startY, bvx, bvy, gun, "player");
+    };
 
     // 2. Spawning
     if (direction === 0) {
-        spawnBullet(startX, startY, vx, vy, gun, "player");
-        if (gun.Bullet?.reverseFire) bullets.push(createBullet(-vx, -vy));
+        spawn(vx, vy);
+        if (gun.Bullet?.reverseFire) spawn(-vx, -vy);
 
         // MultiDirectional Logic
         if (gun.Bullet?.multiDirectional?.active) {
             const md = gun.Bullet.multiDirectional;
-            if (md.fireNorth) bullets.push(createBullet(0, -speed));
-            if (md.fireEast) bullets.push(createBullet(speed, 0));
-            if (md.fireSouth) bullets.push(createBullet(0, speed));
-            if (md.fireWest) bullets.push(createBullet(-speed, 0));
+            if (md.fireNorth) spawn(0, -speed);
+            if (md.fireEast) spawn(speed, 0);
+            if (md.fireSouth) spawn(0, speed);
+            if (md.fireWest) spawn(-speed, 0);
             if (md.fire360) {
                 for (let i = 0; i < 360; i += 10) {
                     const rad = i * Math.PI / 180;
-                    bullets.push(createBullet(Math.cos(rad) * speed, Math.sin(rad) * speed));
+                    spawn(Math.cos(rad) * speed, Math.sin(rad) * speed);
                 }
             }
         }
@@ -1967,24 +1916,24 @@ function fireBullet(direction, speed, vx, vy, angle) {
     else if (direction === 360) {
         for (let i = 0; i < 360; i += 10) {
             const rad = i * Math.PI / 180;
-            bullets.push(createBullet(Math.cos(rad) * speed, Math.sin(rad) * speed));
+            spawn(Math.cos(rad) * speed, Math.sin(rad) * speed);
         }
     }
     else if (direction === 1) { // North
-        bullets.push(createBullet(0, -speed));
-        if (gun.Bullet?.reverseFire) bullets.push(createBullet(0, speed));
+        spawn(0, -speed);
+        if (gun.Bullet?.reverseFire) spawn(0, speed);
     }
     else if (direction === 2) { // East
-        bullets.push(createBullet(speed, 0));
-        if (gun.Bullet?.reverseFire) bullets.push(createBullet(-speed, 0));
+        spawn(speed, 0);
+        if (gun.Bullet?.reverseFire) spawn(-speed, 0);
     }
     else if (direction === 3) { // South
-        bullets.push(createBullet(0, speed));
-        if (gun.Bullet?.reverseFire) bullets.push(createBullet(0, -speed));
+        spawn(0, speed);
+        if (gun.Bullet?.reverseFire) spawn(0, -speed);
     }
     else if (direction === 4) { // West
-        bullets.push(createBullet(-speed, 0));
-        if (gun.Bullet?.reverseFire) bullets.push(createBullet(speed, 0));
+        spawn(-speed, 0);
+        if (gun.Bullet?.reverseFire) spawn(speed, 0);
     }
 
     bulletsInRoom++;
@@ -3155,18 +3104,27 @@ function updateEnemies() {
             if (en.moveType) {
                 if (en.moveType === 'static') isStatic = true;
                 if (typeof en.moveType === 'object' && en.moveType.type === 'static') isStatic = true;
+                // 'track' type (or undefined) falls through to default movement below
             }
 
             if (!isStatic) {
                 // --- STEERING BEHAVIORS ---
-                // 1. Seek Player
+                // Determine Move Strategy
+                let isRunAway = false;
+                if (en.moveType === 'runAway') isRunAway = true;
+                if (typeof en.moveType === 'object' && en.moveType.type === 'runAway') isRunAway = true;
+
+                // 1. Seek (or Flee) Player
                 let dx = player.x - en.x;
                 let dy = player.y - en.y;
                 const distToPlayer = Math.hypot(dx, dy);
                 let dirX = 0, dirY = 0;
 
                 if (distToPlayer > 0.1) {
-                    dirX = dx / distToPlayer; dirY = dy / distToPlayer;
+                    // If runAway, we invert the direction to push AWAY from player
+                    const factor = isRunAway ? -1.0 : 1.0;
+                    dirX = (dx / distToPlayer) * factor;
+                    dirY = (dy / distToPlayer) * factor;
                 }
 
                 // 2. Avoid Bombs

@@ -15,7 +15,7 @@
     "shape": "square",
     "gun": "",
     "moveType": {
-        "type": "static",
+        "type": "track",
         "x": 0,
         "y": 0
     },

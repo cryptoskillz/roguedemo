@@ -1,5 +1,5 @@
 {
-    "type": "grunt_hexagon",
+    "type": "grunt hexagon",
     "hp": 3,
     "damage": 1,
     "knockback": 20,

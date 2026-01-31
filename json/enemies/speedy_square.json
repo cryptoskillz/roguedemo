@@ -1,5 +1,5 @@
 {
-    "type": "speedy",
+    "type": "speedy square",
     "hp": 1,
     "damage": 2,
     "knockback": 100,

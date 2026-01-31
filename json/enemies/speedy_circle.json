@@ -1,5 +1,5 @@
 {
-    "type": "speedy",
+    "type": "speedy_circle",
     "hp": 1,
     "damage": 2,
     "knockback": 100,
@@ -13,9 +13,9 @@
     "deathDuration": 30,
     "invulColour": "#ffffff",
     "shape": "circle",
-    "gun": "",
+    "gun": "json/weapons/guns/enemy/peashooter.json",
     "moveType": {
-        "type": "track",
+        "type": "runAway",
         "x": 0,
         "y": 0
     },

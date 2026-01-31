@@ -1,5 +1,5 @@
 {
-    "type": "grunt",
+    "type": "grunt circle",
     "damage": 2,
     "knockback": 100,
     "shake": 2,
@@ -13,7 +13,6 @@
     "deathDuration": 30,
     "invulColour": "#ffffff",
     "shape": "circle",
-    "gun": "json/weapons/guns/enemy/peashooter.json",
     "moveType": {
         "type": "track",
         "x": 0,

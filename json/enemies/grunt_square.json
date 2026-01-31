@@ -1,5 +1,5 @@
 {
-    "type": "grunt",
+    "type": "grunt square",
     "damage": 2,
     "knockback": 100,
     "shake": 2,

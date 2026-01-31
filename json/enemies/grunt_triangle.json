@@ -1,5 +1,5 @@
 {
-    "type": "grunt",
+    "type": "grunt triangle",
     "damage": 2,
     "knockback": 100,
     "shake": 2,
