@@ -3295,6 +3295,7 @@ function updateEnemies() {
         // 4. BULLET COLLISION (Fixed)
         bullets.forEach((b, bi) => {
             if (en.invulnerable) return; // Skip collision if invulnerable
+            if (b.ownerType === 'enemy') return; // Friendly Fire Prevention
 
             const dist = Math.hypot(b.x - en.x, b.y - en.y);
             // Check if bullet overlaps enemy radius
