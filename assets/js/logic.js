@@ -17,6 +17,7 @@ const mctx = mapCanvas.getContext('2d');
 const debugSelect = document.getElementById('debug-select');
 const debugForm = document.getElementById('debug-form');
 const debugPanel = document.getElementById('debug-panel');
+const debugLogEl = document.getElementById('debug-log');
 
 // Global audio variable
 const introMusic = new Audio('assets/music/tron.mp3');
@@ -28,7 +29,7 @@ let lastMusicToggle = 0;
 
 // --- DEBUG LOGGING ---
 let debugLogs = [];
-const MAX_DEBUG_LOGS = 10;
+const MAX_DEBUG_LOGS = 1000;
 
 // --- FLOATING TEXT SYSTEM ---
 let floatingTexts = [];
@@ -75,11 +76,30 @@ function drawFloatingTexts() {
 }
 
 function log(...args) {
-    if (typeof DEBUG_WINDOW_ENABLED !== 'undefined' && DEBUG_WINDOW_ENABLED) {
+    // Console log always (or maybe conditional too?)
+    // console.log(...args); // Optional: keep console clean if preferred, but usually good to keep.
+
+    if (typeof DEBUG_LOG_ENABLED !== 'undefined' && DEBUG_LOG_ENABLED) {
         const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+
+        // Push to internal array for history/other uses
         debugLogs.push(msg);
         if (debugLogs.length > MAX_DEBUG_LOGS) {
             debugLogs.shift();
+        }
+
+        // Update DOM
+        if (typeof debugLogEl !== 'undefined' && debugLogEl) {
+            const line = document.createElement('div');
+            line.innerText = msg;
+            debugLogEl.appendChild(line);
+            // Auto scroll to bottom
+            debugLogEl.scrollTop = debugLogEl.scrollHeight;
+
+            // Maintain max lines in DOM too
+            while (debugLogEl.childElementCount > MAX_DEBUG_LOGS) {
+                debugLogEl.removeChild(debugLogEl.firstChild);
+            }
         }
     }
 }
@@ -357,6 +377,266 @@ function renderDebugForm() {
     if (!debugForm || !debugSelect) return;
     debugForm.innerHTML = '';
     const type = debugSelect.value;
+
+    // SPAWN LOGIC REFACTOR
+    if (type === 'spawn') {
+        if (!window.allItemTemplates) {
+            debugForm.innerText = "No items loaded.";
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.style.padding = "10px";
+
+        // Filter / Search
+        const searchInput = document.createElement('input');
+        searchInput.placeholder = "Search items...";
+        searchInput.style.width = "100%";
+        searchInput.style.marginBottom = "10px";
+        searchInput.style.background = "#333";
+        searchInput.style.color = "#fff";
+        searchInput.style.border = "1px solid #555";
+
+        const select = document.createElement('select');
+        select.style.width = "100%";
+        select.style.marginBottom = "10px";
+        select.style.background = "#333";
+        select.style.color = "#fff";
+        select.style.border = "1px solid #555";
+        select.size = 10; // Show multiple lines
+
+        function populate(filter = "") {
+            select.innerHTML = "";
+            window.allItemTemplates.forEach((item, idx) => {
+                if (!item) return;
+                const name = item.name || item.id || "Unknown";
+                if (filter && !name.toLowerCase().includes(filter.toLowerCase())) return;
+
+                const opt = document.createElement('option');
+                opt.value = idx;
+                const rarity = item.rarity ? `[${item.rarity.toUpperCase()}] ` : "";
+                opt.innerText = `${rarity}${name} (${item.type})`;
+                select.appendChild(opt);
+            });
+        }
+        populate();
+
+        searchInput.addEventListener('input', (e) => populate(e.target.value));
+
+        const spawnBtn = document.createElement('button');
+        spawnBtn.innerText = "SPAWN";
+        spawnBtn.style.width = "100%";
+        spawnBtn.style.padding = "10px";
+        spawnBtn.style.background = "#27ae60";
+        spawnBtn.style.color = "white";
+        spawnBtn.style.border = "none";
+        spawnBtn.style.cursor = "pointer";
+        spawnBtn.style.fontWeight = "bold";
+
+        spawnBtn.onclick = () => {
+            const idx = select.value;
+            if (idx === "") return;
+            const itemTemplate = window.allItemTemplates[idx];
+
+            // Spawn logic
+            groundItems.push({
+                x: player.x + (Math.random() * 60 - 30),
+                y: player.y + (Math.random() * 60 - 30),
+                data: JSON.parse(JSON.stringify(itemTemplate)), // Deep copy
+                roomX: player.roomX,
+                roomY: player.roomY,
+                vx: 0, vy: 0,
+                solid: true, moveable: true, friction: 0.9, size: 15,
+                floatOffset: Math.random() * 100
+            });
+            log("Spawned:", itemTemplate.name);
+        };
+
+        container.appendChild(searchInput);
+        container.appendChild(select);
+        container.appendChild(spawnBtn);
+        debugForm.appendChild(container);
+        return;
+    } else if (type === 'spawnRoom') {
+        if (!roomTemplates) {
+            debugForm.innerText = "No room templates loaded.";
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.style.padding = "10px";
+
+        const select = document.createElement('select');
+        select.style.width = "100%";
+        select.style.marginBottom = "10px";
+        select.style.background = "#333";
+        select.style.color = "#fff";
+        select.style.border = "1px solid #555";
+        select.size = 10;
+
+        // Populate room list
+        Object.keys(roomTemplates).sort().forEach(key => {
+            const tmpl = roomTemplates[key];
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.innerText = `[${key}] ${tmpl.name || "Unnamed"}`;
+            select.appendChild(opt);
+        });
+
+        const loadBtn = document.createElement('button');
+        loadBtn.innerText = "LOAD ROOM";
+        loadBtn.style.width = "100%";
+        loadBtn.style.padding = "10px";
+        loadBtn.style.background = "#e74c3c";
+        loadBtn.style.color = "white";
+        loadBtn.style.border = "none";
+        loadBtn.style.cursor = "pointer";
+        loadBtn.style.fontWeight = "bold";
+
+        loadBtn.onclick = () => {
+            const key = select.value;
+            if (!key) return;
+            const template = roomTemplates[key];
+
+            // 1. Deep Copy
+            const newRoomData = JSON.parse(JSON.stringify(template));
+
+            // 2. Preserve Doors from current map state (so we don't get trapped)
+            const currentEntry = levelMap[`${player.roomX},${player.roomY}`];
+            if (currentEntry && currentEntry.roomData.doors) {
+                newRoomData.doors = JSON.parse(JSON.stringify(currentEntry.roomData.doors));
+                // Resnap doors to center of new room width/height
+                ['top', 'bottom', 'left', 'right'].forEach(dir => {
+                    if (newRoomData.doors[dir]) {
+                        delete newRoomData.doors[dir].x;
+                        delete newRoomData.doors[dir].y;
+                    }
+                });
+            }
+
+            // 3. Update Level Map & Active Data
+            if (currentEntry) {
+                currentEntry.roomData = newRoomData;
+                currentEntry.cleared = false; // Reset cleared status
+            }
+            roomData = newRoomData;
+
+            // 4. Reset State
+            bullets = [];
+            bombs = [];
+            enemies = [];
+            particles = [];
+            groundItems = []; // Clear floor items? Yes, usually.
+
+            // 5. Update Canvas & Time
+            canvas.width = roomData.width || 800;
+            canvas.height = roomData.height || 600;
+            roomStartTime = Date.now();
+            roomNameEl.innerText = roomData.name || "Unknown Room";
+
+            // 6. Spawn Enemies
+            spawnEnemies();
+
+            log(`Loaded Room Template: ${key}`);
+            updateUI();
+        };
+
+        container.appendChild(select);
+        container.appendChild(loadBtn);
+        debugForm.appendChild(container);
+        return;
+    } else if (type === 'spawnEnemy') {
+        if (!enemyTemplates) {
+            debugForm.innerText = "No enemy templates loaded.";
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.style.padding = "10px";
+
+        const searchInput = document.createElement('input');
+        searchInput.placeholder = "Search enemies...";
+        searchInput.style.width = "100%";
+        searchInput.style.marginBottom = "10px";
+        searchInput.style.background = "#333";
+        searchInput.style.color = "#fff";
+        searchInput.style.border = "1px solid #555";
+
+        const select = document.createElement('select');
+        select.style.width = "100%";
+        select.style.marginBottom = "10px";
+        select.style.background = "#333";
+        select.style.color = "#fff";
+        select.style.border = "1px solid #555";
+        select.size = 10;
+
+        function populate(filter = "") {
+            select.innerHTML = "";
+            Object.keys(enemyTemplates).sort().forEach(key => {
+                const tmpl = enemyTemplates[key];
+                const name = tmpl.name || key || "Unknown";
+                if (filter && !name.toLowerCase().includes(filter.toLowerCase())) return;
+
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.innerText = `[${key}] ${name} (HP: ${tmpl.hp})`;
+                select.appendChild(opt);
+            });
+        }
+        populate();
+
+        searchInput.addEventListener('input', (e) => populate(e.target.value));
+
+        const spawnBtn = document.createElement('button');
+        spawnBtn.innerText = "SPAWN ENEMY";
+        spawnBtn.style.width = "100%";
+        spawnBtn.style.padding = "10px";
+        spawnBtn.style.background = "#e74c3c"; // Red for danger
+        spawnBtn.style.color = "white";
+        spawnBtn.style.border = "none";
+        spawnBtn.style.cursor = "pointer";
+        spawnBtn.style.fontWeight = "bold";
+
+        spawnBtn.onclick = () => {
+            const key = select.value;
+            if (!key) return;
+            const template = enemyTemplates[key];
+
+            // 1. Logic similar to spawnEnemies loop
+            const inst = JSON.parse(JSON.stringify(template));
+            // Find safe spot away from player
+            let safeX, safeY, dist;
+            let attempts = 0;
+            do {
+                safeX = 50 + Math.random() * (canvas.width - 100);
+                safeY = 50 + Math.random() * (canvas.height - 100);
+                dist = Math.hypot(safeX - player.x, safeY - player.y);
+                attempts++;
+            } while (dist < 200 && attempts < 20);
+
+            inst.x = safeX;
+            inst.y = safeY;
+
+            // Bounds check (redundant given above, but safe)
+            inst.x = Math.max(50, Math.min(canvas.width - 50, inst.x));
+            inst.y = Math.max(50, Math.min(canvas.height - 50, inst.y));
+
+            inst.currentHp = inst.hp;
+            inst.isDead = false;
+            inst.roomX = player.roomX;
+            inst.roomY = player.roomY;
+
+            enemies.push(inst);
+            log(`Spawned Enemy: ${inst.name || key}`);
+        };
+
+        container.appendChild(searchInput);
+        container.appendChild(select);
+        container.appendChild(spawnBtn);
+        debugForm.appendChild(container);
+        return;
+    }
+
     const target = type === 'player' ? player : roomData;
 
     function createFields(parent, obj, path) {
@@ -546,16 +826,17 @@ const BOUNDARY = 20;
 const DOOR_SIZE = 50;
 const DOOR_THICKNESS = 15;
 // Load configurations (Async)
-const DEBUG_START_BOSS = false; // TOGGLE THIS FOR DEBUGGING
-const DEBUG_PLAYER = true;
-const CHEATS_ENABLED = false;
-const DEBUG_WINDOW_ENABLED = false;
-const DEBUG_SPAWN_ALL_ITEMS = false; // Master Switch (Overrides others if true)
-const DEBUG_SPAWN_GUNS = false;
-const DEBUG_SPAWN_BOMBS = false;
-const DEBUG_SPAWN_INVENTORY = false;
-const DEBUG_SPAWN_MODS_PLAYER = false;
-const DEBUG_SPAWN_MODS_BULLET = true;
+let DEBUG_START_BOSS = false;
+let DEBUG_PLAYER = true;
+let CHEATS_ENABLED = false;
+let DEBUG_WINDOW_ENABLED = false;
+let DEBUG_LOG_ENABLED = false;
+let DEBUG_SPAWN_ALL_ITEMS = false;
+let DEBUG_SPAWN_GUNS = false;
+let DEBUG_SPAWN_BOMBS = false;
+let DEBUG_SPAWN_INVENTORY = false;
+let DEBUG_SPAWN_MODS_PLAYER = false;
+let DEBUG_SPAWN_MODS_BULLET = true;
 
 let musicMuted = false;
 let lastMKeyTime = 0;
@@ -579,7 +860,7 @@ async function initGame(isRestart = false) {
         // introMusic.pause(); 
     }
 
-    if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
+    // Debug panel setup moved after config load
 
     // MOVED: Music start logic is now handled AFTER game.json is loaded to respect "music": false setting.
 
@@ -594,11 +875,7 @@ async function initGame(isRestart = false) {
     if (typeof portal !== 'undefined') portal.active = false;
 
     // ... [Previous debug and player reset logic remains the same] ...
-    if (DEBUG_WINDOW_ENABLED) {
-        roomEl.style.display = 'block';
-    } else {
-        roomEl.style.display = 'none';
-    }
+    // Room debug display setup moved after config load
 
     player.hp = 3;
     player.speed = 4;
@@ -627,6 +904,30 @@ async function initGame(isRestart = false) {
         ]);
 
         gameData = gData;
+
+        // --- SYNC DEBUG FLAGS FROM CONFIG ---
+        if (gameData.debug) {
+            DEBUG_START_BOSS = gameData.debug.startBoss ?? false;
+            DEBUG_PLAYER = gameData.debug.player ?? true;
+            CHEATS_ENABLED = gameData.debug.cheats ?? false;
+            DEBUG_WINDOW_ENABLED = gameData.debug.windowEnabled ?? false;
+            DEBUG_LOG_ENABLED = gameData.debug.log ?? false;
+
+            if (gameData.debug.spawn) {
+                DEBUG_SPAWN_ALL_ITEMS = gameData.debug.spawn.allItems ?? false;
+                DEBUG_SPAWN_GUNS = gameData.debug.spawn.guns ?? false;
+                DEBUG_SPAWN_BOMBS = gameData.debug.spawn.bombs ?? false;
+                DEBUG_SPAWN_INVENTORY = gameData.debug.spawn.inventory ?? false;
+                DEBUG_SPAWN_MODS_PLAYER = gameData.debug.spawn.modsPlayer ?? false;
+                DEBUG_SPAWN_MODS_BULLET = gameData.debug.spawn.modsBullet ?? true;
+            }
+        }
+
+        // Apply Debug UI state
+        if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
+        if (roomEl) roomEl.style.display = DEBUG_WINDOW_ENABLED ? 'block' : 'none';
+        if (debugLogEl) debugLogEl.style.display = DEBUG_LOG_ENABLED ? 'block' : 'none';
+
         roomManifest = mData;
 
         // LOAD STARTING ITEMS
@@ -811,11 +1112,11 @@ async function initGame(isRestart = false) {
         // 3. Pre-load ALL room templates
         roomTemplates = {};
         const templatePromises = [];
-        templatePromises.push(fetch('/json/rooms/start/room.json?t=' + Date.now()).then(res => res.json()).then(data => roomTemplates["start"] = data));
-        templatePromises.push(fetch('/json/rooms/boss1/room.json?t=' + Date.now()).then(res => res.json()).then(data => roomTemplates["boss"] = data));
+        templatePromises.push(fetch('/json/rooms/start/room.json?t=' + Date.now()).then(res => res.json()).then(data => { data.templateId = "start"; roomTemplates["start"] = data; }));
+        templatePromises.push(fetch('/json/rooms/boss1/room.json?t=' + Date.now()).then(res => res.json()).then(data => { data.templateId = "boss"; roomTemplates["boss"] = data; }));
 
         roomManifest.rooms.forEach(id => {
-            templatePromises.push(fetch(`/json/rooms/${id}/room.json?t=` + Date.now()).then(res => res.json()).then(data => roomTemplates[id] = data));
+            templatePromises.push(fetch(`/json/rooms/${id}/room.json?t=` + Date.now()).then(res => res.json()).then(data => { data.templateId = id; roomTemplates[id] = data; }));
         });
 
         await Promise.all(templatePromises);
@@ -3545,7 +3846,8 @@ function goContinue() {
 
 function drawTutorial() {
     // --- Start Room Tutorial Text ---
-    if (player.roomX === 0 && player.roomY === 0 && (DEBUG_START_BOSS === false)) {
+    // --- Start Room Tutorial Text ---
+    if (player.roomX === 0 && player.roomY === 0 && roomData.templateId === 'start' && (DEBUG_START_BOSS === false)) {
         ctx.save();
 
         // Internal helper for keycaps
@@ -3686,22 +3988,8 @@ function drawMinimap() {
 }
 
 function drawDebugLogs() {
-    if (typeof DEBUG_WINDOW_ENABLED !== 'undefined' && DEBUG_WINDOW_ENABLED && debugLogs.length > 0) {
-        ctx.save();
-        ctx.font = "12px 'Courier New'";
-        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        ctx.fillRect(10, canvas.height - 15 - (debugLogs.length * 15), 400, (debugLogs.length * 15) + 5);
-
-        ctx.textAlign = "left";
-        ctx.textBaseline = "bottom";
-        ctx.fillStyle = "#00FF00"; // Hacker green
-
-        debugLogs.forEach((msg, i) => {
-            ctx.fillText(msg, 15, canvas.height - 10 - ((debugLogs.length - 1 - i) * 15));
-        });
-
-        ctx.restore();
-    }
+    // Deprecated: Logs are now drawn to DOM via log() function
+    // Kept empty to satisfy loop calls if any
 }
 
 function drawBossIntro() {

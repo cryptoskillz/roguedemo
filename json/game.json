@@ -136,5 +136,20 @@
                 "item": "/items/gun_ghost.json"
             }
         }
+    },
+    "debug": {
+        "startBoss": false,
+        "player": true,
+        "cheats": false,
+        "windowEnabled": false,
+        "log": false,
+        "spawn": {
+            "allItems": false,
+            "guns": false,
+            "bombs": false,
+            "inventory": false,
+            "modsPlayer": false,
+            "modsBullet": false
+        }
     }
 }

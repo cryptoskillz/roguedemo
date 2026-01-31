@@ -225,19 +225,14 @@ mini map
     make rooms go golden if you follow the golden path as a later level will be random rooms that get harder and harder everytime you go off the golden path and enemies respawn in rooms.
 
 debug window 
-    CHEATS_ENABLED
     enemies
     bombs
     guns
-    items
     updateDebugEditor make it update in realtime when something happens in the game
     when you click off of it it should focus back on the game
     add a export json option
     move the cords into this 
     go to room (renders it in)
-    move it left
-    move the log to below the debug window
-    add spawn items 
 
 
 
