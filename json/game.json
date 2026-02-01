@@ -18,7 +18,7 @@
     "showRoom": false,
     "showOverlay": false,
     "ghost": {
-        "spawn": true,
+        "spawn": false,
         "roomGhostTimer": 10000,
         "roomFollow": true
     },

@@ -3652,7 +3652,7 @@ function updateGhost() {
     // 2. Not already spawned in this room
     // 3. Time exceeded
     if (ghostConfig.spawn && !ghostSpawned && (now - roomStartTime > ghostConfig.roomGhostTimer)) {
-        if (player.roomX === 0 && player.roomY === 0) return; // No ghost in start room
+        // if (player.roomX === 0 && player.roomY === 0) return; // Allow ghost in start room if configured
 
         log("THE GHOST APPEARS!");
         ghostSpawned = true;
