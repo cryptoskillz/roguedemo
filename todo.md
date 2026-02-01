@@ -1,5 +1,5 @@
 bugs
-    and num of rooms set in json change this to per level if used
+
     in debug space is spqaing room
  
 next up 
@@ -240,6 +240,7 @@ debug window
 
 
 rooms
+    number of rooms json change this to per level if used
 change the drop chane from 100% once we are finished testing
     Boss room
     secrets roons

@@ -434,6 +434,7 @@ function renderDebugForm() {
         spawnBtn.style.fontWeight = "bold";
 
         spawnBtn.onclick = () => {
+            spawnBtn.blur(); // Remove focus so Space doesn't trigger again
             const idx = select.value;
             if (idx === "") return;
             const itemTemplate = window.allItemTemplates[idx];
@@ -494,6 +495,7 @@ function renderDebugForm() {
         loadBtn.style.fontWeight = "bold";
 
         loadBtn.onclick = () => {
+            loadBtn.blur(); // Remove focus
             const key = select.value;
             if (!key) return;
             const template = roomTemplates[key];
@@ -598,6 +600,7 @@ function renderDebugForm() {
         spawnBtn.style.fontWeight = "bold";
 
         spawnBtn.onclick = () => {
+            spawnBtn.blur(); // Remove focus
             const key = select.value;
             if (!key) return;
             const template = enemyTemplates[key];

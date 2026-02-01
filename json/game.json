@@ -140,7 +140,7 @@
     "debug": {
         "startBoss": false,
         "player": true,
-        "godMode": true,
+        "godMode": false,
         "windowEnabled": true,
         "log": false,
         "spawn": {
