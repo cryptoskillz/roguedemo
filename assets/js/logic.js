@@ -1304,9 +1304,55 @@ function spawnEnemies() {
         player.invulnUntil = freezeUntil;
     }
 
+    // CHECK SAVED STATE (Persistence)
+    const currentCoord = `${player.roomX},${player.roomY}`;
+    // If we have specific saved enemies, restore them (PRECISE STATE)
+    if (levelMap[currentCoord] && levelMap[currentCoord].savedEnemies) {
+        log("Restoring saved enemies for this room...");
+        levelMap[currentCoord].savedEnemies.forEach(saved => {
+            const typeKey = saved.templateId || saved.type;
+            const template = enemyTemplates[typeKey] || { hp: 1, speed: 1, size: 25 }; // fallback
+            const inst = JSON.parse(JSON.stringify(template));
+
+            // Re-attach templateId for next save
+            inst.templateId = typeKey;
+
+            // Overwrite with saved state
+            inst.x = saved.x;
+            inst.y = saved.y;
+            inst.hp = saved.hp;
+            if (saved.moveType) inst.moveType = saved.moveType;
+            if (saved.solid !== undefined) inst.solid = saved.solid;
+            if (saved.indestructible !== undefined) inst.indestructible = saved.indestructible;
+
+            // Standard init
+            inst.frozen = true;
+            inst.freezeEnd = freezeUntil;
+            // Restore invulnerability based on type/indestructible logic
+            inst.invulnerable = inst.indestructible || false;
+
+            enemies.push(inst);
+        });
+
+        // Handle Ghost if Haunted (still spawn it separately if consistent with design?)
+        // The original code handled Haunted via map property. 
+        // We should probably fall through to allow ghost spawn if desired, BUT
+        // the original code returns early if room is cleared. 
+        // Here we have enemies, so we should allow Ghost check below?
+        // Let's stick to restoring only explicitly saved ones for now. 
+        // If the room was haunted, the ghost might be handled separately or saved?
+        // Original logic: "If room is haunted... return". 
+        // Let's keep the Ghost Check that is BELOW this block in my insertion point?
+        // Wait, I am inserting this at the top.
+        // Let's actually ensure we do the Haunted check separately as it was.
+    }
+
+    // START STANDARD SPAWN (Skip if we restored)
+    if (enemies.length > 0 && !(levelMap[currentCoord] && levelMap[currentCoord].haunted)) return;
+
     // CHECK HAUNTED STATUS
     // If room is haunted, skip normal enemies and spawn Ghost immediately
-    const currentCoord = `${player.roomX},${player.roomY}`;
+    // const currentCoord = `${player.roomX},${player.roomY}`; // Already defined above
     if (levelMap[currentCoord] && levelMap[currentCoord].haunted) {
         log("The room is Haunted! The Ghost returns...");
 
@@ -1342,6 +1388,7 @@ function spawnEnemies() {
             if (template) {
                 for (let i = 0; i < group.count; i++) {
                     const inst = JSON.parse(JSON.stringify(template));
+                    inst.templateId = group.type; // Store ID for persistence lookup
 
                     // MERGE moveType from Room Config (Override)
                     if (group.moveType) {
@@ -1409,8 +1456,10 @@ function spawnEnemies() {
 
         const template = enemyTemplates[randomType] || { hp: 2, speed: 1, size: 25 };
 
+
         for (let i = 0; i < count; i++) {
             const inst = JSON.parse(JSON.stringify(template));
+            inst.templateId = randomType; // Store ID for persistence lookup
             inst.x = Math.random() * (canvas.width - 60) + 30;
             inst.y = Math.random() * (canvas.height - 60) + 30;
             inst.frozen = true;
@@ -1468,7 +1517,29 @@ function changeRoom(dx, dy) {
     // Save cleared status of current room before leaving
     const currentCoord = `${player.roomX},${player.roomY}`;
     if (levelMap[currentCoord]) {
-        levelMap[currentCoord].cleared = (enemies.length === 0);
+        // FILTER: Save only valid, living enemies (skip ghosts, dead, friendly)
+        const survivors = enemies.filter(en => !en.isDead && en.type !== 'ghost' && en.ownerType !== 'player');
+
+        // If enemies remain, save their state
+        if (survivors.length > 0) {
+            levelMap[currentCoord].savedEnemies = survivors.map(en => ({
+                templateId: en.templateId, // Save the Lookup Key
+                type: en.type,
+                x: en.x,
+                y: en.y,
+                hp: en.hp,
+                maxHp: en.maxHp, // If applicable
+                moveType: en.moveType,
+                solid: en.solid,
+                indestructible: en.indestructible,
+                // Add other necessary props if dynamic (e.g. specialized gun config? usually static)
+            }));
+            levelMap[currentCoord].cleared = false;
+        } else {
+            // No survivors? Room is cleared.
+            levelMap[currentCoord].savedEnemies = null;
+            levelMap[currentCoord].cleared = true;
+        }
     }
 
     // Reset Room Specific Flags

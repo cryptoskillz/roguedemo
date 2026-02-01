@@ -3,7 +3,6 @@ bugs
        check each enemy in span enemy
 
 - [x] ghost does not always seem to kill you if it hots i think if there are other emenuies something is going wrong witht he collision
-    if a static / invul enemy is in the room when you leave it sghould still be there when you come back
     is the player cheat in game.json doing anything?
     is 2way used atall whats the difference beween this and 2way and num of rooms
     gun turret should use the x y override 
