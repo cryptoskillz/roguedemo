@@ -19,7 +19,11 @@
         "legendary": {
             "count": 0,
             "dropChance": 0
-        }
+        },
+        "special": [
+            "json/items/gun_peashooter.json",
+            "json/items/bomb_normal.json"
+        ]
     },
     "isBoss": true,
     "enemies": [

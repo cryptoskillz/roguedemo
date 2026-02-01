@@ -1,8 +1,19 @@
 bugs
     use local storage for game data, unlocks etc
     if movetype has an x,y start it there
-    add golden path bonus (big reward)
- 
+    restsrt game should slip welcome screen
+    main menu should move to enter key and be default on the pause, game over, victory
+    on level tooling up if you dont pick up the peashoort or bombs you go into a pacafist run 
+    use item flag unlocked on level 3
+    drop items flag on level 3 if not picked up items are never dropped
+        guns items
+        bombd
+        inventory
+        bullets 
+        player
+        
+     
+
 next up 
     unlocks & levels
     rooms

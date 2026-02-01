@@ -2688,6 +2688,36 @@ function spawnRoomRewards(dropConfig, label = null) {
         log(`spawnRoomRewards: Final pending count: ${pendingDrops.length}`);
     }
 
+    // 2.5 Handle "Special" Drops (Array of Paths)
+    if (dropConfig.special && Array.isArray(dropConfig.special)) {
+        dropConfig.special.forEach(path => {
+            (async () => {
+                try {
+                    // Normalize path: Ensure no double slashed, but handle simple relative paths
+                    const url = path;
+                    const res = await fetch(`${url}?t=${Date.now()}`);
+                    if (res.ok) {
+                        const itemData = await res.json();
+                        // Spawn Logic
+                        groundItems.push({
+                            x: (canvas.width / 2) + (Math.random() - 0.5) * 50,
+                            y: (canvas.height / 2) + (Math.random() - 0.5) * 50,
+                            data: itemData,
+                            roomX: player.roomX, roomY: player.roomY,
+                            vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
+                            friction: 0.9, solid: true, moveable: true, size: 15, floatOffset: Math.random() * 100
+                        });
+                        log("Spawned Special Item:", itemData.name);
+                        spawnFloatingText(canvas.width / 2, canvas.height / 2 - 60, "SPECIAL DROP!", "#e74c3c");
+                    } else {
+                        console.error("Failed to fetch special item:", url);
+                    }
+                } catch (e) { console.error("Error spawning special item:", e); }
+            })();
+            anyDropped = true;
+        });
+    }
+
     // 3. Spawn the final list
     pendingDrops.forEach(drop => {
         const item = drop.item;
