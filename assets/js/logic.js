@@ -850,8 +850,14 @@ function generateLevel(length) {
             const neighborCoord = `${rx + d.dx},${ry + d.dy}`;
             if (levelMap[neighborCoord]) {
                 // If neighbor exists, ensure door is active and unlocked
-                if (!data.doors[d.name]) data.doors[d.name] = { active: 1, locked: 0 };
-                data.doors[d.name].active = 1;
+                // If neighbor exists, ensure door is active and unlocked (unless template forbids it)
+                if (!data.doors[d.name]) {
+                    data.doors[d.name] = { active: 1, locked: 0 };
+                } else {
+                    // Respect template: Only force active if undefined
+                    if (data.doors[d.name].active === undefined) data.doors[d.name].active = 1;
+                }
+
                 // Keep locked status if template specifically had it, otherwise 0
                 if (data.doors[d.name].locked === undefined) data.doors[d.name].locked = 0;
 
@@ -3026,7 +3032,7 @@ function updateBulletsAndShards(aliveEnemies) {
 
 function updateShooting() {
     // --- 5. SHOOTING ---
-    const shootingKeys = keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight'];
+    const shootingKeys = !gun.Bullet?.NoBullets && (keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight']);
     if (shootingKeys) {
 
         // STATIONARY AIMING LOGIC
