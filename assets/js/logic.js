@@ -928,9 +928,9 @@ async function initGame(isRestart = false) {
 
     gameState = isRestart ? STATES.PLAY : STATES.START;
 
-    gameState = isRestart ? STATES.PLAY : STATES.START;
+    gameState = STATES.START; // Always reset to START first, let startGame() transition to PLAY
     overlayEl.style.display = 'none';
-    welcomeEl.style.display = isRestart ? 'none' : 'flex';
+    welcomeEl.style.display = 'none'; // Default hidden, show only after config check
     if (uiEl) {
         if (isRestart) {
             uiEl.style.display = (gameData && gameData.showUI !== false) ? 'block' : 'none';
@@ -1343,18 +1343,8 @@ async function initGame(isRestart = false) {
         canvas.width = roomData.width || 800;
         canvas.height = roomData.height || 600;
 
-        if (gameState === STATES.PLAY) {
-            spawnEnemies();
-
-            // Check for Start Room Bonus
-            if (gameData.bonuses && gameData.bonuses.startroom) {
-                const dropped = spawnRoomRewards(gameData.bonuses.startroom);
-                if (dropped) {
-                    perfectEl.innerText = "START BONUS!";
-                    triggerPerfectText();
-                }
-            }
-        }
+        // if (gameState === STATES.PLAY) { spawnEnemies(); ... } 
+        // Logic removed: startGame() handles spawning now.
 
         if (!gameLoopStarted) {
             gameLoopStarted = true;
@@ -4944,6 +4934,18 @@ async function showNextUnlock() {
             if (data.json && data.attr && data.value !== undefined) {
                 saveUnlockOverride(data.json, data.attr, data.value);
             }
+
+            // CHECK HISTORY: Skip if already unlocked
+            const history = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+            if (history.includes(key)) {
+                log(`Skipping already unlocked: ${key}`);
+                showNextUnlock();
+                return;
+            }
+
+            // Add to history now (or after OK? better now to prevent loop if crash)
+            history.push(key);
+            localStorage.setItem('game_unlocked_ids', JSON.stringify(history));
 
             // Render
             unlockEl.innerHTML = `
