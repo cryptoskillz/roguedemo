@@ -1,0 +1,55 @@
+{
+    "name": "NOTHING HERE ",
+    "description": "You should not be here",
+    "keyBonus": 1.0,
+    "speedGoal": 0,
+    "item": {
+        "common": {
+            "count": 1,
+            "dropChance": 0
+        },
+        "uncommon": {
+            "count": 1,
+            "dropChance": 0
+        },
+        "rare": {
+            "count": 1,
+            "dropChance": 0
+        },
+        "legendary": {
+            "count": 1,
+            "dropChance": 0
+        }
+    },
+    "isBoss": true,
+    "enemies": [],
+    "doors": {
+        "top": {
+            "locked": 0,
+            "active": 0,
+            "x": 400
+        },
+        "bottom": {
+            "locked": 0,
+            "active": 0,
+            "x": 400
+        },
+        "left": {
+            "locked": 0,
+            "active": 0,
+            "y": 300
+        },
+        "right": {
+            "locked": 0,
+            "active": 0,
+            "y": 300
+        }
+    },
+    "width": 800,
+    "height": 600,
+    "unlocks": [
+        "welcome",
+        "rooms"
+    ],
+    "nextLevel": "levels/1.json"
+}

@@ -1,0 +1,24 @@
+{
+    "items": [
+        "2way",
+        "360",
+        "4way",
+        "critChance",
+        "critDamage",
+        "curve",
+        "damage",
+        "decreasefirerate",
+        "explode",
+        "freezeChance",
+        "freezeDuration",
+        "homing",
+        "number",
+        "pierce",
+        "range",
+        "recoil",
+        "size",
+        "speed",
+        "spreadrate",
+        "wallbounce"
+    ]
+}

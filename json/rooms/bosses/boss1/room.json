@@ -1,0 +1,59 @@
+{
+    "name": "Boss Room 1",
+    "description": "",
+    "keyBonus": 1.0,
+    "speedGoal": 10000,
+    "item": {
+        "common": {
+            "count": 1,
+            "dropChance": 0
+        },
+        "uncommon": {
+            "count": 1,
+            "dropChance": 0
+        },
+        "rare": {
+            "count": 1,
+            "dropChance": 0
+        },
+        "legendary": {
+            "count": 1,
+            "dropChance": 0.5
+        }
+    },
+    "isBoss": true,
+    "enemies": [
+        {
+            "type": "boss",
+            "count": 1
+        },
+        {
+            "type": "grunt_turret",
+            "count": 5
+        }
+    ],
+    "doors": {
+        "top": {
+            "locked": 0,
+            "active": 0,
+            "x": 400
+        },
+        "bottom": {
+            "locked": 0,
+            "active": 0,
+            "x": 400
+        },
+        "left": {
+            "locked": 0,
+            "active": 0,
+            "y": 300
+        },
+        "right": {
+            "locked": 0,
+            "active": 0,
+            "y": 300
+        }
+    },
+    "width": 800,
+    "height": 600
+}
