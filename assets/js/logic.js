@@ -3623,9 +3623,14 @@ function updatePortal() {
     const dist = Math.hypot(player.x - portal.x, player.y - portal.y);
     if (dist < 30) {
         // WIN GAME
-        gameState = STATES.WIN;
-        updateUI();
-        gameOver();
+        // Check for Unlocks FIRST
+        if (roomData.unlocks && roomData.unlocks.length > 0) {
+            handleUnlocks(roomData.unlocks);
+        } else {
+            gameState = STATES.WIN;
+            updateUI();
+            gameOver();
+        }
     }
 }
 
@@ -4865,5 +4870,94 @@ function applyModifierToGun(gunObj, modConfig) {
             if (!gunObj.Bullet) gunObj.Bullet = {};
             gunObj.Bullet.homing = val;
         }
+    }
+}
+// --- UNLOCK SYSTEM ---
+let unlockQueue = [];
+let isUnlocking = false;
+
+async function handleUnlocks(unlockKeys) {
+    if (isUnlocking) return;
+    isUnlocking = true;
+    unlockQueue = [...unlockKeys]; // Copy
+
+    // Create Unlock UI if not exists
+    let unlockEl = document.getElementById('unlock-overlay');
+    if (!unlockEl) {
+        unlockEl = document.createElement('div');
+        unlockEl.id = 'unlock-overlay';
+        unlockEl.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 2000; color: white;
+            font-family: monospace; text-align: center;
+        `;
+        document.body.appendChild(unlockEl);
+    }
+
+    // Process first unlock
+    await showNextUnlock();
+}
+
+async function showNextUnlock() {
+    const unlockEl = document.getElementById('unlock-overlay');
+    if (unlockQueue.length === 0) {
+        // All Done -> Proceed to Victory
+        unlockEl.style.display = 'none';
+        isUnlocking = false;
+
+        // Final Win State
+        gameState = STATES.WIN;
+        updateUI();
+        gameOver();
+        return;
+    }
+
+    const key = unlockQueue.shift();
+    // Try to fetch unlock data
+    try {
+        // Handle "victory" specially or just ignore if file missing (user deleted it)
+        // If file is missing, fetch throws or returns 404
+        const res = await fetch(`json/unlocks/${key}.json?t=${Date.now()}`);
+        if (res.ok) {
+            const data = await res.json();
+
+            // Render
+            unlockEl.innerHTML = `
+                <h1 style="color: gold; text-shadow: 0 0 10px gold;">UNLOCKED!</h1>
+                <h2 style="font-size: 2em; margin: 20px;">${data.name || key}</h2>
+                <p style="font-size: 1.2em; color: #aaa;">${data.description || "You have unlocked a new feature!"}</p>
+                <div style="margin-top: 40px; padding: 10px 20px; border: 2px solid white; cursor: pointer; display: inline-block;" id="unlock-ok-btn">
+                    CONTINUE (Enter)
+                </div>
+            `;
+            unlockEl.style.display = 'flex';
+
+            // SFX??
+            if (window.SFX && SFX.coin) SFX.coin(); // Reuse coin sound for now
+
+            // Handler for click/key
+            const proceed = () => {
+                window.removeEventListener('keydown', keyHandler);
+                document.getElementById('unlock-ok-btn').removeEventListener('click', proceed);
+                showNextUnlock(); // Recursion for next item
+            };
+
+            const keyHandler = (e) => {
+                if (e.code === 'Enter' || e.code === 'Space') {
+                    proceed();
+                }
+            };
+
+            document.getElementById('unlock-ok-btn').addEventListener('click', proceed);
+            window.addEventListener('keydown', keyHandler);
+
+        } else {
+            console.warn(`Unlock file not found for: ${key}`);
+            showNextUnlock(); // Skip if not found
+        }
+    } catch (e) {
+        console.warn(`Failed to load unlock: ${key}`, e);
+        showNextUnlock(); // Skip on error
     }
 }

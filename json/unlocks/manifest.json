@@ -1,6 +1,10 @@
 {
     "unlocls": [
         "sfx",
-        "music"
+        "music",
+        "welcome",
+        "rooms",
+        "text",
+        "victory"
     ]
 }

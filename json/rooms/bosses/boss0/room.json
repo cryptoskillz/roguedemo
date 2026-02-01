@@ -48,8 +48,11 @@
     "width": 800,
     "height": 600,
     "unlocks": [
+        "text",
+        "victory",
         "welcome",
         "rooms"
     ],
-    "nextLevel": "levels/1.json"
+    "nextLevel": "",
+    "endGame": true
 }
