@@ -1,4 +1,5 @@
 bugs
+ghost is spawing in start room
 nprmal bomb opening any door
 space not opening doors
 boss sometimes not rendering on level 4
@@ -24,7 +25,6 @@ next up
     bug fixss
     ui updates
     inventory
-        
         stats
         player with modifiers
     rooms
