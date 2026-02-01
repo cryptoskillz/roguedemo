@@ -50,6 +50,7 @@
     "unlocks": [
         "music",
         "soundEffects",
+        "pause",
         "startlevel2"
     ],
     "nextLevel": "",

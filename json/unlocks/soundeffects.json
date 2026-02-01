@@ -4,5 +4,5 @@
     "unlock": "soundEffects",
     "json": "game.json",
     "attr": "soundEffects",
-    "value": "true"
+    "value": true
 }
