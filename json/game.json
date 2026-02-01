@@ -6,8 +6,9 @@
     "showDebugWindow": false,
     "showDebugLog": false,
     "showMinimap": false,
-    "showStats": true,
     "showUI": false,
+    "showWelcome": false,
+    "showStats": false,
     "showPerfect": false,
     "showRoomName": false,
     "showBombs": false,
@@ -16,7 +17,6 @@
     "showKeys": false,
     "showRoom": false,
     "showOverlay": false,
-    "showWelcome": false,
     "ghost": {
         "spawn": true,
         "roomGhostTimer": 10000,

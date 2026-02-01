@@ -931,7 +931,13 @@ async function initGame(isRestart = false) {
     gameState = isRestart ? STATES.PLAY : STATES.START;
     overlayEl.style.display = 'none';
     welcomeEl.style.display = isRestart ? 'none' : 'flex';
-    if (uiEl) uiEl.style.display = isRestart ? 'block' : 'none';
+    if (uiEl) {
+        if (isRestart) {
+            uiEl.style.display = (gameData && gameData.showUI !== false) ? 'block' : 'none';
+        } else {
+            uiEl.style.display = 'none'; // Hidden until start
+        }
+    }
     bullets = [];
     bombs = [];
     particles = [];
@@ -995,8 +1001,8 @@ async function initGame(isRestart = false) {
             DEBUG_START_BOSS = gameData.debug.startBoss ?? false;
             DEBUG_PLAYER = gameData.debug.player ?? true;
             GODMODE_ENABLED = gameData.debug.godMode ?? false;
-            DEBUG_WINDOW_ENABLED = gameData.debug.windowEnabled ?? false;
-            DEBUG_LOG_ENABLED = gameData.debug.log ?? false;
+            DEBUG_WINDOW_ENABLED = (gameData.showDebugWindow !== undefined) ? gameData.showDebugWindow : (gameData.debug.windowEnabled ?? false);
+            DEBUG_LOG_ENABLED = (gameData.showDebugLog !== undefined) ? gameData.showDebugLog : (gameData.debug.log ?? false);
 
             if (gameData.debug.spawn) {
                 DEBUG_SPAWN_ALL_ITEMS = gameData.debug.spawn.allItems ?? false;
@@ -1007,6 +1013,10 @@ async function initGame(isRestart = false) {
                 DEBUG_SPAWN_MODS_BULLET = gameData.debug.spawn.modsBullet ?? true;
             }
         }
+
+        // Support root-level overrides (regardless of debug object existence)
+        if (gameData.showDebugWindow !== undefined) DEBUG_WINDOW_ENABLED = gameData.showDebugWindow;
+        if (gameData.showDebugLog !== undefined) DEBUG_LOG_ENABLED = gameData.showDebugLog;
 
         // Apply Debug UI state
         if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
@@ -1438,7 +1448,10 @@ function startGame() {
             // Start Game
             gameState = STATES.PLAY;
             welcomeEl.style.display = 'none';
-            uiEl.style.display = 'block';
+            uiEl.style.display = (gameData.showUI !== false) ? 'block' : 'none';
+
+            // Minimap Visibility
+            if (mapCanvas) mapCanvas.style.display = (gameData.showMinimap !== false) ? 'block' : 'none';
 
             // If starting primarily in Boss Room (Debug Mode), reset intro timer
             if (roomData.isBoss) {
@@ -4274,6 +4287,8 @@ function drawTutorial() {
 }
 
 function drawMinimap() {
+    if (gameData && gameData.showMinimap === false) return;
+
     const mapSize = 100;
     const roomSize = 12;
     const padding = 2;
