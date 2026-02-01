@@ -2,6 +2,8 @@
     "perfectGoal": 5,
     "startLevel": "json/levels/0.json",
     "music": false,
+    "pause": false,
+    "items": false,
     "soundEffects": false,
     "showDebugWindow": false,
     "showDebugLog": false,

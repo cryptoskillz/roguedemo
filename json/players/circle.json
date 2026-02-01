@@ -1,5 +1,5 @@
 {
-    "name": "Player 1",
+    "name": "Runt",
     "Description": "The runt of the litter",
     "colour": "#5dade2",
     "locked": false,
@@ -40,10 +40,10 @@
     "speedTotalCount": 0,
     "perfectCount": 0,
     "perfectTotalCount": 0,
-    "bombType": "normal",
+    "bombType": "",
     "gunType": "",
     "inventory": {
-        "keys": 1,
-        "bombs": 10
+        "keys": 0,
+        "bombs": 0
     }
 }

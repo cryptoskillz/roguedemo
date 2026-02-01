@@ -14,17 +14,12 @@ next up
 
 level plan
 
-victory screen unlocked 
-welcome screen unlocked
-start room unlocked
-text unlocked 
-start room unclocked 
+
 
 level 1
 
 the player is in the start room, no mini map, no ui, no weapon, no doors.  The portal is there this time purple (the main on we use for the rest of the game).  came compelete screen shows up
 
-doors unlocked
 rooms unlocked
 enemies unlocked 
 

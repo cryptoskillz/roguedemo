@@ -1,5 +1,5 @@
 {
-    "name": "Level 0: The Beginning",
+    "name": "",
     "NoRooms": 1,
     "startRoom": "json/rooms/bosses/boss0/room.json",
     "bossRoom": "",

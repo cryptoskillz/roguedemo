@@ -1204,7 +1204,7 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
         // Load player specific assets
         const [gunData, bombData] = await Promise.all([
             (player.gunType ? fetch(`/json/weapons/guns/player/${player.gunType}.json?t=` + Date.now()).then(res => res.json()) : Promise.resolve({ Bullet: { NoBullets: true } })),
-            fetch(`/json/weapons/bombs/${player.bombType}.json?t=` + Date.now()).then(res => res.json())
+            (player.bombType ? fetch(`/json/weapons/bombs/${player.bombType}.json?t=` + Date.now()).then(res => res.json()) : Promise.resolve({}))
         ]);
         gun = gunData;
         bomb = bombData;
@@ -1476,7 +1476,7 @@ function startGame() {
         try {
             const [gData, bData] = await Promise.all([
                 (player.gunType ? fetch(`/json/weapons/guns/player/${player.gunType}.json?t=` + Date.now()).then(res => res.json()) : Promise.resolve({ Bullet: { NoBullets: true } })),
-                fetch(`/json/weapons/bombs/${player.bombType}.json?t=` + Date.now()).then(res => res.json())
+                (player.bombType ? fetch(`/json/weapons/bombs/${player.bombType}.json?t=` + Date.now()).then(res => res.json()) : Promise.resolve({}))
             ]);
             gun = gData;
             bomb = bData;
@@ -1873,7 +1873,6 @@ function changeRoom(dx, dy) {
     const nextEntry = levelMap[nextCoord];
     if (nextEntry) {
         roomData = nextEntry.roomData;
-        log("Enter Room:", nextCoord, "Boss:", roomData.isBoss, "EndGame:", roomData.endGame, "Cleared:", nextEntry.cleared);
         visitedRooms[nextCoord] = nextEntry; // Add to visited for minimap
 
         roomNameEl.innerText = roomData.name || "Unknown Room";
@@ -2448,11 +2447,7 @@ async function draw() {
 
 function drawPortal() {
     // Only draw if active AND in the boss room
-    // Only draw if active AND in the boss room
-    if (!portal.active || !roomData.isBoss) {
-        if (roomData.isBoss) console.log("Portal Skip - Active:", portal.active, "IsBoss:", roomData.isBoss);
-        return;
-    }
+    if (!portal.active || !roomData.isBoss) return;
     const time = Date.now() / 500;
 
     ctx.save();
@@ -4151,7 +4146,7 @@ function drawBombs(doors) {
 
 // --- 3. BOMB DROPPING ---
 function updateBombDropping() {
-    if (keys['KeyB'] && player.inventory?.bombs > 0) {
+    if (keys['KeyB'] && player.inventory?.bombs > 0 && player.bombType) {
         // dropBomb handles delay checks, overlap checks, and valid position checks
         dropBomb().then(dropped => {
             if (dropped) {
@@ -4297,7 +4292,8 @@ function goContinue() {
 function drawTutorial() {
     // --- Start Room Tutorial Text ---
     // --- Start Room Tutorial Text ---
-    if (player.roomX === 0 && player.roomY === 0 && roomData.templateId === 'start' && (DEBUG_START_BOSS === false)) {
+    // Show in start room (0,0) if it is NOT a boss room
+    if (player.roomX === 0 && player.roomY === 0 && !roomData.isBoss && (DEBUG_START_BOSS === false)) {
         ctx.save();
 
         // Internal helper for keycaps
@@ -4331,17 +4327,19 @@ function drawTutorial() {
         drawKey("D", lx + 45, ly);
 
         // SHOOT (Arrows)
-        const rx = canvas.width - 200;
-        ctx.fillText("SHOOT", rx, ly - 90);
-        ctx.beginPath();
-        ctx.arc(rx, ly - 75, 5, 0, Math.PI * 2);
-        ctx.fillStyle = "#e74c3c";
-        ctx.fill();
+        if (player.gunType) {
+            const rx = canvas.width - 200;
+            ctx.fillText("SHOOT", rx, ly - 90);
+            ctx.beginPath();
+            ctx.arc(rx, ly - 75, 5, 0, Math.PI * 2);
+            ctx.fillStyle = "#e74c3c";
+            ctx.fill();
 
-        drawKey("↑", rx, ly - 45);
-        drawKey("←", rx - 45, ly);
-        drawKey("→", rx + 45, ly);
-        drawKey("↓", rx, ly + 45);
+            drawKey("↑", rx, ly - 45);
+            drawKey("←", rx - 45, ly);
+            drawKey("→", rx + 45, ly);
+            drawKey("↓", rx, ly + 45);
+        }
 
         // Action Keys (Bottom Row)
         let mx = canvas.width / 6;
@@ -4349,9 +4347,12 @@ function drawTutorial() {
 
         const actions = [
             { label: "ITEM", key: "⎵" },
-            { label: "PAUSE", key: "P" },
-            { label: "BOMB", key: "B" }
+            { label: "PAUSE", key: "P" }
         ];
+
+        if (player.bombType) {
+            actions.push({ label: "BOMB", key: "B" });
+        }
 
         if (typeof DEBUG_WINDOW_ENABLED !== 'undefined' && DEBUG_WINDOW_ENABLED) {
             actions.push({ label: "RESTART", key: "R" });
