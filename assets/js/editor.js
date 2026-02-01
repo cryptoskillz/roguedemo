@@ -4,6 +4,7 @@ const ctx = canvas.getContext('2d');
 const entityListEl = document.getElementById('entity-list');
 const assetSearchEl = document.getElementById('assetSearch');
 const entityTypeSelector = document.getElementById('entityTypeSelector');
+const itemCategorySelector = document.getElementById('itemCategorySelector');
 
 let roomData = {
     name: "New Room",
@@ -31,7 +32,16 @@ let roomData = {
 
 let loadedAssets = {
     enemies: [],
-    items: []
+    items: [],
+    rooms: [],
+    weapons: {
+        guns_enemy: [],
+        guns_player: [],
+        inventory_bombs: [],
+        inventory_key: [],
+        modifiers_bullets: [],
+        modifiers_player: []
+    }
 };
 
 let selectedEntity = null; // The template we want to place
@@ -78,6 +88,7 @@ window.onload = async function () {
 
     assetSearchEl.addEventListener('input', renderAssetList);
     entityTypeSelector.addEventListener('change', renderAssetList);
+    itemCategorySelector.addEventListener('change', renderAssetList);
 
     // Selected Object Inputs
     document.getElementById('selObjCount').addEventListener('change', updateSelectedObjectData);
@@ -230,6 +241,52 @@ async function loadAssetManifests() {
             type: 'item'
         }));
 
+        // Load Room Manifest
+        try {
+            const resRooms = await fetch('json/rooms/manifest.json');
+            const manifestRooms = await resRooms.json();
+            // Manifest is just IDs: ["1", "2", "testit"]
+            loadedAssets.rooms = manifestRooms.rooms.map(r => ({
+                id: r,
+                file: `json/rooms/${r}/room.json`, // Path structure based on user context
+                type: 'room'
+            }));
+        } catch (err) {
+            console.warn("Failed to load room manifest", err);
+        }
+
+        // Load Weapon Components (Nested Items)
+        const loadWeaponType = async (category, subPath, keyName) => {
+            try {
+                const res = await fetch(`json/weapons/${subPath}/manifest.json`);
+                const manifest = await res.json();
+                // Assumes manifest has a key like "items", "guns", "modifiers", etc.
+                // We need to inspect the manifest structure. 
+                // Based on `json/weapons/guns/enemy/manifest.json` cursor: let's assumes standard arrays.
+                // Or just use Object.values(manifest)[0] if key varies.
+                // But for safety, let's assume specific keys if known or just iterate.
+                // Actually, cleaner V1: map whatever array is found.
+                const list = manifest.guns || manifest.items || manifest.modifiers || manifest.bombs || manifest.keys || [];
+
+                loadedAssets.weapons[keyName] = list.map(i => ({
+                    id: i,
+                    file: `json/weapons/${subPath}/${i}.json`,
+                    type: 'item' // Treat as items for placement
+                }));
+            } catch (err) {
+                console.warn(`Failed to load weapon manifest: ${subPath}`, err);
+            }
+        };
+
+        await Promise.all([
+            loadWeaponType('guns', 'guns/enemy', 'guns_enemy'),
+            loadWeaponType('guns', 'guns/player', 'guns_player'),
+            loadWeaponType('inventory', 'inventory/bombs', 'inventory_bombs'),
+            loadWeaponType('inventory', 'inventory/key', 'inventory_key'),
+            loadWeaponType('modifiers', 'modifiers/bullets', 'modifiers_bullets'),
+            loadWeaponType('modifiers', 'modifiers/player', 'modifiers_player')
+        ]);
+
         renderAssetList();
 
     } catch (e) {
@@ -241,7 +298,28 @@ async function loadAssetManifests() {
 function renderAssetList() {
     const filter = assetSearchEl.value.toLowerCase();
     const mode = entityTypeSelector.value;
-    const list = mode === 'enemy' ? loadedAssets.enemies : loadedAssets.items;
+    let list = [];
+
+    // Reset UI
+    itemCategorySelector.style.display = 'none';
+
+    if (mode === 'enemy') {
+        list = loadedAssets.enemies;
+    } else if (mode === 'item') {
+        itemCategorySelector.style.display = 'block';
+        // Use sub-category
+        const subCat = itemCategorySelector.value || 'guns_enemy';
+        list = loadedAssets.weapons[subCat] || [];
+
+        // Also include standard items? 
+        // User asked to break items down. 
+        // Previous 'items' (loadedAssets.items) likely belong to one of these or are generic.
+        // Let's allow selecting "Generic" if needed, but for now specific categories requested.
+        // If we want to show the OLD items, we might need a "Generic" option in dropdown.
+        // But user request seems to replace the single "Items" view with these categories.
+    } else if (mode === 'room') {
+        list = loadedAssets.rooms;
+    }
 
     entityListEl.innerHTML = '';
 
@@ -253,10 +331,119 @@ function renderAssetList() {
         if (selectedEntity && selectedEntity.id === asset.id) div.classList.add('selected');
 
         div.innerText = asset.id;
-        div.onclick = () => selectTool(asset);
+
+        if (asset.type === 'room') {
+            div.onclick = () => loadRoomAsset(asset);
+        } else {
+            div.onclick = () => selectTool(asset);
+        }
 
         entityListEl.appendChild(div);
     });
+}
+
+async function loadRoomAsset(asset) {
+    if (!confirm(`Load room "${asset.id}"? Unsaved changes will be lost.`)) return;
+
+    try {
+        const res = await fetch(asset.file);
+        if (!res.ok) throw new Error("File not found");
+        const data = await res.json();
+
+        // Use existing load logic (but we need to adapt it since loadFromClipboard expects clipboard)
+        // Let's refactor loadFromClipboard to reuse a common parsing function 'loadRoomData(data)'?
+        // OR just simulate it.
+        // Actually, we can just update roomData and UI directly, effectively what loadFromClipboard does.
+        // Or extract the logic.
+        // I'll extract a helper: processLoadedRoom(data)
+        processLoadedRoom(data);
+        showToast(`Room "${asset.id}" loaded!`, "success");
+
+    } catch (e) {
+        console.error(e);
+        showToast("Failed to load room: " + e.message, "error");
+    }
+}
+
+// Helper to share logic with loadFromClipboard
+function processLoadedRoom(data) {
+    // Basic Validation
+    if (!data.width || !data.height) throw new Error("Invalid Room JSON");
+
+    // Hydrate Data: Restore top-level x,y for Editor if missing (from MoveType)
+    if (data.enemies) {
+        const explodedEnemies = [];
+        data.enemies.forEach(en => {
+            // Determine Count
+            const count = en.count || 1;
+
+            // Explode based on count
+            for (let i = 0; i < count; i++) {
+                const newEn = JSON.parse(JSON.stringify(en)); // Deep copy
+                newEn.count = 1; // Reset count for individual entity
+
+                // 1. Try to get from moveType (Base coord)
+                if (newEn.x === undefined && newEn.moveType && newEn.moveType.x !== undefined) newEn.x = newEn.moveType.x;
+                if (newEn.y === undefined && newEn.moveType && newEn.moveType.y !== undefined) newEn.y = newEn.moveType.y;
+
+                // 2. Fallback: Random placement if missing or 0,0
+                if (newEn.x === undefined || (newEn.moveType && newEn.moveType.x === 0)) {
+                    if (newEn.x === undefined || newEn.x === 0) {
+                        newEn.x = Math.floor(Math.random() * (data.width - 100)) + 50;
+                    }
+                }
+                if (newEn.y === undefined || (newEn.moveType && newEn.moveType.y === 0)) {
+                    if (newEn.y === undefined || newEn.y === 0) {
+                        newEn.y = Math.floor(Math.random() * (data.height - 100)) + 50;
+                    }
+                }
+
+                explodedEnemies.push(newEn);
+            }
+        });
+        data.enemies = explodedEnemies;
+    }
+
+    roomData = data;
+
+    // Update UI inputs
+    // (We need to ensure document.getElementById calls work. They should.)
+    if (document.getElementById('roomName')) document.getElementById('roomName').value = roomData.name || "Unnamed";
+    if (document.getElementById('roomDescription')) document.getElementById('roomDescription').value = roomData.description || "";
+    if (document.getElementById('roomKeyBonus')) document.getElementById('roomKeyBonus').value = roomData.keyBonus !== undefined ? roomData.keyBonus : 1.0;
+    if (document.getElementById('roomSpeedGoal')) document.getElementById('roomSpeedGoal').value = roomData.speedGoal !== undefined ? roomData.speedGoal : 0;
+    if (document.getElementById('roomAllDoorsUnlocked')) document.getElementById('roomAllDoorsUnlocked').checked = !!roomData.allDoorsUnlocked;
+
+    // Populate Drop Inputs
+    const dropTypes = ['Common', 'Uncommon', 'Rare', 'Legendary'];
+    dropTypes.forEach(type => {
+        const key = type.toLowerCase();
+        const d = roomData.item && roomData.item[key] ? roomData.item[key] : { count: 0, dropChance: 0 };
+        const elCount = document.getElementById(`drop${type}Count`);
+        const elChance = document.getElementById(`drop${type}Chance`);
+        if (elCount) elCount.value = d.count;
+        if (elChance) elChance.value = d.dropChance;
+    });
+
+    if (document.getElementById('roomWidth')) document.getElementById('roomWidth').value = roomData.width;
+    if (document.getElementById('roomHeight')) document.getElementById('roomHeight').value = roomData.height;
+
+    // Doors
+    const bindDoor = (dir) => {
+        const d = roomData.doors[dir];
+        const elActive = document.getElementById(`door${dir.charAt(0).toUpperCase() + dir.slice(1)}Active`);
+        const elLocked = document.getElementById(`door${dir.charAt(0).toUpperCase() + dir.slice(1)}Locked`);
+        const elSecret = document.getElementById(`door${dir.charAt(0).toUpperCase() + dir.slice(1)}Secret`);
+        if (elActive) elActive.checked = !!d?.active;
+        if (elLocked) elLocked.checked = !!d?.locked;
+        if (elSecret) elSecret.checked = !!d?.secret;
+    };
+    bindDoor('top');
+    bindDoor('bottom');
+    bindDoor('left');
+    bindDoor('right');
+
+    draw();
 }
 
 function selectTool(asset) {
@@ -591,23 +778,25 @@ window.exportJSON = function () {
 
         const json = JSON.stringify(cleanData, null, 4);
         const outputParams = document.getElementById('jsonOutput');
-        if (outputParams) outputParams.value = json;
 
-        // Check for Clipboard API support
+        // 1. Always fill and select the textarea first (Reliable Fallback)
+        if (outputParams) {
+            outputParams.value = json;
+            outputParams.select();
+        }
+
+        // 2. Try Async Clipboard
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(json).then(() => {
                 showToast("JSON copied to clipboard!", "success");
             }).catch(err => {
                 console.error("Clipboard write failed:", err);
-                // Fallback
-                if (outputParams) outputParams.select();
-                showToast("Clipboard failed. Text selected.", "error");
+                // We already selected the text above, so just notify
+                showToast("Clipboard failed. Text selected for manual copy.", "error");
             });
         } else {
-            // Fallback for non-secure contexts (http://192...)
             console.warn("Clipboard API missing");
-            if (outputParams) outputParams.select();
-            showToast("Clipboard not supported. Text selected.", "info");
+            showToast("Clipboard not supported. Text selected for manual copy.", "info");
         }
     } catch (e) {
         console.error("Export Failed:", e);
@@ -623,92 +812,117 @@ window.loadFromClipboard = async function () {
         // Basic Validation
         if (!data.width || !data.height) throw new Error("Invalid Room JSON");
 
-        // Hydrate Data: Restore top-level x,y for Editor if missing (from MoveType)
-        if (data.enemies) {
-            const explodedEnemies = [];
-            data.enemies.forEach(en => {
-                // Determine Count
-                const count = en.count || 1;
+        processLoadedRoom(data);
 
-                // Explode based on count
-                for (let i = 0; i < count; i++) {
-                    const newEn = JSON.parse(JSON.stringify(en)); // Deep copy
-                    newEn.count = 1; // Reset count for individual entity
-
-                    // 1. Try to get from moveType (Base coord)
-                    if (newEn.x === undefined && newEn.moveType && newEn.moveType.x !== undefined) newEn.x = newEn.moveType.x;
-                    if (newEn.y === undefined && newEn.moveType && newEn.moveType.y !== undefined) newEn.y = newEn.moveType.y;
-
-                    // 2. Fallback: Random placement if missing or 0,0 (User request)
-                    // Note: If we are exploding a group that HAD specific coords (e.g. x:100, y:100, count:5),
-                    // should they all stack? Or scatter?
-                    // User said "use count to place multiple enemies in DIFFERENT places".
-                    // This implies even if coords exist, we might want to scatter them? 
-                    // Or only if they are "random" (0,0)?
-                    // "in load from json if there is no xy ... place it randomly"
-                    // So if there IS xy, we probably respect it (stacking).
-                    // If NO xy (or 0,0), we scatter.
-
-                    if (newEn.x === undefined || (newEn.moveType && newEn.moveType.x === 0)) {
-                        if (newEn.x === undefined || newEn.x === 0) {
-                            newEn.x = Math.floor(Math.random() * (data.width - 100)) + 50;
-                        }
-                    }
-                    if (newEn.y === undefined || (newEn.moveType && newEn.moveType.y === 0)) {
-                        if (newEn.y === undefined || newEn.y === 0) {
-                            newEn.y = Math.floor(Math.random() * (data.height - 100)) + 50;
-                        }
-                    }
-
-                    explodedEnemies.push(newEn);
-                }
-            });
-            data.enemies = explodedEnemies;
-        }
-
-        roomData = data;
-
-        // Update UI inputs
-        document.getElementById('roomName').value = roomData.name || "Unnamed";
-        document.getElementById('roomDescription').value = roomData.description || "";
-        document.getElementById('roomKeyBonus').value = roomData.keyBonus !== undefined ? roomData.keyBonus : 1.0;
-        document.getElementById('roomSpeedGoal').value = roomData.speedGoal !== undefined ? roomData.speedGoal : 0;
-        document.getElementById('roomAllDoorsUnlocked').checked = !!roomData.allDoorsUnlocked;
-
-        // Populate Drop Inputs
-        const dropTypes = ['Common', 'Uncommon', 'Rare', 'Legendary'];
-        dropTypes.forEach(type => {
-            const key = type.toLowerCase();
-            const data = roomData.item && roomData.item[key] ? roomData.item[key] : { count: 0, dropChance: 0 };
-            document.getElementById(`drop${type}Count`).value = data.count;
-            document.getElementById(`drop${type}Chance`).value = data.dropChance;
-        });
-
-        document.getElementById('roomWidth').value = roomData.width;
-        document.getElementById('roomHeight').value = roomData.height;
-        document.getElementById('doorTopActive').checked = !!roomData.doors.top?.active;
-        document.getElementById('doorTopLocked').checked = !!roomData.doors.top?.locked;
-        document.getElementById('doorTopSecret').checked = !!roomData.doors.top?.secret;
-
-        document.getElementById('doorBottomActive').checked = !!roomData.doors.bottom?.active;
-        document.getElementById('doorBottomLocked').checked = !!roomData.doors.bottom?.locked;
-        document.getElementById('doorBottomSecret').checked = !!roomData.doors.bottom?.secret;
-
-        document.getElementById('doorLeftActive').checked = !!roomData.doors.left?.active;
-        document.getElementById('doorLeftLocked').checked = !!roomData.doors.left?.locked;
-        document.getElementById('doorLeftSecret').checked = !!roomData.doors.left?.secret;
-
-        document.getElementById('doorRightActive').checked = !!roomData.doors.right?.active;
-        document.getElementById('doorRightLocked').checked = !!roomData.doors.right?.locked;
-        document.getElementById('doorRightSecret').checked = !!roomData.doors.right?.secret;
-
-        draw();
         draw();
         showToast("Room Loaded!", "success");
     } catch (e) {
         showToast("Failed to load JSON: " + e.message, "error");
     }
 };
+
+// Update UI inputs
+// (This block was orphaned - removing it)
+
+// Helper to share logic with loadFromClipboard
+function processLoadedRoom(data) {
+    // Basic Validation
+    if (!data.width || !data.height) throw new Error("Invalid Room JSON");
+
+    // Hydrate Data: Restore top-level x,y for Editor if missing (from MoveType)
+    if (data.enemies) {
+        const explodedEnemies = [];
+        data.enemies.forEach(en => {
+            // Determine Count
+            const count = en.count || 1;
+
+            // Explode based on count
+            for (let i = 0; i < count; i++) {
+                const newEn = JSON.parse(JSON.stringify(en)); // Deep copy
+                newEn.count = 1; // Reset count for individual entity
+
+                // 1. Try to get from moveType (Base coord)
+                if (newEn.x === undefined && newEn.moveType && newEn.moveType.x !== undefined) newEn.x = newEn.moveType.x;
+                if (newEn.y === undefined && newEn.moveType && newEn.moveType.y !== undefined) newEn.y = newEn.moveType.y;
+
+                // 2. Fallback: Random placement if missing or 0,0
+                if (newEn.x === undefined || (newEn.moveType && newEn.moveType.x === 0)) {
+                    if (newEn.x === undefined || newEn.x === 0) {
+                        newEn.x = Math.floor(Math.random() * (data.width - 100)) + 50;
+                    }
+                }
+                if (newEn.y === undefined || (newEn.moveType && newEn.moveType.y === 0)) {
+                    if (newEn.y === undefined || newEn.y === 0) {
+                        newEn.y = Math.floor(Math.random() * (data.height - 100)) + 50;
+                    }
+                }
+
+                explodedEnemies.push(newEn);
+            }
+        });
+        data.enemies = explodedEnemies;
+    }
+
+    roomData = data;
+
+    // Update UI inputs
+    if (document.getElementById('roomName')) document.getElementById('roomName').value = roomData.name || "Unnamed";
+    if (document.getElementById('roomDescription')) document.getElementById('roomDescription').value = roomData.description || "";
+    if (document.getElementById('roomKeyBonus')) document.getElementById('roomKeyBonus').value = roomData.keyBonus !== undefined ? roomData.keyBonus : 1.0;
+    if (document.getElementById('roomSpeedGoal')) document.getElementById('roomSpeedGoal').value = roomData.speedGoal !== undefined ? roomData.speedGoal : 0;
+    if (document.getElementById('roomAllDoorsUnlocked')) document.getElementById('roomAllDoorsUnlocked').checked = !!roomData.allDoorsUnlocked;
+
+    // Populate Drop Inputs
+    const dropTypes = ['Common', 'Uncommon', 'Rare', 'Legendary'];
+    dropTypes.forEach(type => {
+        const key = type.toLowerCase();
+        const d = roomData.item && roomData.item[key] ? roomData.item[key] : { count: 0, dropChance: 0 };
+        const elCount = document.getElementById(`drop${type}Count`);
+        const elChance = document.getElementById(`drop${type}Chance`);
+        if (elCount) elCount.value = d.count;
+        if (elChance) elChance.value = d.dropChance;
+    });
+
+    if (document.getElementById('roomWidth')) document.getElementById('roomWidth').value = roomData.width;
+    if (document.getElementById('roomHeight')) document.getElementById('roomHeight').value = roomData.height;
+
+    // Doors
+    const bindDoor = (dir) => {
+        const d = roomData.doors[dir];
+        const elActive = document.getElementById(`door${dir.charAt(0).toUpperCase() + dir.slice(1)}Active`);
+        const elLocked = document.getElementById(`door${dir.charAt(0).toUpperCase() + dir.slice(1)}Locked`);
+        const elSecret = document.getElementById(`door${dir.charAt(0).toUpperCase() + dir.slice(1)}Secret`);
+        if (elActive) elActive.checked = !!d?.active;
+        if (elLocked) elLocked.checked = !!d?.locked;
+        if (elSecret) elSecret.checked = !!d?.secret;
+    };
+    bindDoor('top');
+    bindDoor('bottom');
+    bindDoor('left');
+    bindDoor('right');
+
+    const json = JSON.stringify(roomData, null, 4);
+    if (document.getElementById('jsonOutput')) document.getElementById('jsonOutput').value = json;
+
+    draw();
+}
+
+async function loadRoomAsset(asset) {
+    if (!confirm(`Load room "${asset.id}"? Unsaved changes will be lost.`)) return;
+
+    try {
+        const res = await fetch(asset.file);
+        if (!res.ok) throw new Error("File not found");
+        const data = await res.json();
+
+        processLoadedRoom(data);
+        showToast(`Room "${asset.id}" loaded!`, "success");
+
+    } catch (e) {
+        console.error(e);
+        showToast("Failed to load room: " + e.message, "error");
+    }
+}
 
 window.testRoom = function () {
     // 1. Save current room data to localStorage
@@ -758,14 +972,4 @@ window.showToast = function (msg, type = 'info') {
     }, 3000);
 };
 
-// --- ALERTS REPLACEMENT ---
-// Overriding the previous alert calls in export/import
-// (We re-define the logic here or update the existing functions?)
-// Ideally update existing blocks. But previous Replace tools modified them.
-// I will just append the updated versions of export/load here to ensure they use showToast.
-// Wait, declaring them again might be messy if not replacing exact lines.
-// Let's replace the EXACT lines where alerts serve.
 
-// (Requires multiple Replace calls or one multi-replace if distributed)
-// The alerts are inside window.exportJSON and window.loadFromClipboard.
-// I will target those specific function blocks.

@@ -352,7 +352,17 @@
                     <div class="panel-content"><select id="entityTypeSelector">
                             <option value="enemy">Enemies</option>
                             <option value="item">Items</option>
-                        </select><input type="text" id="assetSearch" placeholder="Filter...">
+                            <option value="room">Rooms</option>
+                        </select>
+                        <select id="itemCategorySelector" style="display:none; margin-top:5px; width:100%;">
+                            <option value="guns_enemy">Enemy Guns</option>
+                            <option value="guns_player">Player Guns</option>
+                            <option value="inventory_bombs">Bombs</option>
+                            <option value="inventory_key">Keys</option>
+                            <option value="modifiers_bullets">Bullet Modifiers</option>
+                            <option value="modifiers_player">Player Modifiers</option>
+                        </select>
+                        <input type="text" id="assetSearch" placeholder="Filter...">
                         <div id="entity-list">
                             <!-- Populated by JS -->
                             <div class="entity-item" style="color: #777;">Loading assets...</div>
