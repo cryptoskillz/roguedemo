@@ -933,7 +933,8 @@ window.testRoom = function () {
     const modal = document.getElementById('testModal');
     const frame = document.getElementById('testFrame');
 
-    frame.src = 'index.html?debugRoom=true';
+    frame.src = 'index.html?debugRoom=true&t=' + Date.now();
+
     modal.style.display = 'flex';
 
     // Focus button to allow easy close? No, focus iframe?

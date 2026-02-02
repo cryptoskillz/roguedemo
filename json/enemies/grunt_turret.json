@@ -5,6 +5,7 @@
     "shake": 2,
     "hp": 0,
     "indestructible": true,
+    "stealth": true,
     "speed": 1.2,
     "size": 25,
     "color": "rgba(231, 76, 60, 0.8)",

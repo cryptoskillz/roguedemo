@@ -23,29 +23,7 @@
     },
     "isBoss": true,
     "enemies": [],
-    "doors": {
-        "top": {
-            "locked": 0,
-            "active": 0,
-            "x": 400
-        },
-        "bottom": {
-            "locked": 0,
-            "active": 0,
-            "x": 400
-        },
-        "left": {
-            "locked": 0,
-            "active": 0,
-            "y": 300
-        },
-        "right": {
-            "locked": 0,
-            "active": 0,
-            "y": 300
-        },
-        "special": []
-    },
+    "doors": {},
     "width": 800,
     "height": 600,
     "unlocks": [

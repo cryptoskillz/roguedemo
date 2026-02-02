@@ -319,7 +319,7 @@ function updateWelcomeScreen() {
         ? 'press any key to continue<br><span style="font-size:0.6em; color:#ff6b6b;">press N for new game (clears data)</span>'
         : 'press any key to start';
 
-    let html = `<h1>rogue demo</h1>
+    let html = `<h1>Geometry Dash</h1>
         ${charSelectHtml}
         <p>${gameData.music ? 'press 0 to toggle music<br>' : ''}${p.locked ? '<span style="color:red; font-size:1.5em; font-weight:bold;">LOCKED</span>' : startText}</p>`;
 
@@ -902,6 +902,7 @@ const DOOR_SIZE = 50;
 const DOOR_THICKNESS = 15;
 // Load configurations (Async)
 let DEBUG_START_BOSS = false;
+let DEBUG_TEST_ROOM = false;
 let DEBUG_PLAYER = true;
 let GODMODE_ENABLED = false;
 let DEBUG_WINDOW_ENABLED = false;
@@ -1404,6 +1405,8 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
         bosses = bosses.filter(p => p && p.trim() !== "");
         bosses.forEach(path => roomProtos.push(loadRoomFile(path, 'boss')));
 
+
+
         await Promise.all(roomProtos);
 
         // 4. Pre-load ALL enemy templates
@@ -1417,35 +1420,40 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
         await Promise.all(ePromises);
 
         // 5. Generate Level
+        const urlParams = new URLSearchParams(window.location.search);
+        const isDebugRoom = urlParams.get('debugRoom') === 'true';
+        DEBUG_TEST_ROOM = isDebugRoom;
+
         if (DEBUG_START_BOSS) {
             bossCoord = "0,0";
             goldenPath = ["0,0"];
             bossIntroEndTime = Date.now() + 2000;
             levelMap["0,0"] = { roomData: JSON.parse(JSON.stringify(roomTemplates["boss"])), cleared: false };
-        } else {
-            // --- DEBUG ROOM LOADER ---
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('debugRoom') === 'true') {
-                const debugData = localStorage.getItem('debugRoomData');
-                if (debugData) {
-                    try {
-                        const parsed = JSON.parse(debugData);
-                        console.log("Loading Test Room:", parsed);
-                        // Override 'start' template
-                        roomTemplates["start"] = parsed;
-                        // Ensure roomTemplates['boss'] exists to prevent crash if not loaded yet?
-                        // Actually loadAssets() happens before initGame(), so templates should exist.
-                        // We just override "start" AFTER loadAssets() but BEFORE generateLevel().
+        }
+        else if (isDebugRoom) {
+            // --- EDITOR TEST ROOM BYPASS ---
+            try {
+                const debugJson = localStorage.getItem('debugRoomData');
+                if (debugJson) {
+                    const debugData = JSON.parse(debugJson);
 
-                        // WAIT! roomTemplates are loaded in loadAssets(). 
-                        // We need to inject this logic AFTER `loadAssets` completes but BEFORE game starts.
-                        // `initGame` calls `loadAssets`, awaits it, then does setup.
-                        // We should inject this logic inside `initGame` after `loadAssets`.
-                    } catch (e) {
-                        console.error("Failed to parse Debug Room Data", e);
-                    }
+                    bossCoord = "0,0";
+                    goldenPath = ["0,0"];
+                    levelMap["0,0"] = { roomData: debugData, cleared: false }; // Directly inject into map
+
+                    // Force Skip Welcome
+                    gameData.showWelcome = false;
+                    gData.showWelcome = false;
+                } else {
+                    console.error("No debugRoomData found in localStorage");
+                    generateLevel(gameData.NoRooms !== undefined ? gameData.NoRooms : 11);
                 }
+            } catch (e) {
+                console.error("Failed to load test room", e);
+                generateLevel(gameData.NoRooms !== undefined ? gameData.NoRooms : 11);
             }
+        }
+        else {
             generateLevel(gameData.NoRooms !== undefined ? gameData.NoRooms : 11);
         }
 
@@ -1484,6 +1492,20 @@ initGame();
 
 // --- Input Handling ---
 window.addEventListener('keydown', e => {
+    // Debug Toggle
+    if (e.code === 'Backquote') {
+        DEBUG_WINDOW_ENABLED = !DEBUG_WINDOW_ENABLED;
+        DEBUG_LOG_ENABLED = !DEBUG_LOG_ENABLED; // Toggle log too? User implied "Debug Window broken", usually they go together.
+
+        if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
+        if (debugLogEl) debugLogEl.style.display = DEBUG_LOG_ENABLED ? 'block' : 'none';
+
+        // Re-render check
+        if (DEBUG_WINDOW_ENABLED) renderDebugForm();
+        log("Debug Toggled:", DEBUG_WINDOW_ENABLED);
+        return;
+    }
+
     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
     if (gameState === STATES.START) {
         // Allow Menu Navigation keys to pass through to handleGlobalInputs
@@ -1654,6 +1676,27 @@ function startGame() {
 }
 
 // Debug Listeners
+function populateDebugSelect() {
+    if (!debugSelect) return;
+    debugSelect.innerHTML = '';
+    const opts = [
+        { val: 'player', text: 'Player' },
+        { val: 'room', text: 'Room Data' },
+        { val: 'spawn', text: 'Spawn Items' },
+        { val: 'spawnEnemy', text: 'Spawn Enemies' },
+        { val: 'spawnRoom', text: 'Load Room' }
+    ];
+    opts.forEach(o => {
+        const el = document.createElement('option');
+        el.value = o.val;
+        el.innerText = o.text;
+        debugSelect.appendChild(el);
+    });
+    // Default select based on last used or first
+    // debugSelect.value = 'player';
+}
+populateDebugSelect();
+
 if (debugSelect) debugSelect.addEventListener('change', renderDebugForm);
 // Force initial render of the form
 setTimeout(renderDebugForm, 100);
@@ -1789,8 +1832,8 @@ function spawnEnemies() {
                     if (mt && typeof mt === 'object') {
                         if (mt.x !== undefined && mt.y !== undefined) {
                             // Rule 1: Ignore 0,0 (treat as unset/random)
-                            // Rule 2: Only 'static' enemies use fixed positioning
-                            if ((mt.x !== 0 || mt.y !== 0) && mt.type === 'static') {
+                            // Rule 2: user requested "if movetype has x,y start it there" regardless of type
+                            if (mt.x !== 0 || mt.y !== 0) {
                                 useFixed = true;
                                 fixedX = mt.x;
                                 fixedY = mt.y;
@@ -1816,6 +1859,7 @@ function spawnEnemies() {
                     }
 
                     enemies.push(inst);
+                    log(`Spawned ${inst.type} (ID: ${group.type}). Stealth: ${inst.stealth}, Indestructible: ${inst.indestructible}`);
                 }
             } else {
                 console.warn(`Enemy template not found for: ${group.type}`);
@@ -2145,34 +2189,47 @@ async function dropBomb() {
     const gap = 6;
     const backDist = player.size + baseR + gap;
 
-    // Detect Movement (Simple Key Check)
-    const isMoving = (keys['KeyW'] || keys['KeyA'] || keys['KeyS'] || keys['KeyD'] ||
-        keys['ArrowUp'] || keys['ArrowLeft'] || keys['ArrowDown'] || keys['ArrowRight']);
+    const isMoving = (keys['KeyW'] || keys['KeyA'] || keys['KeyS'] || keys['KeyD']);
+    const isShooting = (keys['ArrowUp'] || keys['ArrowLeft'] || keys['ArrowDown'] || keys['ArrowRight']);
 
-    // Default to 1 (Down) if no movement yet
-    const lastX = (player.lastMoveX === undefined && player.lastMoveY === undefined) ? 0 : (player.lastMoveX || 0);
-    const lastY = (player.lastMoveX === undefined && player.lastMoveY === undefined) ? 1 : (player.lastMoveY || 0);
+    // Determine Drop Direction (Facing)
+    let dirX = 0;
+    let dirY = 0;
+
+    if (isMoving) {
+        // Use Movement Direction
+        if (keys['KeyW']) dirY = -1;
+        if (keys['KeyS']) dirY = 1;
+        if (keys['KeyA']) dirX = -1;
+        if (keys['KeyD']) dirX = 1;
+        // Normalize diagonals not strictly needed for grid offset here but keeps it clean? 
+        // Logic just adds components. 
+    } else if (isShooting) {
+        // Use Shooting Direction
+        if (keys['ArrowUp']) dirY = -1;
+        if (keys['ArrowDown']) dirY = 1;
+        if (keys['ArrowLeft']) dirX = -1;
+        if (keys['ArrowRight']) dirX = 1;
+    } else {
+        // Fallback to Last Moved
+        dirX = (player.lastMoveX === undefined && player.lastMoveY === undefined) ? 0 : (player.lastMoveX || 0);
+        dirY = (player.lastMoveX === undefined && player.lastMoveY === undefined) ? 1 : (player.lastMoveY || 0);
+    }
 
     let dropX, dropY, dropVx = 0, dropVy = 0;
 
     if (isMoving) {
-        // MOVING: Drop Behind and Add Velocity (Follow/Trail)
-        // Check if user meant "Follow" = "Move WITH me" or "Trail BEHIND me".
-        // "Trail Behind" is cleaner for safety. "Move with me" is chaos.
-        // Let's implement "Trail Behind" with slight inertia.
-        dropX = player.x - (lastX * backDist);
-        dropY = player.y - (lastY * backDist);
+        // MOVING: Drop Behind
+        dropX = player.x - (dirX * backDist);
+        dropY = player.y - (dirY * backDist);
 
-        // Add a bit of player velocity to the bomb so it "drifts"
-        // Assuming player speed is roughly 4 (default).
-        // Let's give it 50% of movement text direction.
-        dropVx = lastX * 2;
-        dropVy = lastY * 2;
+        dropVx = dirX * 2;
+        dropVy = dirY * 2;
     } else {
         // STATIONARY: Drop IN FRONT (Pushable)
-        // Offset + (Front)
-        dropX = player.x + (lastX * backDist);
-        dropY = player.y + (lastY * backDist);
+        dropX = player.x + (dirX * backDist);
+        dropY = player.y + (dirY * backDist);
+        log(`Stationary Drop. Facing: ${dirX},${dirY}. Player: ${player.x.toFixed(0)},${player.y.toFixed(0)}. Drop: ${dropX.toFixed(0)},${dropY.toFixed(0)}`);
     }
 
     // Check if drop position overlaps with an existing bomb
@@ -2185,8 +2242,52 @@ async function dropBomb() {
         }
     }
     // Also check walls
+    // Fix: If wall blocked, Clamp bomb to wall and Push Player back
     if (dropX < BOUNDARY || dropX > canvas.width - BOUNDARY || dropY < BOUNDARY || dropY > canvas.height - BOUNDARY) {
-        canDrop = false;
+        // Only engage push logic if not moving (Stationary drop)
+        if (!isMoving) {
+            // Clamp Bomb and Determine Push Direction
+            let pushAngle = 0;
+            let clamped = false;
+
+            if (dropX < BOUNDARY) {
+                dropX = BOUNDARY + baseR;
+                pushAngle = 0; // Push Right
+                clamped = true;
+            } else if (dropX > canvas.width - BOUNDARY) {
+                dropX = canvas.width - BOUNDARY - baseR;
+                pushAngle = Math.PI; // Push Left
+                clamped = true;
+            }
+
+            if (dropY < BOUNDARY) {
+                dropY = BOUNDARY + baseR;
+                pushAngle = Math.PI / 2; // Push Down
+                clamped = true;
+            } else if (dropY > canvas.height - BOUNDARY) {
+                dropY = canvas.height - BOUNDARY - baseR;
+                pushAngle = -Math.PI / 2; // Push Up
+                clamped = true;
+            }
+
+            // Push Player (Force away from wall)
+            if (clamped) {
+                const pushDist = backDist + 5;
+                player.x = dropX + Math.cos(pushAngle) * pushDist;
+                player.y = dropY + Math.sin(pushAngle) * pushDist;
+
+                player.x = Math.max(BOUNDARY + player.size, Math.min(canvas.width - BOUNDARY - player.size, player.x));
+                player.y = Math.max(BOUNDARY + player.size, Math.min(canvas.height - BOUNDARY - player.size, player.y));
+
+                canDrop = true;
+                log(`Wall Clamp. Pushed player to ${player.x.toFixed(0)},${player.y.toFixed(0)}`);
+            } else {
+                canDrop = false;
+            }
+        } else {
+            // Moving and hit wall -> Block drop
+            canDrop = false;
+        }
     }
 
     if (!canDrop) return false;
@@ -3193,27 +3294,37 @@ function updateBulletsAndShards(aliveEnemies) {
 
         // --- HOMING LOGIC ---
         if (b.homing && aliveEnemies && aliveEnemies.length > 0) {
-            // Find closest enemy
-            let closest = aliveEnemies[0];
-            let minDist = Infinity;
-            aliveEnemies.forEach(en => {
-                const d = Math.hypot(b.x - en.x, b.y - en.y);
-                if (d < minDist) { minDist = d; closest = en; }
-            });
+            // Filter valid targets (excluding stealth)
+            const targets = aliveEnemies.filter(en => !en.stealth);
 
-            // Rotate velocity towards target
-            const targetAngle = Math.atan2(closest.y - b.y, closest.x - b.x);
-            const currentAngle = Math.atan2(b.vy, b.vx);
+            if (targets.length > 0) {
+                // Find closest enemy
+                let closest = targets[0];
+                let minDist = Infinity;
+                targets.forEach(en => {
+                    const d = Math.hypot(b.x - en.x, b.y - en.y);
+                    if (d < minDist) { minDist = d; closest = en; }
+                });
 
-            // Subtle curve (0.1 strength)
-            b.vx += Math.cos(targetAngle) * 0.5;
-            b.vy += Math.sin(targetAngle) * 0.5;
+                // Rotate velocity towards target
+                const targetAngle = Math.atan2(closest.y - b.y, closest.x - b.x);
+                const currentAngle = Math.atan2(b.vy, b.vx);
 
-            // Normalize to gun speed so bullets don't accelerate to infinity
-            const speed = gun.Bullet.speed || 5;
-            const currMag = Math.hypot(b.vx, b.vy);
-            b.vx = (b.vx / currMag) * speed;
-            b.vy = (b.vy / currMag) * speed;
+                // Subtle curve (0.1 strength)
+                b.vx += Math.cos(targetAngle) * 0.5;
+                b.vy += Math.sin(targetAngle) * 0.5;
+
+                // Normalize to gun speed so bullets don't accelerate to infinity
+                const speed = gun.Bullet.speed || 5;
+                const currMag = Math.hypot(b.vx, b.vy);
+                b.vx = (b.vx / currMag) * speed;
+                b.vy = (b.vy / currMag) * speed;
+            } else {
+                // No valid targets? Behave like normal bullet (or curve if set)
+                // Fallthrough to curve check below if we want strict behavior, 
+                // but usually homing bullets just go straight if no target.
+            }
+
         } else if (b.curve) {
             // --- GENERIC CURVE ---
             const currentAngle = Math.atan2(b.vy, b.vx);
@@ -3648,6 +3759,22 @@ function updateEnemies() {
                     }
                 }
 
+                // 2.2 Avoid Solid Enemies (e.g. Turrets)
+                for (const other of enemies) {
+                    if (other !== en && !other.isDead && other.solid) {
+                        const odx = en.x - other.x; const ody = en.y - other.y;
+                        const oDist = Math.hypot(odx, ody);
+                        const safeDist = en.size + other.size + 40; // Detection range
+                        if (oDist < safeDist) {
+                            const push = (safeDist - oDist) / safeDist;
+                            if (oDist > 0) {
+                                dirX += (odx / oDist) * push * AVOID_WEIGHT;
+                                dirY += (ody / oDist) * push * AVOID_WEIGHT;
+                            }
+                        }
+                    }
+                }
+
                 // 2.5 Avoid Walls (Stay in Room)
                 const WALL_DETECT_DIST = 30;
                 const WALL_PUSH_WEIGHT = 1.5; // Reduced so they can corner the player
@@ -3658,15 +3785,32 @@ function updateEnemies() {
                 if (en.y > canvas.height - BOUNDARY - WALL_DETECT_DIST) dirY -= WALL_PUSH_WEIGHT * ((en.y - (canvas.height - BOUNDARY - WALL_DETECT_DIST)) / WALL_DETECT_DIST);
 
                 // 3. Separation
-                const SEP_WEIGHT = 2.5;
+                const SEP_WEIGHT = 6.0; // Increased for stronger push
                 enemies.forEach((other, oi) => {
                     if (ei === oi || other.isDead) return;
                     const odx = en.x - other.x; const ody = en.y - other.y;
                     const odist = Math.hypot(odx, ody);
-                    const checkDist = (en.size + other.size) * 0.8 + 20;
+                    const checkDist = (en.size + other.size); // Full size check
                     if (odist < checkDist) {
-                        if (odist === 0) { dirX += (Math.random() - 0.5) * 5; dirY += (Math.random() - 0.5) * 5; }
-                        else { const push = (checkDist - odist) / checkDist; dirX += (odx / odist) * push * SEP_WEIGHT; dirY += (ody / odist) * push * SEP_WEIGHT; }
+                        const overlap = checkDist - odist;
+                        if (odist === 0) {
+                            // Random spread if exact overlap
+                            const rx = (Math.random() - 0.5) * 2;
+                            const ry = (Math.random() - 0.5) * 2;
+                            dirX += rx * 10; dirY += ry * 10;
+                            en.x += rx; en.y += ry; // Hard nudge
+                        } else {
+                            const push = (checkDist - odist) / checkDist;
+                            // Cubic push for steering velocity
+                            const strongPush = push * push * push;
+                            dirX += (odx / odist) * strongPush * SEP_WEIGHT * 5;
+                            dirY += (ody / odist) * strongPush * SEP_WEIGHT * 5;
+
+                            // HARD MOVEMENT RESOLVE (Fix stuck enemies)
+                            const resolveFactor = 0.1;
+                            en.x += (odx / odist) * overlap * resolveFactor;
+                            en.y += (ody / odist) * overlap * resolveFactor;
+                        }
                     }
                 });
 
@@ -3678,7 +3822,16 @@ function updateEnemies() {
 
                     // Collision Check
                     const isBlocked = (tx, ty) => {
-                        for (const b of bombs) if (b.solid && !b.exploding && Math.hypot(tx - b.x, ty - b.y) < en.size + (b.baseR || 15)) return true;
+                        // Check Bombs
+                        for (const b of bombs) {
+                            if (b.solid && !b.exploding && Math.hypot(tx - b.x, ty - b.y) < en.size + (b.baseR || 15)) return true;
+                        }
+                        // Check Solid Enemies (e.g. Turrets)
+                        for (const other of enemies) {
+                            if (other === en || other.isDead || !other.solid) continue;
+                            const dist = Math.hypot(tx - other.x, ty - other.y);
+                            if (dist < en.size + other.size) return true;
+                        }
                         return false;
                     };
                     const nextX = en.x + vx; const nextY = en.y + vy;
@@ -4343,9 +4496,24 @@ function updateBombDropping() {
 function updateMovementAndDoors(doors, roomLocked) {
     // --- 4. MOVEMENT & DOOR COLLISION ---
     const moveKeys = { "KeyW": [0, -1, 'top'], "KeyS": [0, 1, 'bottom'], "KeyA": [-1, 0, 'left'], "KeyD": [1, 0, 'right'] };
+
+    // TRACK INPUT VECTOR for Diagonals
+    let inputDx = 0;
+    let inputDy = 0;
+    if (keys['KeyW']) inputDy -= 1;
+    if (keys['KeyS']) inputDy += 1;
+    if (keys['KeyA']) inputDx -= 1;
+    if (keys['KeyD']) inputDx += 1;
+
+    // Update last move only if there is input
+    if (inputDx !== 0 || inputDy !== 0) {
+        player.lastMoveX = inputDx;
+        player.lastMoveY = inputDy;
+    }
+
     for (let [key, [dx, dy, dir]] of Object.entries(moveKeys)) {
         if (keys[key]) {
-            player.lastMoveX = dx; player.lastMoveY = dy;
+            // player.lastMoveX = dx; player.lastMoveY = dy; // REMOVED: Managed by vector above
             const door = doors[dir] || { active: 0, locked: 0, hidden: 0 };
 
             // Reference center for alignment
@@ -4522,7 +4690,7 @@ function drawTutorial() {
     // --- Start Room Tutorial Text ---
     // --- Start Room Tutorial Text ---
     // Show in start room (0,0) if it is NOT a boss room
-    if (player.roomX === 0 && player.roomY === 0 && !roomData.isBoss && (DEBUG_START_BOSS === false)) {
+    if (player.roomX === 0 && player.roomY === 0 && !roomData.isBoss && !DEBUG_START_BOSS && !DEBUG_TEST_ROOM) {
         ctx.save();
 
         // Internal helper for keycaps
@@ -4885,15 +5053,36 @@ function updateItems() {
         }
 
         // Pickup Logic
+        // Pickup Logic
+        // Decrement Cooldown
+        if (item.pickupCooldown > 0) {
+            item.pickupCooldown--;
+        }
+
+        // Lazy Init Heat
+        if (item.collisionHeat === undefined) item.collisionHeat = 0;
+
         const dist = Math.hypot(player.x - item.x, player.y - item.y);
-        // Reduce pickup range slightly so you have to be close, 
-        // but not INSIDE it if it's solid. 
-        // 40 is lenient.
-        if (dist < 50) {
-            if (keys['Space']) {
+        const PICKUP_THRESHOLD = 50;
+        const HEAT_MAX = 100;
+
+        if (dist < PICKUP_THRESHOLD) {
+            // Player is touching/close
+            if (!item.pickupCooldown || item.pickupCooldown <= 0) {
+                // Increase Heat (Sustained contact or rapid bumps)
+                item.collisionHeat += 5;
+                if (item.collisionHeat > HEAT_MAX) item.collisionHeat = HEAT_MAX;
+            }
+
+            // ALLOW MANUAL OVERRIDE (Space) OR HEAT TRIGGER
+            if (keys['Space'] || item.collisionHeat >= HEAT_MAX) {
                 keys['Space'] = false; // Consume input
                 pickupItem(item, i);
             }
+        } else {
+            // Decay Heat when away
+            item.collisionHeat -= 2;
+            if (item.collisionHeat < 0) item.collisionHeat = 0;
         }
     }
 }

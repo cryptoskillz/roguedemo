@@ -31,7 +31,7 @@
         "spreadRate": 0,
         "number": 1,
         "recoil": 0,
-        "homing": false,
+        "homing": true,
         "fireRate": 0.5,
         "wallBounce": false,
         "pierce": false,

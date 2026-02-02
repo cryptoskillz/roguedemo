@@ -1,13 +1,14 @@
 bugs
-    bombs are a little jenky on doors in front of you 
-    homic missles should not target indestrucibile ememies (maybe we want this if so add a targetable attr to enemies, be nice to have some that stealth enemies)
+    bombb blast pushing the player away not working (maybe can damage player has to be on) 
+    editor test roon is not working
+    run through a item with force acts a pick up 
     the boss is not invul during intro
-    enemies can pass through other enemies marked as solid but the player cannot
     replace java script new game with something nice
-    boss sometimes not rendering on level 4
+
 
 next up 
     bug fixss
+    ghost
     ui updates
         inventory
         stats
@@ -17,6 +18,14 @@ next up
     balance
     unlocks / permance
     server
+
+ghost
+if you go through multiple room and back track you will see multiple ghosts
+if you leave a room and come back the ghost should be the same place + closer to you basedo on the speed the ghost moves. 
+if you kill some of the enemeis and leave a room and back there should only be the remaining enemies left (with ghost or blowing doors)
+    ghost timer is running when you are on the welcome screen
+    ghpst wont enter a room with an indestrcutible eemies
+
 
 
 level plan
@@ -90,11 +99,6 @@ enemies
 
 
 
-
-ghost
-if you go through multiple room and back track you will see multiple ghosts
-if you leave a room and come back the ghost should be the same place + closer to you basedo on the speed the ghost moves. 
-if you kill some of the enemeis and leave a room and back there should only be the remaining enemies left (with ghost or blowing doors)
 
 
 

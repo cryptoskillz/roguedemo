@@ -43,11 +43,6 @@ canvas {
 }
 
 #debug-panel {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    /* Ensure it stands out */
     display: flex;
     flex-direction: column;
     gap: 10px;
