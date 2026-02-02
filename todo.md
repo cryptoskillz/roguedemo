@@ -1,6 +1,5 @@
 bugs
-    on welcoem screen when you have something local data it will ask you to continue or new game
-    dont drop the same item twice
+    on welcome screen when you have something local data it will ask you to continue or new game
     boss sometimes not rendering on level 4
 
 
@@ -94,8 +93,6 @@ enemies
 
 
 ghost
-- [x] ghost does not always seem to kill you if it hots i think if there are other emenuies something is going wrong witht he collision
-
 if you go through multiple room and back track you will see multiple ghosts
 if you leave a room and come back the ghost should be the same place + closer to you basedo on the speed the ghost moves. 
 if you kill some of the enemeis and leave a room and back there should only be the remaining enemies left (with ghost or blowing doors)
@@ -109,6 +106,9 @@ server
     store permant modiifers
 
 items
+    dont drop the same item twice
+
+
     solid false
     coin item :
     start room in a 10000 chance to drop a legendary item 

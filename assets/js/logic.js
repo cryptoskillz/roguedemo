@@ -313,9 +313,15 @@ function updateWelcomeScreen() {
         </div>`;
     }
 
+    // Check for Saved Data (Unlocks or Progress)
+    const hasSave = localStorage.getItem('game_unlocks') || localStorage.getItem('game_unlocked_ids');
+    const startText = hasSave
+        ? 'press any key to continue<br><span style="font-size:0.6em; color:#ff6b6b;">press N for new game (clears data)</span>'
+        : 'press any key to start';
+
     let html = `<h1>rogue demo</h1>
         ${charSelectHtml}
-        <p>${gameData.music ? 'press 0 to toggle music<br>' : ''}${p.locked ? '<span style="color:red; font-size:1.5em; font-weight:bold;">LOCKED</span>' : 'press any key to start'}</p>`;
+        <p>${gameData.music ? 'press 0 to toggle music<br>' : ''}${p.locked ? '<span style="color:red; font-size:1.5em; font-weight:bold;">LOCKED</span>' : startText}</p>`;
 
     welcomeEl.innerHTML = html;
 
@@ -1484,6 +1490,18 @@ window.addEventListener('keydown', e => {
         if (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'KeyM') {
             log("Keydown Menu Key:", e.code);
             keys[e.code] = true;
+            return;
+        }
+
+        // Check for New Game (N)
+        const hasSave = localStorage.getItem('game_unlocks') || localStorage.getItem('game_unlocked_ids');
+        if (e.code === 'KeyN' && hasSave) {
+            if (confirm("START NEW GAME?\n\nThis will DELETE ALL UNLOCKS and progress.\nAre you sure?")) {
+                localStorage.removeItem('game_unlocks');
+                localStorage.removeItem('game_unlocked_ids');
+                log("Save data cleared. Starting fresh.");
+                restartGame();
+            }
             return;
         }
 
