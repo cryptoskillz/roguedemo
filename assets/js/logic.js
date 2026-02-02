@@ -5053,15 +5053,36 @@ function updateItems() {
         }
 
         // Pickup Logic
+        // Pickup Logic
+        // Decrement Cooldown
+        if (item.pickupCooldown > 0) {
+            item.pickupCooldown--;
+        }
+
+        // Lazy Init Heat
+        if (item.collisionHeat === undefined) item.collisionHeat = 0;
+
         const dist = Math.hypot(player.x - item.x, player.y - item.y);
-        // Reduce pickup range slightly so you have to be close, 
-        // but not INSIDE it if it's solid. 
-        // 40 is lenient.
-        if (dist < 50) {
-            if (keys['Space']) {
+        const PICKUP_THRESHOLD = 50;
+        const HEAT_MAX = 100;
+
+        if (dist < PICKUP_THRESHOLD) {
+            // Player is touching/close
+            if (!item.pickupCooldown || item.pickupCooldown <= 0) {
+                // Increase Heat (Sustained contact or rapid bumps)
+                item.collisionHeat += 5;
+                if (item.collisionHeat > HEAT_MAX) item.collisionHeat = HEAT_MAX;
+            }
+
+            // ALLOW MANUAL OVERRIDE (Space) OR HEAT TRIGGER
+            if (keys['Space'] || item.collisionHeat >= HEAT_MAX) {
                 keys['Space'] = false; // Consume input
                 pickupItem(item, i);
             }
+        } else {
+            // Decay Heat when away
+            item.collisionHeat -= 2;
+            if (item.collisionHeat < 0) item.collisionHeat = 0;
         }
     }
 }
