@@ -967,7 +967,8 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
             inventory: { ...player.inventory },
             gunType: player.gunType,
             bombType: player.bombType,
-            speed: player.speed
+            speed: player.speed,
+            perfectStreak: perfectStreak // Save Streak
         };
         log("Saved Player Stats:", JSON.stringify(savedPlayerStats));
     }
@@ -977,6 +978,7 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
         player.speed = 4;
         player.inventory.keys = 0;
         player.inventory.bombs = 0; // Ensure bombs reset too if not kept
+        perfectStreak = 0; // Reset streak ONLY on fresh start
     }
     // Always reset pos
     player.x = 300;
@@ -985,7 +987,7 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
     player.roomY = 0;
     bulletsInRoom = 0;
     hitsInRoom = 0;
-    perfectStreak = 0;
+    // perfectStreak = 0; // REMOVED: Managed above
     perfectEl.style.display = 'none';
     roomStartTime = Date.now();
     ghostSpawned = false; // Reset Ghost
@@ -1214,6 +1216,9 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
             player.gunType = savedPlayerStats.gunType;
             player.bombType = savedPlayerStats.bombType;
             player.speed = savedPlayerStats.speed;
+            if (savedPlayerStats.perfectStreak !== undefined) {
+                perfectStreak = savedPlayerStats.perfectStreak; // Restore Streak
+            }
         }
 
         // Apply Game Config Overrides
@@ -2708,8 +2713,10 @@ function updateRoomLock() {
         }
 
         // --- PERFECT BONUS (STREAK) ---
-        // Check if no damage taken in this room
-        if (!player.tookDamageInRoom) {
+        // Check if no damage taken in this room AND room had enemies
+        const hasCombat = roomData.enemies && roomData.enemies.some(e => (e.count || 0) > 0);
+
+        if (!player.tookDamageInRoom && hasCombat) {
             perfectStreak++;
             const goal = gameData.perfectGoal || 3;
 

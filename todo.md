@@ -1,13 +1,9 @@
 bugs
     on welcoem screen when you have something local data it will ask you to continue or new game
     dont drop the same item twice
-    mini map should not show red for static enemies once the room is clear it should go yellow
     boss sometimes not rendering on level 4
-    if movetype has an x,y start it there
-    on level tooling up if you dont pick up the peashoort or bombs you go into a pacafist run 
-    use item flag unlocked on level 3
-is perfect bonus reset between runds
-why am i getting perfect bonus for running through empty rooms
+
+
 
 
      
@@ -26,7 +22,8 @@ next up
 
 
 level plan
-
+    on level tooling up if you dont pick up the peashoort or bombs you go into a pacafist run 
+    use item flag unlocked on level 3
 drop items flag on level 3 if not picked up items are never dropped
     guns items (uses items)
 bombs
@@ -50,6 +47,7 @@ NPCs
 rooms
     number of rooms json change this to per level if used
 change the drop chane from 100% once we are finished testing
+    if movetype has an x,y start it there
     Boss room
     shop
         shows up once a round (have to add coins)
@@ -250,6 +248,8 @@ mini map
     item will show boss
     whole mini map should be shown always (is this true we have a button which will show the full map)
     make rooms go golden if you follow the golden path as a later level will be random rooms that get harder and harder everytime you go off the golden path and enemies respawn in rooms.
+    mini map should not show red for static enemies once the room is clear it should go yellow
+
 
 debug window 
     updateDebugEditor make it update in realtime when something happens in the game
