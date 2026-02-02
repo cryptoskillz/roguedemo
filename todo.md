@@ -1,11 +1,10 @@
 bugs
-    on welcome screen when you have something local data it will ask you to continue or new game
+    bombs are a little jenky on doors in front of you 
+    homic missles should not target indestrucibile ememies (maybe we want this if so add a targetable attr to enemies, be nice to have some that stealth enemies)
+    the boss is not invul during intro
+    enemies can pass through other enemies marked as solid but the player cannot
+    replace java script new game with something nice
     boss sometimes not rendering on level 4
-
-
-
-
-     
 
 next up 
     bug fixss

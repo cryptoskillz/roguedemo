@@ -15,7 +15,7 @@
     "invulColour": "#ffffff",
     "shape": "square",
     "gun": "json/weapons/guns/enemy/peashooter.json",
-    "solid": false,
+    "solid": true,
     "moveType": {
         "type": "static",
         "x": 0,

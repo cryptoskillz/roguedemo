@@ -4480,9 +4480,17 @@ function gameMenu() {
     gameState = STATES.GAMEMENU;
     overlay.style.display = 'flex';
     overlayTitle.innerText = "Pause";
-    overlayTitle.innerText = "Pause";
+
+    // Configure Buttons for Pause
     overlayEl.querySelector('#continueBtn').style.display = '';
+    overlayEl.querySelector('#continueBtn').innerText = "(Enter) Continue";
+
     overlayEl.querySelector('#restartBtn').style.display = '';
+
+    // Show Main Menu Button
+    const menuBtn = overlayEl.querySelector('#menuBtn');
+    menuBtn.style.display = '';
+    menuBtn.innerText = "(M)ain Menu";
 }
 
 function restartGame() {
