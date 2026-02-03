@@ -1842,8 +1842,9 @@ function applyEnemyConfig(inst, group) {
             if (angryStats.color) inst.color = angryStats.color;
 
             // Angry Timer
-            if (angryStats.angryTime) {
-                inst.angryUntil = Date.now() + angryStats.angryTime;
+            const duration = inst.angryTime || angryStats.angryTime;
+            if (duration) {
+                inst.angryUntil = Date.now() + duration;
             }
         }
     }
@@ -2815,6 +2816,9 @@ async function draw() {
             ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
+
+            if (p.vx) p.x += p.vx;
+            if (p.vy) p.y += p.vy;
 
             p.life -= 0.05; // Decay
             if (p.life <= 0) particles.splice(i, 1);
@@ -4103,6 +4107,20 @@ function updateEnemies() {
                     en.lastHitCritical = true;
                     log(`CRIT! Chance: ${gun.Bullet?.critChance}, Damage: ${finalDamage}`);
                     SFX.yelp();
+
+                    // Critical Hit Particles (Red + 50% Larger)
+                    for (let i = 0; i < 8; i++) {
+                        particles.push({
+                            x: b.x,
+                            y: b.y,
+                            vx: (Math.random() - 0.5) * 5, // Explosion velocity
+                            vy: (Math.random() - 0.5) * 5,
+                            life: 1.0,
+                            maxLife: 0.6,
+                            size: (b.size || 5) * 0.75, // 50% larger than normal 0.5 mult
+                            color: "red"
+                        });
+                    }
                 } else {
                     en.lastHitCritical = false;
                 }
@@ -4129,8 +4147,9 @@ function updateEnemies() {
 
                             // If already angry, just extend timer
                             if (en.mode === 'angry') {
-                                if (angryStats.angryTime) {
-                                    en.angryUntil = Date.now() + angryStats.angryTime;
+                                const duration = en.angryTime || angryStats.angryTime;
+                                if (duration) {
+                                    en.angryUntil = Date.now() + duration;
                                 }
                             } else {
                                 // Become Angry
@@ -4151,8 +4170,9 @@ function updateEnemies() {
                                 if (angryStats.color) en.color = angryStats.color;
 
                                 // Timer
-                                if (angryStats.angryTime) {
-                                    en.angryUntil = Date.now() + angryStats.angryTime;
+                                const duration = en.angryTime || angryStats.angryTime;
+                                if (duration) {
+                                    en.angryUntil = Date.now() + duration;
                                 }
 
                                 log(`${en.type} became ANGRY!`);

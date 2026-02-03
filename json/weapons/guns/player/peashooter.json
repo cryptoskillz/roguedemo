@@ -38,7 +38,7 @@
         "reverseFire": false,
         "frontLocked": false,
         "NoBullets": false,
-        "critChance": 0.05,
+        "critChance": 0.5,
         "critDamage": 2.0,
         "freezeChance": 0.05,
         "freezeDuration": 100,
