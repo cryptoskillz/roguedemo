@@ -1119,465 +1119,489 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
             gData.bombType = 'normal';
             log("Applying Unlocked Normal Bomb to Loadout");
         }
+        // Apply Global Data
+        gameData = gData;
+        perfectGoal = gameData.perfectGoal || 3;
 
-        // 3. Load Level Specific Data
-        // Use nextLevel if provided, else config startLevel
-        const levelFile = nextLevel || gData.startLevel;
-        if (levelFile) {
-            try {
-                log("Loading Level:", levelFile);
-                const url = levelFile.startsWith('json/') ? levelFile : `json/${levelFile}`;
-                const levelRes = await fetch(`${url}?t=${Date.now()}`);
-                if (levelRes.ok) {
-                    const levelData = await levelRes.json();
-                    // Merge level data into game data (Level overrides Game)
-                    gData = { ...gData, ...levelData };
-                } else {
-                    console.error("Failed to load level file:", gData.startLevel);
-                }
-            } catch (err) {
-                console.error("Error parsing level file:", err);
-            }
-        }
+        // Show debug window if enabled (Checked after load)
+        if (debugWindow) debugWindow.style.display = (gameData.showDebugWindow) ? 'block' : 'none';
 
-        // 3. Load Manifests in Parallel
-        const [manData, mData, itemMan] = await Promise.all([
-            fetch('/json/players/manifest.json?t=' + Date.now()).then(res => res.json()),
-            fetch('json/rooms/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] })),
-            fetch('json/items/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ items: [] }))
+        // Debug Log Visibility
+        DEBUG_LOG_ENABLED = gameData.showDebugLog || false;
+        if (debugLog) debugLog.style.display = DEBUG_LOG_ENABLED ? 'block' : 'none';
+
+        // 3. Load Everything Else (Parallel)
+        const [pData, wData, tData] = await Promise.all([
+            fetch('/json/ui.json?t=' + Date.now()).then(res => res.json()),
+            fetch('/json/rooms/welcome.json?t=' + Date.now()).then(res => res.json()),
+            fetch('/json/text.json?t=' + Date.now()).then(res => res.json())
+        ]);
+
+        // Setup Players
+        availablePlayers = pData.players || [];
+        selectedPlayerIndex = 0; // Default
+
+        // Define Templates
+        enemyTemplates = {}; // Loaded during level gen or distinct fetch?
+        // Logic.js doesn't seem to load enemies.json here, maybe in generateLevel? 
+        // Wait, manifest.json?
+        // Checking passed gData... 
+        // Assuming generateLevel handles enemy loading or they are embedded.
+
+        // Setup Welcome Text
+        welcomeText = wData || { title: "ROGUE DEMO", instructions: ["WASD to Move", "Space to Shoot"] };
+
+        // Setup Text Data
+        textData = tData || {};
+
+        // 4. Generate Level (This loads rooms/enemies async inside)
+        await generateLevel();
+
+        // 5. Finalize UI
+        updateWelcomeScreen();
+        updateUI();
+
+    } catch (err) {
+        console.error("Critical Init Error:", err);
+        alert("Failed to initialize game. See console.");
+    } finally {
+        isInitializing = false;
+    }
+} fetch('json/rooms/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] })),
+    fetch('json/items/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ items: [] }))
         ]);
 
 
 
-        gameData = gData;
+gameData = gData;
 
-        // --- SYNC DEBUG FLAGS FROM CONFIG ---
-        if (gameData.debug) {
-            DEBUG_START_BOSS = gameData.debug.startBoss ?? false;
-            DEBUG_PLAYER = gameData.debug.player ?? true;
-            GODMODE_ENABLED = gameData.debug.godMode ?? false;
-            DEBUG_WINDOW_ENABLED = (gameData.showDebugWindow !== undefined) ? gameData.showDebugWindow : (gameData.debug.windowEnabled ?? false);
-            DEBUG_LOG_ENABLED = (gameData.showDebugLog !== undefined) ? gameData.showDebugLog : (gameData.debug.log ?? false);
+// --- SYNC DEBUG FLAGS FROM CONFIG ---
+if (gameData.debug) {
+    DEBUG_START_BOSS = gameData.debug.startBoss ?? false;
+    DEBUG_PLAYER = gameData.debug.player ?? true;
+    GODMODE_ENABLED = gameData.debug.godMode ?? false;
+    DEBUG_WINDOW_ENABLED = (gameData.showDebugWindow !== undefined) ? gameData.showDebugWindow : (gameData.debug.windowEnabled ?? false);
+    DEBUG_LOG_ENABLED = (gameData.showDebugLog !== undefined) ? gameData.showDebugLog : (gameData.debug.log ?? false);
 
-            if (gameData.debug.spawn) {
-                DEBUG_SPAWN_ALL_ITEMS = gameData.debug.spawn.allItems ?? false;
-                DEBUG_SPAWN_GUNS = gameData.debug.spawn.guns ?? false;
-                DEBUG_SPAWN_BOMBS = gameData.debug.spawn.bombs ?? false;
-                DEBUG_SPAWN_INVENTORY = gameData.debug.spawn.inventory ?? false;
-                DEBUG_SPAWN_MODS_PLAYER = gameData.debug.spawn.modsPlayer ?? false;
-                DEBUG_SPAWN_MODS_BULLET = gameData.debug.spawn.modsBullet ?? true;
-            }
-        }
+    if (gameData.debug.spawn) {
+        DEBUG_SPAWN_ALL_ITEMS = gameData.debug.spawn.allItems ?? false;
+        DEBUG_SPAWN_GUNS = gameData.debug.spawn.guns ?? false;
+        DEBUG_SPAWN_BOMBS = gameData.debug.spawn.bombs ?? false;
+        DEBUG_SPAWN_INVENTORY = gameData.debug.spawn.inventory ?? false;
+        DEBUG_SPAWN_MODS_PLAYER = gameData.debug.spawn.modsPlayer ?? false;
+        DEBUG_SPAWN_MODS_BULLET = gameData.debug.spawn.modsBullet ?? true;
+    }
+}
 
-        // Support root-level overrides (regardless of debug object existence)
-        if (gameData.showDebugWindow !== undefined) DEBUG_WINDOW_ENABLED = gameData.showDebugWindow;
-        if (gameData.showDebugLog !== undefined) DEBUG_LOG_ENABLED = gameData.showDebugLog;
+// Support root-level overrides (regardless of debug object existence)
+if (gameData.showDebugWindow !== undefined) DEBUG_WINDOW_ENABLED = gameData.showDebugWindow;
+if (gameData.showDebugLog !== undefined) DEBUG_LOG_ENABLED = gameData.showDebugLog;
 
-        // Apply Debug UI state
-        if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
-        if (roomEl) roomEl.style.display = DEBUG_WINDOW_ENABLED ? 'block' : 'none';
-        if (debugLogEl) debugLogEl.style.display = DEBUG_LOG_ENABLED ? 'block' : 'none';
+// Apply Debug UI state
+if (debugPanel) debugPanel.style.display = DEBUG_WINDOW_ENABLED ? 'flex' : 'none';
+if (roomEl) roomEl.style.display = DEBUG_WINDOW_ENABLED ? 'block' : 'none';
+if (debugLogEl) debugLogEl.style.display = DEBUG_LOG_ENABLED ? 'block' : 'none';
 
-        roomManifest = mData;
+roomManifest = mData;
 
-        // LOAD STARTING ITEMS
-        groundItems = [];
-        if (itemMan && itemMan.items) {
-            log("Loading Items Manifest:", itemMan.items.length);
-            const itemPromises = itemMan.items.map(i =>
-                fetch(`json/items/${i}.json?t=` + Date.now()).then(r => r.json()).catch(e => {
-                    console.error("Failed to load item:", i, e);
-                    return null;
-                })
-            );
-            const allItems = await Promise.all(itemPromises);
-            window.allItemTemplates = allItems; // Expose for room drops
+// LOAD STARTING ITEMS
+groundItems = [];
+if (itemMan && itemMan.items) {
+    log("Loading Items Manifest:", itemMan.items.length);
+    const itemPromises = itemMan.items.map(i =>
+        fetch(`json/items/${i}.json?t=` + Date.now()).then(r => r.json()).catch(e => {
+            console.error("Failed to load item:", i, e);
+            return null;
+        })
+    );
+    const allItems = await Promise.all(itemPromises);
+    window.allItemTemplates = allItems; // Expose for room drops
 
-            // ENHANCE: Fetch color from target config
-            await Promise.all(allItems.map(async (item) => {
-                if (!item || !item.location) return;
-                try {
-                    const res = await fetch(`json/${item.location}?t=` + Date.now());
-                    const config = await res.json();
-
-                    // Check Top Level (Bombs/Modifiers) OR Bullet Level (Guns)
-                    const color = config.colour || config.color ||
-                        (config.Bullet && (config.Bullet.colour || config.Bullet.color));
-
-                    if (color) {
-                        item.colour = color;
-                    }
-                } catch (e) {
-                    // console.warn("Could not load config for color:", item.name);
-                }
-            }));
-
-            // Filter starters
-            // Legacy: Previously spawned all 'starter:false' items.
-            // NOW: Only spawn if DEBUG flag is set.
-            // Filter starters
-            // Legacy: Previously spawned all 'starter:false' items.
-            // NOW: Spawn based on granular DEBUG flags.
-            const starters = allItems.filter(i => {
-                if (!i) return false;
-
-                // 1. Explicitly enabled by ALL flag
-                if (DEBUG_SPAWN_ALL_ITEMS) return true;
-
-                // 2. Category Checks
-                const isGun = i.type === 'gun';
-                const isBomb = i.type === 'bomb';
-                const isMod = i.type === 'modifier';
-                const loc = (i.location || "").toLowerCase();
-
-                // Inventory (Keys/Bombs/Consumables) - often identified by path or lack of "modifier" type?
-                // Actually user defines them as type="modifier" usually. 
-                // Let's look for "inventory" in path.
-                const isInventory = isMod && loc.includes('inventory');
-
-                // Player Mods (Stats, Shields)
-                const isPlayerMod = isMod && loc.includes('modifiers/player') && !isInventory;
-
-                // Bullet Mods (Homing, FireRate, etc)
-                const isBulletMod = isMod && loc.includes('modifiers/bullets');
-
-                if (DEBUG_SPAWN_GUNS && isGun) return true;
-                if (DEBUG_SPAWN_BOMBS && isBomb) return true;
-                if (DEBUG_SPAWN_INVENTORY && isInventory) return true;
-                if (DEBUG_SPAWN_MODS_PLAYER && isPlayerMod) return true;
-                if (DEBUG_SPAWN_MODS_BULLET && isBulletMod) return true;
-
-                return false;
-            });
-            log(`Found ${allItems.length} total items. Spawning ${starters.length} floor items.`);
-
-            // Spawn them in a row
-            // Spawn them in a grid within safe margins
-            const marginX = canvas.width * 0.2;
-            const marginY = canvas.height * 0.2;
-            const safeW = canvas.width - (marginX * 2);
-            const itemSpacing = 80;
-            const cols = Math.floor(safeW / itemSpacing);
-
-            starters.forEach((item, idx) => {
-                const c = idx % cols;
-                const r = Math.floor(idx / cols);
-
-                groundItems.push({
-                    x: marginX + (c * itemSpacing) + (itemSpacing / 2),
-                    y: marginY + (r * itemSpacing) + (itemSpacing / 2),
-                    data: item,
-                    roomX: 0,
-                    roomY: 0,
-                    // Add physics properties immediately
-                    vx: 0, vy: 0,
-                    solid: true, moveable: true, friction: 0.9, size: 15,
-                    floatOffset: Math.random() * 100
-                });
-            });
-            log(`Spawned ${starters.length} starter items.`);
-        } else {
-            log("No item manifest found!");
-        }
-
-        // Load all players
-        availablePlayers = [];
-        if (manData && manData.players) {
-            const playerPromises = manData.players.map(p =>
-                fetch(`/json/players/${p.file}?t=` + Date.now())
-                    .then(res => res.json())
-                    .then(data => ({ ...data, file: p.file })) // Keep file ref if needed
-            );
-            availablePlayers = await Promise.all(playerPromises);
-        }
-
-        // Default to first player
-        if (availablePlayers.length > 0) {
-            player = JSON.parse(JSON.stringify(availablePlayers[0]));
-        } else {
-            console.error("No players found!");
-            player = { hp: 3, speed: 4, inventory: { keys: 0 }, gunType: 'geometry', bombType: 'normal' }; // Fallback
-        }
-
-        // Restore Stats if kept
-        if (savedPlayerStats) {
-            log("Restoring Stats:", savedPlayerStats);
-            player.hp = savedPlayerStats.hp;
-            player.maxHp = savedPlayerStats.maxHp || player.maxHp;
-            player.inventory = savedPlayerStats.inventory;
-            player.gunType = savedPlayerStats.gunType;
-            player.bombType = savedPlayerStats.bombType;
-            player.speed = savedPlayerStats.speed;
-            if (savedPlayerStats.perfectStreak !== undefined) {
-                perfectStreak = savedPlayerStats.perfectStreak; // Restore Streak
-            }
-        }
-
-        // Apply Game Config Overrides
-        // FIXED: Only override if we are NOT preserving stats (Fresh Start / Restart),
-        // or if the stat was missing.
-        if (gameData.gunType && !savedPlayerStats) {
-            log("Applying gameData override for gunType:", gameData.gunType);
-            player.gunType = gameData.gunType;
-        }
-        if (gameData.bombType && !savedPlayerStats) {
-            log("Applying gameData override for bombType:", gameData.bombType);
-            player.bombType = gameData.bombType;
-        }
-
-        // Load player specific assets
-        let fetchedGun = null;
-        let fetchedBomb = null;
-
+    // ENHANCE: Fetch color from target config
+    await Promise.all(allItems.map(async (item) => {
+        if (!item || !item.location) return;
         try {
-            if (player.gunType) {
-                const gunUrl = `/json/weapons/guns/player/${player.gunType}.json?t=` + Date.now();
-                const gRes = await fetch(gunUrl);
-                if (gRes.ok) fetchedGun = await gRes.json();
-                else console.error("Gun fetch failed:", gRes.status, gRes.statusText);
-            } else {
-                log("No player.gunType defined, skipping initial fetch.");
+            const res = await fetch(`json/${item.location}?t=` + Date.now());
+            const config = await res.json();
+
+            // Check Top Level (Bombs/Modifiers) OR Bullet Level (Guns)
+            const color = config.colour || config.color ||
+                (config.Bullet && (config.Bullet.colour || config.Bullet.color));
+
+            if (color) {
+                item.colour = color;
             }
-        } catch (e) { console.error("Gun fetch error:", e); }
-
-        if (!fetchedGun) {
-            log("Attempting fallback to 'peashooter'...");
-            try {
-                const res = await fetch(`/json/weapons/guns/player/peashooter.json?t=` + Date.now());
-                if (res.ok) {
-                    fetchedGun = await res.json();
-                    player.gunType = 'peashooter'; // Update player state
-                }
-            } catch (e) { }
+        } catch (e) {
+            // console.warn("Could not load config for color:", item.name);
         }
+    }));
 
-        const bombUrl = player.bombType ? `/json/weapons/bombs/${player.bombType}.json?t=` + Date.now() : null;
-        if (bombUrl) {
-            try {
-                const bRes = await fetch(bombUrl);
-                if (bRes.ok) fetchedBomb = await bRes.json();
-            } catch (e) { }
+    // Filter starters
+    // Legacy: Previously spawned all 'starter:false' items.
+    // NOW: Only spawn if DEBUG flag is set.
+    // Filter starters
+    // Legacy: Previously spawned all 'starter:false' items.
+    // NOW: Spawn based on granular DEBUG flags.
+    const starters = allItems.filter(i => {
+        if (!i) return false;
+
+        // 1. Explicitly enabled by ALL flag
+        if (DEBUG_SPAWN_ALL_ITEMS) return true;
+
+        // 2. Category Checks
+        const isGun = i.type === 'gun';
+        const isBomb = i.type === 'bomb';
+        const isMod = i.type === 'modifier';
+        const loc = (i.location || "").toLowerCase();
+
+        // Inventory (Keys/Bombs/Consumables) - often identified by path or lack of "modifier" type?
+        // Actually user defines them as type="modifier" usually. 
+        // Let's look for "inventory" in path.
+        const isInventory = isMod && loc.includes('inventory');
+
+        // Player Mods (Stats, Shields)
+        const isPlayerMod = isMod && loc.includes('modifiers/player') && !isInventory;
+
+        // Bullet Mods (Homing, FireRate, etc)
+        const isBulletMod = isMod && loc.includes('modifiers/bullets');
+
+        if (DEBUG_SPAWN_GUNS && isGun) return true;
+        if (DEBUG_SPAWN_BOMBS && isBomb) return true;
+        if (DEBUG_SPAWN_INVENTORY && isInventory) return true;
+        if (DEBUG_SPAWN_MODS_PLAYER && isPlayerMod) return true;
+        if (DEBUG_SPAWN_MODS_BULLET && isBulletMod) return true;
+
+        return false;
+    });
+    log(`Found ${allItems.length} total items. Spawning ${starters.length} floor items.`);
+
+    // Spawn them in a row
+    // Spawn them in a grid within safe margins
+    const marginX = canvas.width * 0.2;
+    const marginY = canvas.height * 0.2;
+    const safeW = canvas.width - (marginX * 2);
+    const itemSpacing = 80;
+    const cols = Math.floor(safeW / itemSpacing);
+
+    starters.forEach((item, idx) => {
+        const c = idx % cols;
+        const r = Math.floor(idx / cols);
+
+        groundItems.push({
+            x: marginX + (c * itemSpacing) + (itemSpacing / 2),
+            y: marginY + (r * itemSpacing) + (itemSpacing / 2),
+            data: item,
+            roomX: 0,
+            roomY: 0,
+            // Add physics properties immediately
+            vx: 0, vy: 0,
+            solid: true, moveable: true, friction: 0.9, size: 15,
+            floatOffset: Math.random() * 100
+        });
+    });
+    log(`Spawned ${starters.length} starter items.`);
+} else {
+    log("No item manifest found!");
+}
+
+// Load all players
+availablePlayers = [];
+if (manData && manData.players) {
+    const playerPromises = manData.players.map(p =>
+        fetch(`/json/players/${p.file}?t=` + Date.now())
+            .then(res => res.json())
+            .then(data => ({ ...data, file: p.file })) // Keep file ref if needed
+    );
+    availablePlayers = await Promise.all(playerPromises);
+}
+
+// Default to first player
+if (availablePlayers.length > 0) {
+    player = JSON.parse(JSON.stringify(availablePlayers[0]));
+} else {
+    console.error("No players found!");
+    player = { hp: 3, speed: 4, inventory: { keys: 0 }, gunType: 'geometry', bombType: 'normal' }; // Fallback
+}
+
+// Restore Stats if kept
+if (savedPlayerStats) {
+    log("Restoring Stats:", savedPlayerStats);
+    player.hp = savedPlayerStats.hp;
+    player.maxHp = savedPlayerStats.maxHp || player.maxHp;
+    player.inventory = savedPlayerStats.inventory;
+    player.gunType = savedPlayerStats.gunType;
+    player.bombType = savedPlayerStats.bombType;
+    player.speed = savedPlayerStats.speed;
+    if (savedPlayerStats.perfectStreak !== undefined) {
+        perfectStreak = savedPlayerStats.perfectStreak; // Restore Streak
+    }
+}
+
+// Apply Game Config Overrides
+// FIXED: Only override if we are NOT preserving stats (Fresh Start / Restart),
+// or if the stat was missing.
+if (gameData.gunType && !savedPlayerStats) {
+    log("Applying gameData override for gunType:", gameData.gunType);
+    player.gunType = gameData.gunType;
+}
+if (gameData.bombType && !savedPlayerStats) {
+    log("Applying gameData override for bombType:", gameData.bombType);
+    player.bombType = gameData.bombType;
+}
+
+// Load player specific assets
+let fetchedGun = null;
+let fetchedBomb = null;
+
+try {
+    if (player.gunType) {
+        const gunUrl = `/json/weapons/guns/player/${player.gunType}.json?t=` + Date.now();
+        const gRes = await fetch(gunUrl);
+        if (gRes.ok) fetchedGun = await gRes.json();
+        else console.error("Gun fetch failed:", gRes.status, gRes.statusText);
+    } else {
+        log("No player.gunType defined, skipping initial fetch.");
+    }
+} catch (e) { console.error("Gun fetch error:", e); }
+
+if (!fetchedGun) {
+    log("Attempting fallback to 'peashooter'...");
+    try {
+        const res = await fetch(`/json/weapons/guns/player/peashooter.json?t=` + Date.now());
+        if (res.ok) {
+            fetchedGun = await res.json();
+            player.gunType = 'peashooter'; // Update player state
         }
+    } catch (e) { }
+}
 
-        if (!fetchedGun) {
-            console.error("CRITICAL: Could not load ANY gun. Player will be unarmed.");
-            gun = { Bullet: { NoBullets: true } };
-            spawnFloatingText(canvas.width / 2, canvas.height / 2, "ERROR: GUN LOAD FAILED", "red");
-        } else {
-            gun = fetchedGun;
-            log("Loaded Gun Data:", gun.name);
+const bombUrl = player.bombType ? `/json/weapons/bombs/${player.bombType}.json?t=` + Date.now() : null;
+if (bombUrl) {
+    try {
+        const bRes = await fetch(bombUrl);
+        if (bRes.ok) fetchedBomb = await bRes.json();
+    } catch (e) { }
+}
+
+if (!fetchedGun) {
+    console.error("CRITICAL: Could not load ANY gun. Player will be unarmed.");
+    gun = { Bullet: { NoBullets: true } };
+    spawnFloatingText(canvas.width / 2, canvas.height / 2, "ERROR: GUN LOAD FAILED", "red");
+} else {
+    gun = fetchedGun;
+    log("Loaded Gun Data:", gun.name);
+}
+bomb = fetchedBomb || {};
+
+if (gameData.music) {
+    // --- 1. INSTANT AUDIO SETUP ---
+    // Ensure global audio is ready
+    introMusic.loop = true;
+    introMusic.volume = 0.4;
+
+    // This attempts to play immediately.
+    // If the browser blocks it, the 'keydown' listener below will catch it.
+    if (!musicMuted) {
+        introMusic.play().catch(() => {
+            log("Autoplay blocked: Waiting for first user interaction to start music.");
+        });
+    }
+
+    // Fallback: Start music on the very first key press or click if autoplay failed
+    const startAudio = () => {
+        if (introMusic.paused && !musicMuted) introMusic.play();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        window.removeEventListener('keydown', startAudio);
+        window.removeEventListener('mousedown', startAudio);
+    };
+    window.addEventListener('keydown', startAudio);
+    window.addEventListener('mousedown', startAudio);
+}
+
+// Init Menu UI
+if (!isRestart) updateWelcomeScreen();
+// Initialize Ammo
+if (gun.Bullet?.ammo?.active) {
+    player.ammoMode = gun.Bullet?.ammo?.type || 'finite'; // 'finite', 'reload', 'recharge'
+    player.maxMag = gun.Bullet?.ammo?.amount || 100; // Clip size
+    // Handle resetTimer being 0 or undefined, treat as 0 if finite, but if reload/recharge usually non-zero.
+    // But if user sets resetTimer to 0, it instant reloads?
+    player.reloadTime = gun.Bullet?.ammo?.resetTimer !== undefined ? gun.Bullet?.ammo?.resetTimer : (gun.Bullet?.ammo?.reload || 1000);
+
+    // Initial State
+    player.ammo = player.maxMag;
+    player.reloading = false;
+
+    // Reserve Logic
+    if (player.ammoMode === 'reload') {
+        // Magazine Mode: maxAmount is total reserve
+        player.reserveAmmo = (gun.Bullet?.ammo?.maxAmount || 0) - player.maxMag;
+        if (player.reserveAmmo < 0) player.reserveAmmo = 0;
+    } else if (player.ammoMode === 'recharge') {
+        // Recharge Mode: Infinite reserve
+        player.reserveAmmo = Infinity;
+    } else {
+        // Finite Mode: No reserve
+        player.reserveAmmo = 0;
+    }
+}
+
+
+
+// 4. Load Room Templates (Dynamic from Level Data)
+roomTemplates = {};
+const roomProtos = [];
+
+// Helper to load a room file
+const loadRoomFile = (path, type) => {
+    if (!path || path.trim() === "") return Promise.resolve();
+    // Handle relative paths from JSON (e.g. "rooms/start.json")
+    // Ensure we don't double stack "json/" if valid path provided
+    const url = path.startsWith('http') || path.startsWith('/') || path.startsWith('json/') ? path : `json/${path}`;
+    return fetch(url + '?t=' + Date.now())
+        .then(res => {
+            if (!res.ok) throw new Error("404");
+            return res.json();
+        })
+        .then(data => {
+            // ID is filename without extension or just the path for uniqueness
+            const parts = path.split('/');
+            const id = parts[parts.length - 1].replace('.json', '');
+            data.templateId = id;
+            // Tag it
+            if (type) data._type = type;
+            // Special case: if name is "Start Room", force ID to "start" for logic compatibility?
+            // actually, better to handle that in generation.
+            // Store
+            roomTemplates[id] = data;
+            // Also store by full path just in case
+            roomTemplates[path] = data;
+        })
+        .catch(err => console.error(`Failed to load room: ${path}`, err));
+};
+
+// A. Standard Rooms
+let available = gameData.avalibleroons || gameData.availablerooms || [];
+available = available.filter(p => p && p.trim() !== "");
+// If empty, fallback to manifest?
+// ONE CHECK: Only fallback if we DON'T have a startRoom/bossRoom config
+// meaning we are truly in a "default game" state, not a specific level file state.
+if (available.length === 0 && !gameData.startRoom && !gameData.bossRoom) {
+    // FALLBACK: Load from old manifest
+    try {
+        const m = await fetch('json/rooms/manifest.json?t=' + Date.now()).then(res => res.json());
+        if (m.rooms) {
+            m.rooms.forEach(r => roomProtos.push(loadRoomFile(`rooms/${r}/room.json`, 'normal')));
+            // Also try to load start/boss legacy
+            roomProtos.push(loadRoomFile('rooms/start/room.json', 'start'));
+            roomProtos.push(loadRoomFile('rooms/boss1/room.json', 'boss'));
         }
-        bomb = fetchedBomb || {};
+    } catch (e) { console.warn("No legacy manifest found"); }
+} else {
+    available.forEach(path => roomProtos.push(loadRoomFile(path, 'normal')));
+}
 
-        if (gameData.music) {
-            // --- 1. INSTANT AUDIO SETUP ---
-            // Ensure global audio is ready
-            introMusic.loop = true;
-            introMusic.volume = 0.4;
+// C. Explicit Start Room
+if (gameData.startRoom) {
+    roomProtos.push(loadRoomFile(gameData.startRoom, 'start'));
+}
 
-            // This attempts to play immediately.
-            // If the browser blocks it, the 'keydown' listener below will catch it.
-            if (!musicMuted) {
-                introMusic.play().catch(() => {
-                    log("Autoplay blocked: Waiting for first user interaction to start music.");
-                });
-            }
-
-            // Fallback: Start music on the very first key press or click if autoplay failed
-            const startAudio = () => {
-                if (introMusic.paused && !musicMuted) introMusic.play();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                window.removeEventListener('keydown', startAudio);
-                window.removeEventListener('mousedown', startAudio);
-            };
-            window.addEventListener('keydown', startAudio);
-            window.addEventListener('mousedown', startAudio);
-        }
-
-        // Init Menu UI
-        if (!isRestart) updateWelcomeScreen();
-        // Initialize Ammo
-        if (gun.Bullet?.ammo?.active) {
-            player.ammoMode = gun.Bullet?.ammo?.type || 'finite'; // 'finite', 'reload', 'recharge'
-            player.maxMag = gun.Bullet?.ammo?.amount || 100; // Clip size
-            // Handle resetTimer being 0 or undefined, treat as 0 if finite, but if reload/recharge usually non-zero.
-            // But if user sets resetTimer to 0, it instant reloads?
-            player.reloadTime = gun.Bullet?.ammo?.resetTimer !== undefined ? gun.Bullet?.ammo?.resetTimer : (gun.Bullet?.ammo?.reload || 1000);
-
-            // Initial State
-            player.ammo = player.maxMag;
-            player.reloading = false;
-
-            // Reserve Logic
-            if (player.ammoMode === 'reload') {
-                // Magazine Mode: maxAmount is total reserve
-                player.reserveAmmo = (gun.Bullet?.ammo?.maxAmount || 0) - player.maxMag;
-                if (player.reserveAmmo < 0) player.reserveAmmo = 0;
-            } else if (player.ammoMode === 'recharge') {
-                // Recharge Mode: Infinite reserve
-                player.reserveAmmo = Infinity;
-            } else {
-                // Finite Mode: No reserve
-                player.reserveAmmo = 0;
-            }
-        }
+// B. Boss Rooms
+let bosses = gameData.bossrooms || [];
+// Support singular 'bossRoom' fallback
+if (gameData.bossRoom && gameData.bossRoom.trim() !== "") {
+    bosses.push(gameData.bossRoom);
+}
+bosses = bosses.filter(p => p && p.trim() !== "");
+bosses.forEach(path => roomProtos.push(loadRoomFile(path, 'boss')));
 
 
 
-        // 4. Load Room Templates (Dynamic from Level Data)
-        roomTemplates = {};
-        const roomProtos = [];
+await Promise.all(roomProtos);
 
-        // Helper to load a room file
-        const loadRoomFile = (path, type) => {
-            if (!path || path.trim() === "") return Promise.resolve();
-            // Handle relative paths from JSON (e.g. "rooms/start.json")
-            // Ensure we don't double stack "json/" if valid path provided
-            const url = path.startsWith('http') || path.startsWith('/') || path.startsWith('json/') ? path : `json/${path}`;
-            return fetch(url + '?t=' + Date.now())
-                .then(res => {
-                    if (!res.ok) throw new Error("404");
-                    return res.json();
-                })
-                .then(data => {
-                    // ID is filename without extension or just the path for uniqueness
-                    const parts = path.split('/');
-                    const id = parts[parts.length - 1].replace('.json', '');
-                    data.templateId = id;
-                    // Tag it
-                    if (type) data._type = type;
-                    // Special case: if name is "Start Room", force ID to "start" for logic compatibility?
-                    // actually, better to handle that in generation.
-                    // Store
-                    roomTemplates[id] = data;
-                    // Also store by full path just in case
-                    roomTemplates[path] = data;
-                })
-                .catch(err => console.error(`Failed to load room: ${path}`, err));
-        };
+// 4. Pre-load ALL enemy templates
+enemyTemplates = {};
+const enemyManifest = await fetch('json/enemies/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ enemies: [] }));
+const ePromises = enemyManifest.enemies.map(id =>
+    fetch(`json/enemies/${id}.json?t=` + Date.now())
+        .then(res => res.json())
+        .then(data => {
+            // Use the last part of the path as the key (e.g. "special/firstboss" -> "firstboss")
+            const key = id.split('/').pop();
+            enemyTemplates[key] = data;
+        })
+);
+await Promise.all(ePromises);
 
-        // A. Standard Rooms
-        let available = gameData.avalibleroons || gameData.availablerooms || [];
-        available = available.filter(p => p && p.trim() !== "");
-        // If empty, fallback to manifest?
-        // ONE CHECK: Only fallback if we DON'T have a startRoom/bossRoom config
-        // meaning we are truly in a "default game" state, not a specific level file state.
-        if (available.length === 0 && !gameData.startRoom && !gameData.bossRoom) {
-            // FALLBACK: Load from old manifest
-            try {
-                const m = await fetch('json/rooms/manifest.json?t=' + Date.now()).then(res => res.json());
-                if (m.rooms) {
-                    m.rooms.forEach(r => roomProtos.push(loadRoomFile(`rooms/${r}/room.json`, 'normal')));
-                    // Also try to load start/boss legacy
-                    roomProtos.push(loadRoomFile('rooms/start/room.json', 'start'));
-                    roomProtos.push(loadRoomFile('rooms/boss1/room.json', 'boss'));
-                }
-            } catch (e) { console.warn("No legacy manifest found"); }
-        } else {
-            available.forEach(path => roomProtos.push(loadRoomFile(path, 'normal')));
-        }
+// 5. Generate Level
+const urlParams = new URLSearchParams(window.location.search);
+const isDebugRoom = urlParams.get('debugRoom') === 'true';
+DEBUG_TEST_ROOM = isDebugRoom;
 
-        // C. Explicit Start Room
-        if (gameData.startRoom) {
-            roomProtos.push(loadRoomFile(gameData.startRoom, 'start'));
-        }
+if (DEBUG_START_BOSS) {
+    bossCoord = "0,0";
+    goldenPath = ["0,0"];
+    bossIntroEndTime = Date.now() + 2000;
+    levelMap["0,0"] = { roomData: JSON.parse(JSON.stringify(roomTemplates["boss"])), cleared: false };
+}
+else if (isDebugRoom) {
+    // --- EDITOR TEST ROOM BYPASS ---
+    try {
+        const debugJson = localStorage.getItem('debugRoomData');
+        if (debugJson) {
+            const debugData = JSON.parse(debugJson);
 
-        // B. Boss Rooms
-        let bosses = gameData.bossrooms || [];
-        // Support singular 'bossRoom' fallback
-        if (gameData.bossRoom && gameData.bossRoom.trim() !== "") {
-            bosses.push(gameData.bossRoom);
-        }
-        bosses = bosses.filter(p => p && p.trim() !== "");
-        bosses.forEach(path => roomProtos.push(loadRoomFile(path, 'boss')));
-
-
-
-        await Promise.all(roomProtos);
-
-        // 4. Pre-load ALL enemy templates
-        enemyTemplates = {};
-        const enemyManifest = await fetch('json/enemies/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ enemies: [] }));
-        const ePromises = enemyManifest.enemies.map(id =>
-            fetch(`json/enemies/${id}.json?t=` + Date.now())
-                .then(res => res.json())
-                .then(data => {
-                    // Use the last part of the path as the key (e.g. "special/firstboss" -> "firstboss")
-                    const key = id.split('/').pop();
-                    enemyTemplates[key] = data;
-                })
-        );
-        await Promise.all(ePromises);
-
-        // 5. Generate Level
-        const urlParams = new URLSearchParams(window.location.search);
-        const isDebugRoom = urlParams.get('debugRoom') === 'true';
-        DEBUG_TEST_ROOM = isDebugRoom;
-
-        if (DEBUG_START_BOSS) {
             bossCoord = "0,0";
             goldenPath = ["0,0"];
-            bossIntroEndTime = Date.now() + 2000;
-            levelMap["0,0"] = { roomData: JSON.parse(JSON.stringify(roomTemplates["boss"])), cleared: false };
-        }
-        else if (isDebugRoom) {
-            // --- EDITOR TEST ROOM BYPASS ---
-            try {
-                const debugJson = localStorage.getItem('debugRoomData');
-                if (debugJson) {
-                    const debugData = JSON.parse(debugJson);
+            levelMap["0,0"] = { roomData: debugData, cleared: false }; // Directly inject into map
 
-                    bossCoord = "0,0";
-                    goldenPath = ["0,0"];
-                    levelMap["0,0"] = { roomData: debugData, cleared: false }; // Directly inject into map
-
-                    // Force Skip Welcome
-                    gameData.showWelcome = false;
-                    gData.showWelcome = false;
-                } else {
-                    console.error("No debugRoomData found in localStorage");
-                    generateLevel(gameData.NoRooms !== undefined ? gameData.NoRooms : 11);
-                }
-            } catch (e) {
-                console.error("Failed to load test room", e);
-                generateLevel(gameData.NoRooms !== undefined ? gameData.NoRooms : 11);
-            }
-        }
-        else {
+            // Force Skip Welcome
+            gameData.showWelcome = false;
+            gData.showWelcome = false;
+        } else {
+            console.error("No debugRoomData found in localStorage");
             generateLevel(gameData.NoRooms !== undefined ? gameData.NoRooms : 11);
         }
+    } catch (e) {
+        console.error("Failed to load test room", e);
+        generateLevel(gameData.NoRooms !== undefined ? gameData.NoRooms : 11);
+    }
+}
+else {
+    generateLevel(gameData.NoRooms !== undefined ? gameData.NoRooms : 11);
+}
 
-        const startEntry = levelMap["0,0"];
-        roomData = startEntry.roomData;
-        visitedRooms["0,0"] = startEntry;
+const startEntry = levelMap["0,0"];
+roomData = startEntry.roomData;
+visitedRooms["0,0"] = startEntry;
 
-        canvas.width = roomData.width || 800;
-        canvas.height = roomData.height || 600;
+canvas.width = roomData.width || 800;
+canvas.height = roomData.height || 600;
 
-        // if (gameState === STATES.PLAY) { spawnEnemies(); ... } 
-        // Logic removed: startGame() handles spawning now.
+// if (gameState === STATES.PLAY) { spawnEnemies(); ... } 
+// Logic removed: startGame() handles spawning now.
 
-        if (!gameLoopStarted) {
-            gameLoopStarted = true;
-            draw();
-        }
+if (!gameLoopStarted) {
+    gameLoopStarted = true;
+    draw();
+}
 
-        // AUTO START IF CONFIGURED (After everything is ready)
-        if (gameData.showWelcome === false || isRestart) {
-            startGame();
-        }
+// AUTO START IF CONFIGURED (After everything is ready)
+if (gameData.showWelcome === false || isRestart) {
+    startGame();
+}
 
     } catch (err) {
-        console.warn("Could not load configurations", err);
-        if (!gameLoopStarted) {
-            gameLoopStarted = true;
-            draw();
-        }
-    } finally {
-        isInitializing = false;
-        const loadingEl = document.getElementById('loading');
-        if (loadingEl) loadingEl.style.display = 'none';
+    console.warn("Could not load configurations", err);
+    if (!gameLoopStarted) {
+        gameLoopStarted = true;
+        draw();
     }
+} finally {
+    isInitializing = false;
+    const loadingEl = document.getElementById('loading');
+    if (loadingEl) loadingEl.style.display = 'none';
+}
 }
 // Initial Start
 initGame();
@@ -1712,7 +1736,8 @@ function startGame() {
     // Force Audio Resume on User Interaction
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    if (gameState === STATES.PLAY || isGameStarting) return;
+    // Guard against starting while Initializing or Unlocking or already starting
+    if (gameState === STATES.PLAY || isGameStarting || isInitializing || isUnlocking) return;
     isGameStarting = true;
 
     // Check Lock
