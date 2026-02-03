@@ -1735,50 +1735,43 @@ if (debugSelect) debugSelect.addEventListener('change', renderDebugForm);
 setTimeout(renderDebugForm, 100);
 
 function applyEnemyConfig(inst, group) {
-    // 1. Randomise Variant if requested
+    const config = gameData.enemyConfig || {
+        variants: ['speedy', 'small', 'large', 'massive', 'gunner', 'turret', 'medium'],
+        shapes: ['circle', 'square', 'triangle', 'hexagon', 'diamond', 'star'],
+        colors: ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c', '#34495e'],
+        variantStats: {},
+        modeStats: {}
+    };
+
+    // 1. Randomise Variant
     if (group.randomise || group.randomiseVariant) {
-        const variants = ['speedy', 'small', 'large', 'massive', 'gunner', 'turret', 'medium'];
-        group.variant = variants[Math.floor(Math.random() * variants.length)];
+        group.variant = config.variants[Math.floor(Math.random() * config.variants.length)];
     }
 
-    // 1b. Randomise Shape if requested
+    // 1b. Randomise Shape
     if (group.randomiseShape) {
-        const shapes = ['circle', 'square', 'triangle', 'hexagon', 'diamond', 'star'];
-        inst.shape = shapes[Math.floor(Math.random() * shapes.length)];
+        inst.shape = config.shapes[Math.floor(Math.random() * config.shapes.length)];
     }
 
-    // 1c. Randomise Colour if requested
+    // 1c. Randomise Colour
     if (group.randomiseColour) {
-        const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c', '#34495e'];
-        inst.color = colors[Math.floor(Math.random() * colors.length)];
+        inst.color = config.colors[Math.floor(Math.random() * config.colors.length)];
     }
 
     // 2. Apply Variant Stats
-    // "medium" is default, no changes
-    if (group.variant === 'speedy') {
-        inst.size = (inst.size || 25) * 0.75;
-        inst.speed = (inst.speed || 1) * 1.5;
-        inst.hp = Math.max(1, (inst.hp || 10) * 0.5);
-    } else if (group.variant === 'small') {
-        inst.size = (inst.size || 25) * 0.5;
-        inst.hp = Math.max(1, (inst.hp || 10) * 0.5);
-    } else if (group.variant === 'large') {
-        inst.size = (inst.size || 25) * 1.5;
-        inst.speed = (inst.speed || 1) * 0.75;
-        inst.hp = (inst.hp || 10) * 1.5;
-        inst.damage = (inst.damage || 1) * 1.25;
-    } else if (group.variant === 'massive') {
-        inst.size = (inst.size || 25) * 2.0;
-        inst.speed = (inst.speed || 1) * 0.5;
-        inst.hp = (inst.hp || 10) * 2.0;
-        inst.damage = (inst.damage || 1) * 1.5;
-    } else if (group.variant === 'gunner') {
-        inst.gun = 'json/weapons/guns/enemy/peashooter.json';
-    } else if (group.variant === 'turret') {
-        inst.gun = 'json/weapons/guns/enemy/peashooter.json';
+    const stats = config.variantStats[group.variant];
+    if (stats) {
+        if (stats.size) inst.size = (inst.size || 25) * stats.size;
+        if (stats.speed) inst.speed = (inst.speed || 1) * stats.speed;
+        if (stats.hp) inst.hp = Math.max(1, (inst.hp || 10) * stats.hp);
+        if (stats.damage) inst.damage = (inst.damage || 1) * stats.damage;
+        if (stats.gun) inst.gun = stats.gun;
 
-        if (!group.moveType) group.moveType = {};
-        if (!group.moveType.type) group.moveType.type = 'static';
+        // Special case for turret moveType
+        if (group.variant === 'turret' && stats.moveType === 'static') {
+            if (!group.moveType) group.moveType = {};
+            if (!group.moveType.type) group.moveType.type = 'static';
+        }
     }
 
     // 3. Apply Shape (Only if NOT randomised)
@@ -1788,15 +1781,20 @@ function applyEnemyConfig(inst, group) {
 
     // 4. Apply Mode (Angry)
     if (group.mode === 'angry') {
-        inst.hp = (inst.hp || 10) * 1.5;
-        inst.damage = (inst.damage || 1) * 1.5;
+        const angryStats = config.modeStats.angry;
+        if (angryStats) {
+            if (angryStats.hp) inst.hp = (inst.hp || 10) * angryStats.hp;
+            if (angryStats.damage) inst.damage = (inst.damage || 1) * angryStats.damage;
 
-        if (group.variant === 'speedy') {
-            inst.speed = (inst.speed || 1) * 1.25;
-        } else {
-            inst.speed = (inst.speed || 1) * 2.0;
+            // Special handling for speedy variant speed in angry mode
+            if (group.variant === 'speedy' && angryStats.speedySpeed) {
+                inst.speed = (inst.speed || 1) * angryStats.speedySpeed;
+            } else if (angryStats.speed) {
+                inst.speed = (inst.speed || 1) * angryStats.speed;
+            }
+
+            if (angryStats.color) inst.color = angryStats.color;
         }
-        inst.color = '#e74c3c'; // Visual cue for angry? Optional.
     }
 
     // 5. Apply Modifiers (Overrides)

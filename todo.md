@@ -3,6 +3,7 @@ bugs
 
 Balance
 
+    
     when you get a bonus (ie rare, uncommon etc trigger then you should only get the highest not multipile items spawned
 
     the same item should not drop twice if it should never spaw or spawn a random number of coins (add coins)

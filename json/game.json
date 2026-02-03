@@ -2,6 +2,75 @@
     "perfectGoal": 5,
     "startLevel": "json/levels/0.json",
     "hardness": 8,
+    "enemyConfig": {
+        "variants": [
+            "speedy",
+            "small",
+            "large",
+            "massive",
+            "gunner",
+            "turret",
+            "medium"
+        ],
+        "shapes": [
+            "circle",
+            "square",
+            "triangle",
+            "hexagon",
+            "diamond",
+            "star"
+        ],
+        "colors": [
+            "#e74c3c",
+            "#3498db",
+            "#2ecc71",
+            "#f1c40f",
+            "#9b59b6",
+            "#e67e22",
+            "#1abc9c",
+            "#34495e"
+        ],
+        "variantStats": {
+            "speedy": {
+                "size": 0.75,
+                "speed": 1.5,
+                "hp": 0.5
+            },
+            "small": {
+                "size": 0.5,
+                "hp": 0.5
+            },
+            "large": {
+                "size": 1.5,
+                "speed": 0.75,
+                "hp": 1.5,
+                "damage": 1.25
+            },
+            "massive": {
+                "size": 2.0,
+                "speed": 0.5,
+                "hp": 2.0,
+                "damage": 1.5
+            },
+            "gunner": {
+                "gun": "json/weapons/guns/enemy/peashooter.json"
+            },
+            "turret": {
+                "gun": "json/weapons/guns/enemy/peashooter.json",
+                "moveType": "static"
+            },
+            "medium": {}
+        },
+        "modeStats": {
+            "angry": {
+                "hp": 1.5,
+                "damage": 1.5,
+                "speed": 5.0,
+                "speedySpeed": 1.25,
+                "color": "#e74c3c"
+            }
+        }
+    },
     "music": false,
     "pause": false,
     "items": true,
