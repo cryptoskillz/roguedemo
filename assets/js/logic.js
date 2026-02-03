@@ -1707,19 +1707,27 @@ window.addEventListener('blur', () => {
 });
 
 // --- HELPER: START GAME LOGIC ---
+let isGameStarting = false;
 function startGame() {
     // Force Audio Resume on User Interaction
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    if (gameState === STATES.PLAY) return;
+    if (gameState === STATES.PLAY || isGameStarting) return;
+    isGameStarting = true;
 
     // Check Lock
     const p = availablePlayers[selectedPlayerIndex];
 
     if (p && p.locked) {
         log("Player Locked - Cannot Start");
+        isGameStarting = false;
         return;
     }
+
+    // Show Loading Screen immediately to block input/visuals
+    const loadingEl = document.getElementById('loading');
+    if (loadingEl) loadingEl.style.display = 'flex';
+    welcomeEl.style.display = 'none';
 
     // Apply Selected Player Stats
     if (p) {
@@ -1744,6 +1752,9 @@ function startGame() {
             ]);
             gun = gData;
             bomb = bData;
+
+            if (loadingEl) loadingEl.style.display = 'none'; // Hide loading when done
+
 
             // Initialize Ammo for new gun
             if (gun.Bullet?.ammo?.active) {
@@ -1793,6 +1804,12 @@ function startGame() {
             updateUI();
         } catch (err) {
             console.error("Error starting game assets:", err);
+            // Re-show welcome if failed so user can try again
+            welcomeEl.style.display = 'flex';
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl) loadingEl.style.display = 'none';
+        } finally {
+            isGameStarting = false;
         }
     })();
 }
