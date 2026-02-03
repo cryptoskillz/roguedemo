@@ -275,13 +275,13 @@ const SFX = {
         osc.type = 'triangle';
         // Short, sharp yelp: 600Hz to 400Hz quickly
         osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.1);
+        osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.4);
 
         gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
 
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
     }
 };
 

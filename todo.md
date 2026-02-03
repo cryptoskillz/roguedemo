@@ -2,7 +2,7 @@ bugs
 
 
 Balance
-
+    bomb blast should not go throug solid players it should be absorbed by them
     
     when you get a bonus (ie rare, uncommon etc trigger then you should only get the highest not multipile items spawned
 
