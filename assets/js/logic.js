@@ -1415,7 +1415,11 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
         const ePromises = enemyManifest.enemies.map(id =>
             fetch(`json/enemies/${id}.json?t=` + Date.now())
                 .then(res => res.json())
-                .then(data => enemyTemplates[id] = data)
+                .then(data => {
+                    // Use the last part of the path as the key (e.g. "special/firstboss" -> "firstboss")
+                    const key = id.split('/').pop();
+                    enemyTemplates[key] = data;
+                })
         );
         await Promise.all(ePromises);
 

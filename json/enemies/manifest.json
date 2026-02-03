@@ -2,9 +2,9 @@
     "enemies": [
         "grunt",
         "tank",
-        "firstboss",
-        "secondboss",
-        "thirdboss",
-        "ghost"
+        "special/firstboss",
+        "special/secondboss",
+        "special/thirdboss",
+        "special/ghost"
     ]
 }
