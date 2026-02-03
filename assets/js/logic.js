@@ -1520,11 +1520,9 @@ window.addEventListener('keydown', e => {
         // Check for New Game (N)
         const hasSave = localStorage.getItem('game_unlocks') || localStorage.getItem('game_unlocked_ids');
         if (e.code === 'KeyN' && hasSave) {
-            if (confirm("START NEW GAME?\n\nThis will DELETE ALL UNLOCKS and progress.\nAre you sure?")) {
-                localStorage.removeItem('game_unlocks');
-                localStorage.removeItem('game_unlocked_ids');
-                log("Save data cleared. Starting fresh.");
-                restartGame();
+            const modal = document.getElementById('newGameModal');
+            if (modal) {
+                modal.style.display = 'flex';
             }
             return;
         }
@@ -4688,6 +4686,20 @@ function goContinue() {
     }
 
     gameState = STATES.PLAY;
+}
+
+// --- NEW GAME MODAL HANDLING ---
+function confirmNewGame() {
+    localStorage.removeItem('game_unlocks');
+    localStorage.removeItem('game_unlocked_ids');
+    log("Save data cleared. Starting fresh.");
+
+    document.getElementById('newGameModal').style.display = 'none';
+    restartGame();
+}
+
+function cancelNewGame() {
+    document.getElementById('newGameModal').style.display = 'none';
 }
 
 function drawTutorial() {
