@@ -1,19 +1,33 @@
 bugs
-    alwasy angry mode   
-    no sfx online 
-    sound effect for portal
-    sound effect for bomb
-    sound effect for item pick up / spswn
-
+    should never be a gloden door blocling the way to the boss room 
     bomb blast should not go throug solid players it should be absorbed by them
     player can move around once they go through the portal
-    on the server when you go past level 1 and it takes you back to welcome screen you have to reload to be able to play the next leve
-   dont hear sound effects on line (looks like you start the game to fast th welcome screen does not go awat)
+    on the server when you go past level 1 and it takes you back to welcome screen you have to reload to be able to play the next leve  (looks like you start the game to fast th welcome screen does not go awat)
+    angry mod increase fire rate if enemy has a gun 
+    pull to the left keys still an isuse ive noticed its during item spawn / pick up
+    turret mode should be invul by default
+
+
 
 
 Balance
 
+     enemies have a dazed mode theres eyes turn to circles and they run away from the player for a few seconds
+
+    enemies have a confused mode and they attack each other 
+
+    enemy can randomly be scared and they run away out of the room,  You fimd these enemies in the bnss room explaining their cowardice and they attack in the boss battle which shouting 
     
+    "WITNESS ME"
+
+    to which the boss always responds
+
+    "MEDICORE"
+
+
+    if there is a secret in the room some enemies will quickly look in its direction the look away after a second or two
+
+    it would be good to have a list of text each enemy types says and it picks one randonlu and says some after hit, some minding their own business, some when they are and angry and dead.  The crux of this is to potray the "enemies" as the good guys and we will slowly reveal that the player maybe the bad guy in the game. 
     
     when you get a bonus (ie rare, uncommon etc trigger then you should only get the highest not multipile items spawned
 
@@ -38,10 +52,20 @@ Balance
 
     A sucessful pacacfier run awards you the pacacfier gun that does no damage but could be used to turn enemies into pets / friends
 
-    
+   sound
+
+    sound effect for portal
+    sound effect for bomb
+    sound effect for item spswn
+    different sound for each gun
+    different sound for each type yelp angry etc
+    add sound effects to button presses 
+    sound effect when you go past secret room (add seret room)
+
 
 next up 
-    bug fixes 6 and balance 
+    balance
+    sfx 
     ui updates
         inventory
         stats
