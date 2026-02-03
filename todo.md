@@ -1,8 +1,14 @@
 bugs
 
+    bomb blast should not go throug solid players it should be absorbed by them
+    player can move around once they go through the portal
+    on the server when you go past level 1 and it takes you back to welcome screen you have to reload to be able to play the next leve
+   dont hear sound effects on line
+    
 
 Balance
-    bomb blast should not go throug solid players it should be absorbed by them
+
+    
     
     when you get a bonus (ie rare, uncommon etc trigger then you should only get the highest not multipile items spawned
 

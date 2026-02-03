@@ -1335,6 +1335,7 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
             // Fallback: Start music on the very first key press or click if autoplay failed
             const startAudio = () => {
                 if (introMusic.paused && !musicMuted) introMusic.play();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
                 window.removeEventListener('keydown', startAudio);
                 window.removeEventListener('mousedown', startAudio);
             };
@@ -3702,13 +3703,7 @@ function updateUse() {
     if (gameState !== STATES.PLAY) return;
 
     // Start the Tron music if it hasn't started yet
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-    // Handle Audio Context
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
+    // (Handled by startAudio listener now)
 
     const roomLocked = isRoomLocked();
     const doors = roomData.doors || {};
