@@ -1,0 +1,25 @@
+{
+    "type": "ghost",
+    "description": "The scarty ghost.",
+    "damage": 1000,
+    "knockback": 0,
+    "shake": 2,
+    "hp": 200000,
+    "speed": 1.2,
+    "size": 50,
+    "color": "rgba(231, 76, 60, 0.8)",
+    "hitColor": "#ffffff",
+    "deathType": "fadeaway",
+    "deathDuration": 30,
+    "invulColour": "#ffffff",
+    "shape": "ghost",
+    "gun": "",
+    "solid": false,
+    "moveType": {
+        "type": "track",
+        "x": 0,
+        "y": 0
+    },
+    "ignoreInvuln": true,
+    "special": true
+}
