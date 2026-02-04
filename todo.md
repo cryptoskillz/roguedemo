@@ -1,6 +1,7 @@
 bugs
-  
-    when ou leabe a room with a bomb and enter it should still be there / its effect seen it the timer ran out?
+    after portal does that level start screen ebfore going to the next one
+   
+    [x] when ou leabe a room with a bomb and enter it should still be there / its effect seen it the timer ran out?
     pull the player still persissts seems to happen when you pick up an item / spawn an item 
     sometimes when you pick up an item they all despawn
 

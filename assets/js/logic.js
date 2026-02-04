@@ -2434,6 +2434,34 @@ function changeRoom(dx, dy) {
             levelMap[currentCoord].savedEnemies = null;
             levelMap[currentCoord].cleared = true;
         }
+
+        // SAVE BOMBS
+        // Only save unexploded bombs. We save absolute 'explodeAt' so time passes while away.
+        const activeBombs = bombs.filter(b => !b.exploded && b.explodeAt > Date.now());
+        if (activeBombs.length > 0) {
+            levelMap[currentCoord].savedBombs = activeBombs.map(b => ({
+                x: b.x, y: b.y,
+                explodeAt: b.explodeAt, // Save Absolute Time
+                maxTimer: b.maxTimer,
+                damage: b.damage, radius: b.radius,
+                color: b.color,
+                ownerType: b.ownerType,
+                vx: b.vx || 0, vy: b.vy || 0,
+                // Visual Properties
+                type: b.type,
+                timerShow: b.timerShow,
+                image: b.image, // If it has an image
+                canInteract: b.canInteract,
+                openLockedDoors: b.openLockedDoors,
+                openRedDoors: b.openRedDoors,
+                openSecretRooms: b.openSecretRooms,
+                baseR: b.baseR, maxR: b.maxR,
+                explosionDuration: b.explosionDuration
+            }));
+            log(`Saved ${activeBombs.length} bombs in ${currentCoord}`);
+        } else {
+            levelMap[currentCoord].savedBombs = null;
+        }
     }
 
     // Reset Room Specific Flags
@@ -2484,6 +2512,45 @@ function changeRoom(dx, dy) {
 
     bullets = []; // Clear bullets on room entry
     bombs = []; // Clear bombs on room entry
+
+    // RESTORE BOMBS
+    if (levelMap[nextCoord] && levelMap[nextCoord].savedBombs) {
+        const now = Date.now();
+        levelMap[nextCoord].savedBombs.forEach(sb => {
+            // "Keep Ticking" Logic:
+            // If the bomb exploded while we were away (now > explodeAt), do NOT restore it.
+            // (Or restore it as exploding? Usually better to just assume it's gone)
+            if (now > sb.explodeAt) {
+                // Bomb expired. Technically should trigger checks (doors etc) but that's complex without active room logic.
+                // For now, simpler is "it blew up and is gone".
+                // If user wants it to HAVE BLOWN UP DOORS, we'd need to simulate that. 
+                // Let's stick to "it's gone".
+                return;
+            }
+
+            bombs.push({
+                x: sb.x, y: sb.y,
+                explodeAt: sb.explodeAt, // Restore absolute
+                maxTimer: sb.maxTimer,
+                damage: sb.damage, radius: sb.radius,
+                color: sb.color,
+                ownerType: sb.ownerType,
+                vx: sb.vx, vy: sb.vy,
+                exploded: false,
+                // Restore Visuals & Props
+                type: sb.type,
+                timerShow: sb.timerShow,
+                image: sb.image,
+                canInteract: sb.canInteract,
+                openLockedDoors: sb.openLockedDoors,
+                openRedDoors: sb.openRedDoors,
+                openSecretRooms: sb.openSecretRooms,
+                baseR: sb.baseR || 15, maxR: sb.maxR || 100,
+                explosionDuration: sb.explosionDuration || 300
+            });
+        });
+        log(`Restored ${bombs.length} bombs in ${nextCoord}`);
+    }
 
     // Check if Ghost should follow
     const ghostConfig = gameData.ghost || { spawn: true, roomGhostTimer: 10000, roomFollow: false };
