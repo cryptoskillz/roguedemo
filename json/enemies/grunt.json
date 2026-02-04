@@ -7,7 +7,7 @@
     "angryAfterHit": 0.05,
     "angryTime": 5000,
     "knockback": 100,
-    "shake": 2,
+    "shake": 4,
     "speed": 1.2,
     "size": 25,
     "color": "rgba(231, 76, 60, 0.8)",

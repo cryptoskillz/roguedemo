@@ -893,9 +893,13 @@ function generateLevel(length) {
 
         // 2. Try any room tagged as boss (from bossrooms list)
         const bossKey = Object.keys(roomTemplates).find(k => roomTemplates[k]._type === 'boss');
-        if (bossKey) return roomTemplates[bossKey];
+        if (bossKey) {
+            log("Found Boss Template:", bossKey);
+            return roomTemplates[bossKey];
+        }
 
         // 3. Fallback
+        console.warn("No Boss Template found. Using last available.");
         const keys = Object.keys(roomTemplates);
         return roomTemplates[keys[keys.length - 1]];
     };
@@ -1454,18 +1458,22 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
                     return res.json();
                 })
                 .then(data => {
-                    // ID is filename without extension or just the path for uniqueness
+                    // ID Generation: Handle "room.json" collision
                     const parts = path.split('/');
-                    const id = parts[parts.length - 1].replace('.json', '');
+                    let id = parts[parts.length - 1].replace('.json', '');
+                    if (id === 'room' && parts.length > 1) {
+                        id = parts[parts.length - 2]; // Use folder name (e.g. "boss4", "start")
+                    }
+
                     data.templateId = id;
                     // Tag it
                     if (type) data._type = type;
-                    // Special case: if name is "Start Room", force ID to "start" for logic compatibility?
-                    // actually, better to handle that in generation.
+
                     // Store
                     roomTemplates[id] = data;
                     // Also store by full path just in case
                     roomTemplates[path] = data;
+                    log(`Loaded Room: ${id} (${type || 'normal'})`);
                 })
                 .catch(err => console.error(`Failed to load room: ${path}`, err));
         };
@@ -1719,7 +1727,7 @@ window.addEventListener('blur', () => {
 
 // --- HELPER: START GAME LOGIC ---
 let isGameStarting = false;
-function startGame() {
+function startGame(keepState = false) {
     // Force Audio Resume on User Interaction
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
@@ -1742,7 +1750,8 @@ function startGame() {
     welcomeEl.style.display = 'none';
 
     // Apply Selected Player Stats
-    if (p) {
+    // IF keepState is true, we assume player object is already correctly set (loaded or preserved)
+    if (!keepState && p) {
         // Apply stats but keep runtime properties like x/y if needed (though start resets them)
         // Actually initGame reset player.x/y already.
         const defaults = { x: 300, y: 200, roomX: 0, roomY: 0 };
@@ -1768,8 +1777,9 @@ function startGame() {
             if (loadingEl) loadingEl.style.display = 'none'; // Hide loading when done
 
 
-            // Initialize Ammo for new gun
-            if (gun.Bullet?.ammo?.active) {
+            // Initialize Ammo for new gun (Only if NOT keeping state or if we swapped guns?)
+            // If keeping state, ammo should be preserved.
+            if (!keepState && gun.Bullet?.ammo?.active) {
                 player.ammoMode = gun.Bullet?.ammo?.type || 'finite';
                 player.maxMag = gun.Bullet?.ammo?.amount || 100;
                 player.reloadTime = gun.Bullet?.ammo?.resetTimer !== undefined ? gun.Bullet?.ammo?.resetTimer : (gun.Bullet?.ammo?.reload || 1000);
@@ -4390,6 +4400,13 @@ function handleLevelComplete() {
     // 1. Next Level?
     if (roomData.nextLevel && roomData.nextLevel.trim() !== "") {
         log("Proceeding to Next Level:", roomData.nextLevel);
+
+        // Save State to LocalStorage (Robust Persistence)
+        localStorage.setItem('rogue_transition', 'true');
+        // Ensure we save a clean copy without circular refs or huge data if any
+        // But player object is simple enough.
+        localStorage.setItem('rogue_player_state', JSON.stringify(player));
+
         // Load next level, Keep Stats
         initGame(true, roomData.nextLevel, true);
         return;
