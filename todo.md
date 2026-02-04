@@ -1,6 +1,7 @@
 bugs
-    should never be a gloden door blocling the way to the boss room 
-    bomb blast should not go throug solid enemies it should be absorbed by them
+    [x] should never be a gloden door blocling the way to the boss room 
+    [x] bomb blast should not go throug solid enemies it should be absorbed by them
+    player can move around once they go through the portal
     player can move around once they go through the portal
     angry mod increase fire rate if enemy has a gun 
     pull to the left keys still an isuse ive noticed its during item spawn / pick up
@@ -12,7 +13,7 @@ bugs
     new shapes
     running into an enemy shoul dmake a sound
     boss should not get name from names.json he already has a name
-
+    when ou leabe a room with a bomb and enter it should still be there / its effect seen it the timer ran out?
   
 next up 
     balance3

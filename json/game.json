@@ -1,6 +1,6 @@
 {
     "perfectGoal": 5,
-    "startLevel": "json/levels/0.json",
+    "startLevel": "json/levels/4.json",
     "hardness": 8,
     "enemyConfig": {
         "variants": [

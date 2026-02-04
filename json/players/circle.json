@@ -44,6 +44,6 @@
     "gunType": "",
     "inventory": {
         "keys": 0,
-        "bombs": 1
+        "bombs": 10
     }
 }

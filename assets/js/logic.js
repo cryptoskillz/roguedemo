@@ -1092,6 +1092,11 @@ function generateLevel(length) {
                 // Keep locked status if template specifically had it, otherwise 0
                 if (data.doors[d.name].locked === undefined) data.doors[d.name].locked = 0;
 
+                // FORCE UNLOCK if on Golden Path to ensuring Boss is reachable
+                if (goldenPath && goldenPath.includes(coord) && goldenPath.includes(neighborCoord)) {
+                    data.doors[d.name].locked = 0;
+                }
+
                 // Sync door coordinates if missing
                 if (d.name === "top" || d.name === "bottom") {
                     if (data.doors[d.name].x === undefined) data.doors[d.name].x = (data.width || 800) / 2;
@@ -5115,9 +5120,54 @@ function drawBombs(doors) {
             if (!b.didDamage) {
                 b.didDamage = true;
                 enemies.forEach(en => {
-                    if (Math.hypot(b.x - en.x, b.y - en.y) < b.maxR) {
+                    const distEn = Math.hypot(b.x - en.x, b.y - en.y);
+                    if (distEn < b.maxR) {
                         // FIX: check invulnerability AND Boss Intro
                         if (Date.now() < bossIntroEndTime) return;
+
+                        // --- OCCLUSION CHECK: Is there a solid enemy in the way? ---
+                        let blocked = false;
+                        for (const blocker of enemies) {
+                            if (blocker === en) continue; // Don't block self
+                            if (blocker.isDead) continue; // Dead don't block
+                            if (!blocker.solid) continue; // Only solid blocks
+
+                            // Optimization: Blocker must be closer than the target
+                            const distBlocker = Math.hypot(b.x - blocker.x, b.y - blocker.y);
+                            if (distBlocker >= distEn) continue;
+
+                            // Collision Check: Line Segment (Bomb -> Target) vs Circle (Blocker)
+                            // Project Blocker onto Line Segment
+                            const dx = en.x - b.x;
+                            const dy = en.y - b.y;
+                            const lenSq = dx * dx + dy * dy;
+                            if (lenSq === 0) continue; // Overlap?
+
+                            // t = projection factor
+                            // Vector Bomb->Blocker (bx, by)
+                            const bx = blocker.x - b.x;
+                            const by = blocker.y - b.y;
+
+                            // Dot Product
+                            let t = (bx * dx + by * dy) / lenSq;
+                            t = Math.max(0, Math.min(1, t)); // Clamp to segment
+
+                            // Closest Point on segment
+                            const closestX = b.x + t * dx;
+                            const closestY = b.y + t * dy;
+
+                            // Distance from Blocker Center to Closest Point
+                            const distToLine = Math.hypot(blocker.x - closestX, blocker.y - closestY);
+
+                            if (distToLine < (blocker.size || 25)) {
+                                blocked = true;
+                                log(`Blast Blocked! Target: ${en.type} saved by ${blocker.type}`);
+                                break;
+                            }
+                        }
+
+                        if (blocked) return;
+
                         en.hp -= b.damage;
                         en.hitTimer = 10; // Visual flash
                         // Death Logic
@@ -5158,6 +5208,34 @@ function drawBombs(doors) {
 
             ctx.save(); ctx.globalAlpha = 1 - p; ctx.fillStyle = b.explosionColour;
             ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+
+            // MASKING: Erase explosion behind solid enemies so they appear to block it
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.globalAlpha = 1.0;
+            enemies.forEach(en => {
+                if (en.solid && !en.isDead) { // Only solid living enemies block view
+                    ctx.beginPath();
+                    const s = en.size || 25;
+                    const shape = en.shape || 'circle';
+
+                    if (shape === 'square') {
+                        ctx.rect(en.x - s, en.y - s, s * 2, s * 2);
+                    } else if (shape === 'triangle') {
+                        // Match drawEnemies triangle roughly
+                        ctx.moveTo(en.x, en.y - s);
+                        ctx.lineTo(en.x + s, en.y + s);
+                        ctx.lineTo(en.x - s, en.y + s);
+                        ctx.closePath();
+                    } else {
+                        // Default Circle
+                        ctx.arc(en.x, en.y, s, 0, Math.PI * 2);
+                    }
+                    ctx.fillStyle = 'black';
+                    ctx.fill();
+                }
+            });
+            ctx.restore();
             if (p >= 1) bombs.splice(i, 1);
         } else {
             // Unexploded bomb glow
