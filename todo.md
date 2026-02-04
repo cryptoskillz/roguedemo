@@ -143,6 +143,8 @@ if you leave a room and come back the ghost should be the same place + closer to
 if you kill some of the enemeis and leave a room and back there should only be the remaining enemies left (with ghost or blowing doors)
     ghost timer is running when you are on the welcome screen
     ghpst wont enter a room with an indestrcutible eemies
+    [x] Boss/Heavy enemies kick bombs instead of being trapped
+    [x] player can move around once they go through the portal
     if an enemy is nor sold (ie ghost) he should nor try to around enemies just go through them
         solid enemies cant go through each other, player or objects
         non solid enemies can be shot by bullets

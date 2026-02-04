@@ -3009,8 +3009,8 @@ function reloadWeapon() {
 
 // update loop
 function update() {
-    // 0. STOP updates if loading/initializing to prevent movement during transition
-    if (isInitializing) return;
+    // 0. STOP updates if loading/initializing OR unlocking to prevent movement during transition
+    if (isInitializing || isUnlocking) return;
 
     // 0. Global Inputs (Restart/Menu from non-play states)
     if (handleGlobalInputs()) return;
