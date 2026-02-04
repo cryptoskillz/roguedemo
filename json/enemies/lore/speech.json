@@ -1,0 +1,117 @@
+{
+    "general": [
+        "Arghhh",
+        "Die!",
+        "Grrr...",
+        "I see you!",
+        "Attack!",
+        "Crush him!"
+    ],
+    "types": {
+        "ghost": [
+            "Woooo...",
+            "The void calls...",
+            "Join us...",
+            "Fading...",
+            "So cold..."
+        ],
+        "boss": [
+            "I am the end!",
+            "Foolish mortal!",
+            "Bow before me!",
+            "My domain!"
+        ]
+    },
+    "shapes": {
+        "square": [
+            "Block!",
+            "Solid!",
+            "Halt!",
+            "Squared away!"
+        ],
+        "circle": [
+            "Rolling!",
+            "Round!",
+            "Smooth...",
+            "Orbiting!"
+        ],
+        "triangle": [
+            "Sharp!",
+            "Pointy!",
+            "Pierce!",
+            "Edge!"
+        ],
+        "star": [
+            "Shine!",
+            "Twinkle!",
+            "Spiky!",
+            "Star power!"
+        ],
+        "diamond": [
+            "Hard!",
+            "Reflect!",
+            "Precious...",
+            "Unbreakable!"
+        ],
+        "hexagon": [
+            "Six sides!",
+            "Honeycomb!",
+            "Structured!"
+        ]
+    },
+    "sizes": {
+        "small": [
+            "Tiny!",
+            "Fast!",
+            "Quick!",
+            "Zip!",
+            "Little me!"
+        ],
+        "large": [
+            "Heavy!",
+            "Move!",
+            "Out of way!",
+            "Stomp!"
+        ],
+        "massive": [
+            "CRUSH!",
+            "GIANT!",
+            "DOOM!",
+            "TREMBLE!"
+        ]
+    },
+    "moods": {
+        "angry": [
+            "RAGE!",
+            "I see RED!",
+            "FURIOUS!",
+            "NO MERCY!"
+        ],
+        "afraid": [
+            "Stay back!",
+            "No!",
+            "Mercy!"
+        ]
+    },
+    "events": {
+        "hit": [
+            "Ouch!",
+            "Hey!",
+            "My face!",
+            "That hurt!",
+            "Quit it!"
+        ],
+        "death": [
+            "Nooo...",
+            "Avenge me...",
+            "Darkness...",
+            "I fall..."
+        ],
+        "player_die": [
+            "Ha ha ha!",
+            "Weak!",
+            "Another falls.",
+            "Easy."
+        ]
+    }
+}
