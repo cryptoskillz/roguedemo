@@ -1,0 +1,220 @@
+{
+    "prefixes": [
+        "Mr.",
+        "Mrs.",
+        "Ms.",
+        "Dr.",
+        "Prof.",
+        "Sir",
+        "Lady",
+        "Lord",
+        "Baron",
+        "Duke",
+        "Count",
+        "Dame",
+        "Capt.",
+        "Rev.",
+        "Sgt."
+    ],
+    "firstNames": [
+        "Bob",
+        "Sue",
+        "Jim",
+        "Ann",
+        "Tom",
+        "Pat",
+        "Joe",
+        "Fay",
+        "Dan",
+        "Liz",
+        "Max",
+        "Sam",
+        "Ben",
+        "Zoe",
+        "Ray",
+        "Ava",
+        "Leo",
+        "Mia",
+        "Guy",
+        "Eva",
+        "Ron",
+        "Amy",
+        "Ken",
+        "Joy",
+        "Ted",
+        "Sky",
+        "Rex",
+        "Uma",
+        "Ian",
+        "Kim",
+        "Pip",
+        "Jax",
+        "Luz",
+        "Neo",
+        "Kit",
+        "Ash",
+        "Dot",
+        "Gus",
+        "Hal",
+        "Ivy"
+    ],
+    "surnames": {
+        "default": [
+            "Polygon",
+            "Vertex",
+            "Edge",
+            "Face",
+            "Plane",
+            "Solid",
+            "Shape",
+            "Figure",
+            "Form",
+            "Outline"
+        ],
+        "circle": [
+            "Round",
+            "Radius",
+            "Diameter",
+            "Chord",
+            "Arc",
+            "Pi",
+            "Circumference",
+            "Sector",
+            "Tangent",
+            "Loop",
+            "Ring",
+            "Orb",
+            "Sphere",
+            "Disc"
+        ],
+        "square": [
+            "Quad",
+            "Box",
+            "Rect",
+            "Cube",
+            "Right",
+            "Corner",
+            "Block",
+            "Equal",
+            "Four",
+            "Grid"
+        ],
+        "triangle": [
+            "Tri",
+            "Delta",
+            "Acute",
+            "Obtuse",
+            "Isosceles",
+            "Scalene",
+            "Pythagoras",
+            "Angle",
+            "Wedge",
+            "Pyramid",
+            "Trigon",
+            "Cuspid"
+        ],
+        "pentagon": [
+            "Penta",
+            "Five",
+            "Star",
+            "Dodeca",
+            "Field"
+        ],
+        "hexagon": [
+            "Hex",
+            "Comb",
+            "Hive",
+            "Six",
+            "Benzene"
+        ],
+        "heptagon": [
+            "Hepta",
+            "Seven",
+            "Sept"
+        ],
+        "octagon": [
+            "Octa",
+            "Stop",
+            "Eight",
+            "Spider"
+        ],
+        "nonagon": [
+            "Nona",
+            "Nine",
+            "Enne"
+        ],
+        "decagon": [
+            "Deca",
+            "Ten",
+            "Decimate"
+        ],
+        "rhombus": [
+            "Diamond",
+            "Slant",
+            "Lozenge"
+        ],
+        "trapezoid": [
+            "Trap",
+            "Zoid",
+            "Slope"
+        ]
+    },
+    "nicknames": {
+        "speed": [
+            "The Swift",
+            "The Flash",
+            "Zoomer",
+            "Sprinter",
+            "Dash",
+            "Blur",
+            "Quick",
+            "Haste"
+        ],
+        "hp": [
+            "The Tank",
+            "Ironclad",
+            "The Wall",
+            "Sturdy",
+            "Solid",
+            "Fortress",
+            "Heavy",
+            "Durable"
+        ],
+        "damage": [
+            "The Destroyer",
+            "Powerhouse",
+            "Lethal",
+            "Crusher",
+            "Mauler",
+            "Striker",
+            "Hard Hitter",
+            "Deadly"
+        ],
+        "size": [
+            "The Giant",
+            "Titan",
+            "Colossus",
+            "Big",
+            "Massive",
+            "Jumbo",
+            "Mega"
+        ],
+        "tiny": [
+            "The Mite",
+            "Atom",
+            "Bitty",
+            "Small",
+            "Micro",
+            "Nano",
+            "Tiny"
+        ],
+        "angry": [
+            "The Furious",
+            "Rage",
+            "Mad",
+            "Grumpy",
+            "Vicious",
+            "Savage"
+        ]
+    }
+}

@@ -1,21 +1,30 @@
 bugs
     if you backtrack through all enemies angry mode is triggered as you killed their boss
-    when you go to next level yhou should keep your items and inventory
-    next level has a slight pause as does the restart i think this is because of the welcome screen fix from earlier shows loading
     should never be a gloden door blocling the way to the boss room 
     bomb blast should not go throug solid enemies it should be absorbed by them
     player can move around once they go through the portal
-    on the server when you go past level 1 and it takes you back to welcome screen you have to reload to be able to play the next leve  (looks like you start the game to fast th welcome screen does not go awat)
     angry mod increase fire rate if enemy has a gun 
     pull to the left keys still an isuse ive noticed its during item spawn / pick up
     turret mode should be invul by default
     when paused the ghost timer should not run
-    add next to level to boss 4 (make it same levef for now) so you keep you stats
     sometimes when you pick up an item they all despawn
     WHNE YOU CNT PIcK UP AN ITEM GIVE A fail SOUND
+    add polygon as the currency
+    new shapes
+
+       
+
+
+
+       
 
 
 Balance
+
+    give each enemy a name and have an unlockable item enemy name
+
+    make most items locked at the start and you can unlock x items at random everytime you beat a level, beat the game to unlock permance mode 
+    so you cna buy the item you want for the next run you can also get really expensice items that are permant upgrades so upgrades are permant and active when you start a new run such as enemy names
 
     peermant unlocks can be purchased for gold coins you collect once you unlock permance mode you can pay to buy any item you unlocked 
 
@@ -70,6 +79,44 @@ Balance
     different sound for each type yelp angry etc
     add sound effects to button presses 
     sound effect when you go past secret room (add seret room)
+
+
+enemies
+
+ regular
+
+        pentagon
+        heptagon
+        octagon
+        nonagon
+        decagon
+        parrallelogram
+        rhombus
+        trapezoid
+        kite
+
+        irregular
+
+        triangle
+        quadrilateral
+        pentagon
+        hexagon
+        heptagon
+        octagon
+        nonagon
+        decagon
+
+        3d
+
+        sphere
+        right circular cone
+        ectangular box
+        cube
+        cylinder
+        pyramid
+
+
+         with even number of sides
 
 
 next up 

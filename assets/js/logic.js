@@ -118,6 +118,76 @@ let enemies = [];
 let bombs = [];
 let keys = {};
 let groundItems = []; // Items sitting on the floor
+let loreData = null;
+
+// --- HELPER: LORE GENERATION ---
+function generateLore(enemy) {
+    if (!loreData) return null;
+
+    // 1. Name Parts
+    const prefix = loreData.prefixes[Math.floor(Math.random() * loreData.prefixes.length)];
+    const firstName = loreData.firstNames[Math.floor(Math.random() * loreData.firstNames.length)];
+
+    // 2. Surname by Shape
+    const shape = enemy.shape ? enemy.shape.toLowerCase() : 'default';
+    const surnames = loreData.surnames[shape] || loreData.surnames['default'];
+    // Fallback if shape key exists but list empty
+    const surnameList = (surnames && surnames.length > 0) ? surnames : loreData.surnames['default'];
+    const surname = surnameList[Math.floor(Math.random() * surnameList.length)];
+
+    // 3. Nickname by Stats
+    let nickname = "";
+    // Build pool based on stats
+    let pool = [];
+    if (enemy.speed > 3) pool.push('speed');
+    if (enemy.hp > 5) pool.push('hp');
+    if (enemy.damage > 2) pool.push('damage');
+    if (enemy.size > 30) pool.push('size');
+    if (enemy.size < 20) pool.push('tiny');
+    if (enemy.alwaysAngry) pool.push('angry');
+
+    // Fallback pool
+    if (pool.length === 0) pool = ['speed', 'hp'];
+
+    const cat = pool[Math.floor(Math.random() * pool.length)];
+    const nicks = loreData.nicknames[cat] || [];
+    if (nicks.length > 0) {
+        nickname = nicks[Math.floor(Math.random() * nicks.length)];
+    }
+
+    // 4. Randomize Display Format
+    // Options: 
+    // - Nickname (if exists)
+    // - First Name
+    // - Full Name (First Surname)
+    // - Formal (Prefix Surname)
+    // - Formal Full (Prefix First Surname)
+    // - Nick Mid (First "Nick" Surname) - if exists
+
+    let options = [
+        { type: 'first', val: firstName },
+        { type: 'full', val: `${firstName} ${surname}` },
+        { type: 'formal_sur', val: `${prefix} ${surname}` },
+        { type: 'formal_full', val: `${prefix} ${firstName} ${surname}` }
+    ];
+
+    if (nickname) {
+        options.push({ type: 'nick', val: nickname }); // Just "The Tank"
+        options.push({ type: 'nick_mid', val: `${firstName} "${nickname}" ${surname}` });
+    }
+
+    // Select Random
+    const selected = options[Math.floor(Math.random() * options.length)];
+    const displayName = selected.val;
+
+    return {
+        fullName: `${prefix} ${firstName} ${surname}`,
+        nickname: nickname,
+        displayName: displayName, // Use this for rendering
+        title: `${nickname} ${firstName}`
+    };
+}
+
 
 let bomb = {}
 let gun = {}
@@ -1101,6 +1171,15 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
         // 1. Load Game Config First
         let gData = await fetch('/json/game.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ perfectGoal: 3, NoRooms: 11 }));
 
+        // 1b. Load Lore Data
+        try {
+            loreData = await fetch('/json/enemies/lore/names.json?t=' + Date.now()).then(res => res.json());
+            log("Loaded Lore Data");
+        } catch (e) {
+            console.warn("Failed to load lore data", e);
+            loreData = null;
+        }
+
         // APPLY SAVED UNLOCK OVERRIDES (Moved here to affect startLevel)
         try {
             const saved = localStorage.getItem('game_unlocks');
@@ -2026,6 +2105,17 @@ function spawnEnemies() {
 
         const template = enemyTemplates["ghost"] || { hp: 2000, speed: 1.2, size: 50, type: "ghost" };
         const inst = JSON.parse(JSON.stringify(template));
+        // Inst config
+        if (loreData) {
+            // inst.lore = generateLore(inst);
+            inst.lore = {
+                displayName: "Player Snr",
+                fullName: "Player Snr",
+                nickname: "The Departed",
+                title: "Player Snr"
+            };
+        }
+
 
         // Standard random placement or center
         inst.x = Math.random() * (canvas.width - 60) + 30;
@@ -2057,6 +2147,11 @@ function spawnEnemies() {
 
                     // NEW: Apply Variants, Modes, and Modifiers
                     applyEnemyConfig(inst, group);
+
+                    // ASSIGN LORE
+                    if (loreData) {
+                        inst.lore = generateLore(inst);
+                    }
 
                     // MERGE moveType from Room Config (Override)
                     if (group.moveType) {
@@ -4467,6 +4562,14 @@ function updateGhost() {
 
         const inst = JSON.parse(JSON.stringify(template));
 
+        // Assign Name
+        inst.lore = {
+            displayName: "Player Snr",
+            fullName: "Player Snr",
+            nickname: "The Departed",
+            title: "Player Snr"
+        };
+
         // Spawn Location
         if (ghostEntry) {
             // Spawn at the door the player entered
@@ -4614,6 +4717,16 @@ function drawEnemies() {
             ctx.fillStyle = en.invulColour || "#85c1e9"; // Use invulColour (white) if set, else fallback
         } else {
             ctx.fillStyle = en.color || "#e74c3c";
+        }
+
+        // Draw Name if present
+        // Draw Name if present
+        if (en.lore && en.lore.displayName && !en.isDead) {
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+            ctx.font = "10px monospace";
+            ctx.fillText(en.lore.displayName, en.x, en.y - en.size - 5);
         }
 
         // DRAWING SHAPE
