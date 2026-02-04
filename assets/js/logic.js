@@ -4391,7 +4391,17 @@ function updateEnemies() {
             if (en.gunConfig && !en.gunConfig.error && player.hp > 0) {
                 const dist = Math.hypot(player.x - en.x, player.y - en.y);
                 if (dist < 500) {
-                    const fireRate = (en.gunConfig.Bullet?.fireRate || 1) * 1000;
+                    let fireRate = (en.gunConfig.Bullet?.fireRate || 1) * 1000;
+
+                    // Apply Angry Fire Rate Modifier
+                    if (en.mode === 'angry') {
+                        const config = gameData.enemyConfig || {};
+                        const angryStats = config.modeStats?.angry;
+                        if (angryStats && angryStats.fireRate) {
+                            fireRate *= angryStats.fireRate;
+                        }
+                    }
+
                     if (!en.lastShot || now - en.lastShot > fireRate) {
                         const angle = Math.atan2(player.y - en.y, player.x - en.x);
                         const speed = en.gunConfig.Bullet?.speed || 4;

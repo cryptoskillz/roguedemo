@@ -1,13 +1,12 @@
 bugs
-    angry mod increase fire rate if enemy has a gun 
-    pull the player still persissts seems to happen when you pick up an item / spawn an item 
     when paused the ghost timer should not run
-    sometimes when you pick up an item they all despawn
-    WHNE YOU CNT PIcK UP AN ITEM GIVE A fail SOUND
     add polygon as the currency
     running into an enemy shoul dmake a sound
     boss should not get name from names.json he already has a name
     when ou leabe a room with a bomb and enter it should still be there / its effect seen it the timer ran out?
+    pull the player still persissts seems to happen when you pick up an item / spawn an item 
+    sometimes when you pick up an item they all despawn
+
   
 next up 
     balance3
@@ -95,6 +94,7 @@ Balance
     different sound for each type yelp angry etc
     add sound effects to button presses 
     sound effect when you go past secret room (add seret room)
+    WHNE YOU CNT PIcK UP AN ITEM GIVE A fail SOUND
 
 
 enemies

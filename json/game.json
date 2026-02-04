@@ -68,6 +68,7 @@
                 "speed": 5.0,
                 "speedySpeed": 1.25,
                 "color": "#e74c3c",
+                "fireRate": 0.5,
                 "angryTime": 5000
             }
         }
