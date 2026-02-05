@@ -49,17 +49,6 @@ function spawnFloatingText(x, y, text, color = "white") {
 
 let pauseStartTime = 0;
 
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.has('autostart')) {
-    gameLoopStarted = true;
-    initGame(false);
-    // Force hide welcome as initGame(false) shows it
-    document.getElementById('welcome').style.display = 'none';
-    if (window.gameAudio && window.gameAudio.state === 'suspended') {
-        window.gameAudio.resume();
-    }
-}
-
 function updateFloatingTexts() {
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         const ft = floatingTexts[i];
@@ -445,20 +434,8 @@ let hitsInRoom = 0;
 let perfectStreak = 0;
 let gameData = { perfectGoal: 3 };
 
-const STATES = { START: 0, PLAY: 1, GAMEOVER: 2, GAMEMENU: 3, WIN: 4, CREDITS: 5 };
+const STATES = { START: 0, PLAY: 1, GAMEOVER: 2, GAMEMENU: 3, WIN: 4 };
 let gameState = STATES.START;
-
-// EXPOSE GLOBALS FOR MODULES (credits.js)
-window.gameCanvas = canvas;
-window.gameCtx = ctx;
-window.gameKeys = keys;
-window.gameStates = STATES;
-window.uiEl = uiEl;
-window.statsEl = statsEl;
-window.setGameState = (s) => { gameState = s; };
-window.getGameState = () => { return gameState; };
-window.goToWelcome = goToWelcome;
-// window.gameAudio = audioCtx; // MOVED DOWN (Fix ReferenceError)
 
 let visitedRooms = {}; // Track state of each coordinate
 
@@ -495,7 +472,6 @@ let ghostEntry = null;
 let wasRoomLocked = false; // Track previous lock state for events
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-window.gameAudio = audioCtx; // Exposed here after init
 
 // --- ROBUST AUDIO UNLOCKER ---
 const unlockAudio = () => {
@@ -3381,19 +3357,6 @@ function reloadWeapon() {
 
 // update loop
 function update() {
-    if (gameState === STATES.CREDITS) {
-        if (window.updateCredits) {
-            try {
-                window.updateCredits();
-            } catch (e) {
-                console.error("Credits Update Error:", e);
-            }
-        } else {
-            // console.warn("Missing window.updateCredits");
-        }
-        return;
-    }
-
     // 0. STOP updates if loading/initializing OR unlocking to prevent movement during transition
     if (isInitializing || isUnlocking) return;
 
@@ -3511,19 +3474,6 @@ function updateReload() {
 
 //draw loop
 async function draw() {
-    if (gameState === STATES.CREDITS) {
-        if (window.drawCredits) {
-            try {
-                window.drawCredits();
-            } catch (e) {
-                console.error("Credits Draw Error:", e);
-            }
-        }
-        // FIXED: Loop must continue!
-        requestAnimationFrame(() => { update(); draw(); });
-        return;
-    }
-
     if (isInitializing) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -5180,12 +5130,6 @@ function updatePortal() {
 }
 
 function handleLevelComplete() {
-    // 0. Completed It Mate? (Credits)
-    if (roomData.completedItMate) {
-        showCredits();
-        return;
-    }
-
     // 1. Next Level?
     if (roomData.nextLevel && roomData.nextLevel.trim() !== "") {
         log("Proceeding to Next Level:", roomData.nextLevel);
@@ -5202,7 +5146,7 @@ function handleLevelComplete() {
     }
 
     // 2. End Game / Victory?
-    if (roomData.welcomeScreen) {
+    if (roomData.endGame) {
         gameState = STATES.WIN;
         updateUI();
         gameOver();

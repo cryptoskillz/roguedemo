@@ -45,6 +45,10 @@ achivements
 
 
 Balance
+    msui fade in / fade out 
+    check gun unified
+    upddate readme 
+    add a proper end game outro (star field with text a game by crypto skillz and a btc qr code)
     ui should be a fixed height
     mini map should under ui and bigger
     implement seed system to regenerate exact level so we can debug whilst the boss room does not always spawn
@@ -62,39 +66,39 @@ Balance
 
         drops should take into account the room hardness of the room and the player modifiers to incrase the pool chances of dropping to help with balancing 
 
-    rather than add the rooms to the json of level instead add a maxHardnes and maxRooms to decide the rooms that go into the level (you could even factor in the player modifiers)
+        rather than add the rooms to the json of level instead add a maxHardnes and maxRooms to decide the rooms that go into the level (you could even factor in the player modifiers)
 
         peermant unlocks can be purchased for gold coins you collect once you unlock permance mode you can pay to buy any item you unlocked 
 
 
         beat the game to unlock permance mode 
-    so you cna buy the item you want for the next run you can also get really expensice items that are permant upgrades so upgrades are permant and active when you start a new run such as enemy names
+        so you cna buy the item you want for the next run you can also get really expensice items that are permant upgrades so upgrades are permant and active when you start a new run such as enemy names
 
-    Add a canPickUp flag to enemy Json to steal and use your spawned items and guns 
-    using the follow mechanic, gun modifier, canhurtplayer (set to false) and canhurt enemies (set to true) we can create pets that follow you and shoot at enemies
+        Add a canPickUp flag to enemy Json to steal and use your spawned items and guns 
+        using the follow mechanic, gun modifier, canhurtplayer (set to false) and canhurt enemies (set to true) we can create pets that follow you and shoot at enemies
 
-    Add a charisma stat / item that can be used to turn enemies into pets / friends useful for the pacacifer runs
+        Add a charisma stat / item that can be used to turn enemies into pets / friends useful for the pacacifer runs
 
-    add a mechanic for the passiver run the boss room to open the portal i am thinking of standing on tile(s) for a set amount of time and / or in a set sequence
+        add a mechanic for the passiver run the boss room to open the portal i am thinking of standing on tile(s) for a set amount of time and / or in a set sequence
 
-    A sucessful pacacfier run awards you the pacacfier gun that does no damage but could be used to turn enemies into pets / friends
+        A sucessful pacacfier run awards you the pacacfier gun that does no damage but could be used to turn enemies into pets / friends
 
-   enemies have a happy mode where they run around and jump for joy and add hp to you if you hit them 
+        enemies have a happy mode where they run around and jump for joy and add hp to you if you hit them 
 
-    enemies have a dazed mode theres eyes turn to circles and they run away from the player for a few seconds
+        enemies have a dazed mode theres eyes turn to circles and they run away from the player for a few seconds
 
-    enemies have a confused mode and they attack each other 
+        enemies have a confused mode and they attack each other 
 
         enemy can randomly be scared and they run away out of the room,  You fimd these enemies in the bnss room explaining their cowardice and they attack in the boss battle which shouting 
     
-    "WITNESS ME"
+        "WITNESS ME"
 
-    to which the boss always responds
+        to which the boss always responds
 
-    "MEDICORE"
+        "MEDICORE"
 
 
-    if there is a secret in the room some enemies will quickly look in its direction the look away after a second or two
+        if there is a secret in the room some enemies will quickly look in its direction the look away after a second or two
 
 
 
