@@ -256,6 +256,68 @@ function addGreenShards(amount) {
     log(`Green Shards Added: ${amount}. Total: ${next}`);
 }
 
+// --- ITEM SCRAP LOGIC ---
+function convertItemsToScrap(targetX, targetY) {
+    let totalScrap = 0;
+
+    // Identify Scrappable Items
+    // Filter out shards themselves to prevent endless loops or double counting
+    const keptItems = [];
+    const itemsToScrap = [];
+
+    const currentCoord = `${player.roomX},${player.roomY}`;
+
+    console.log(`Scrap: Checking ${groundItems.length} items for room ${currentCoord}`);
+
+    groundItems.forEach(item => {
+        // 1. Must be in current room
+        if (`${item.roomX},${item.roomY}` !== currentCoord) {
+            keptItems.push(item);
+            return;
+        }
+
+        // 2. Must not be a shard (Visual or Real)
+        if (item.data.type === 'shard' || item.data.type === 'visual_shard') {
+            keptItems.push(item);
+            return;
+        }
+
+        // Scrap everything else (Guns, bombs, health, keys)
+        // Calc Value
+        const val = 1 + Math.floor(Math.random() * 3); // 1-3 Shards
+        totalScrap += val;
+        itemsToScrap.push({ x: item.x, y: item.y, val: val });
+    });
+
+    // Update Ground Items (Remove scrapped)
+    // IMPORTANT: Reassigning global variable
+    groundItems = keptItems;
+
+    console.log(`Scrap: Kept ${keptItems.length}, Scrapping ${itemsToScrap.length}`);
+
+    if (totalScrap > 0) {
+        // Add to Player
+        addRedShards(totalScrap);
+
+        // Visuals for each scrapped item
+        itemsToScrap.forEach(it => {
+            spawnFloatingText(it.x, it.y, `SCRAP!`, "#e74c3c");
+            // Optional: Spawn temporary visual shard moving to target
+            groundItems.push({
+                x: it.x, y: it.y,
+                vx: (targetX - it.x) * 0.05,
+                vy: (targetY - it.y) * 0.05,
+                life: 30, // Short life
+                data: { type: 'visual_shard' } // New type to just render and die
+            });
+        });
+
+        log(`Scrapped ${itemsToScrap.length} items for ${totalScrap} Red Shards.`);
+    }
+
+    return totalScrap;
+}
+
 function spawnShard(x, y, type, amount) {
     if (!gameData.redShards && type === 'red') return;
     if (!gameData.greenShards && type === 'green') return;
@@ -1321,7 +1383,11 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
     bombs = [];
     particles = [];
     enemies = [];
-    if (typeof portal !== 'undefined') portal.active = false;
+    if (typeof portal !== 'undefined') {
+        portal.active = false;
+        portal.finished = false;
+        portal.scrapping = false;
+    }
 
     // ... [Previous debug and player reset logic remains the same] ...
     // Room debug display setup moved after config load
@@ -4986,6 +5052,8 @@ function updateEnemies() {
 
     if (roomData.isBoss && activeThreats.length === 0 && !portal.active) {
         portal.active = true;
+        portal.scrapping = false; // Reset flags
+        portal.finished = false;
         portal.x = canvas.width / 2;
         portal.y = canvas.height / 2;
         log("Room Clear! Spawning Portal.");
@@ -5000,6 +5068,29 @@ function updatePortal() {
 
     const dist = Math.hypot(player.x - portal.x, player.y - portal.y);
     if (dist < 30) {
+
+        // SCRAP MECHANIC
+        if (!portal.scrapping && !portal.finished) {
+            console.log("Portal: Starting Scrap Check...");
+            portal.scrapping = true;
+            const scrapped = convertItemsToScrap(portal.x, portal.y);
+            console.log("Portal: Scrapped Value:", scrapped);
+
+            if (scrapped > 0) {
+                // Wait for visual effect
+                setTimeout(() => {
+                    portal.scrapping = false;
+                    portal.finished = true; // Prevent re-scrap
+                }, 1500);
+                return;
+            } else {
+                portal.scrapping = false;
+                portal.finished = true;
+            }
+        }
+
+        if (portal.scrapping) return; // Wait
+
         // WIN GAME
         if (roomData.unlocks && roomData.unlocks.length > 0) {
             handleUnlocks(roomData.unlocks);
@@ -5010,6 +5101,7 @@ function updatePortal() {
 }
 
 function handleLevelComplete() {
+    console.log("Portal: Handling Level Complete...");
     // 1. Next Level?
     if (roomData.nextLevel && roomData.nextLevel.trim() !== "") {
         log("Proceeding to Next Level:", roomData.nextLevel);
@@ -6161,9 +6253,9 @@ function drawItems() {
             ctx.lineTo(15, 10);
             ctx.lineTo(-15, 10);
             ctx.closePath();
-        } else if (item.data.type === 'shard') {
+        } else if (item.data.type === 'shard' || item.data.type === 'visual_shard') {
             // Shard Visuals
-            if (item.data.shardType === 'red') {
+            if (item.data.shardType === 'red' || item.data.type === 'visual_shard') {
                 ctx.fillStyle = "#e74c3c";
                 ctx.shadowColor = "#e74c3c";
                 // Diamond
@@ -6188,7 +6280,8 @@ function drawItems() {
         ctx.textAlign = "center";
 
         // SKIP TEXT FOR SHARDS (too cluttery?) or just show amount?
-        if (item.data.type === 'shard') {
+        // SKIP TEXT FOR SHARDS (too cluttery?) or just show amount?
+        if (item.data.type === 'shard' || item.data.type === 'visual_shard') {
             // Optional: Show amount
             // ctx.fillText(item.data.amount, 0, -15);
             ctx.restore(); // Exit early for shards (no name/space prompt)
@@ -6222,6 +6315,19 @@ function updateItems() {
     for (let i = groundItems.length - 1; i >= 0; i--) {
         const item = groundItems[i];
         if (`${item.roomX},${item.roomY}` !== currentCoord) continue;
+
+        // --- SPECIAL LOGIC FOR VISUAL SHARDS ---
+        if (item.data.type === 'visual_shard') {
+            item.x += item.vx;
+            item.y += item.vy;
+            if (item.life) {
+                item.life--;
+                if (item.life <= 0) {
+                    groundItems.splice(i, 1);
+                }
+            }
+            continue; // Skip normal physics/collision
+        }
 
         // --- PHYSICS ---
         // Lazy Init

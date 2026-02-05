@@ -26,32 +26,32 @@ next up
 
 
        
-
+achivements
+    enemies killed
+    feed the portal
+    
 
 Balance
 
-    add red and green shard sys
-
-    unlock shards item (fake item)
-
-    the same item should not drop twice if it should never spaw or spawn a random number of coins (add coins)
-
-        add a destroy for spawned items that turn it into a resources (and add resources)
-
 
     make most items locked at the start and you can unlock x items at random everytime you beat a level, 
-    
-    peermant unlocks can be purchased for gold coins you collect once you unlock permance mode you can pay to buy any item you unlocked 
-    
-    when you get a bonus (ie rare, uncommon etc trigger then you should only get the highest not multipile items spawned
+    add correct enemies to each room
+    tweak speech.json
+    add event to boss speech (entry and death)
+
+
+    balance 3 ^ 
 
 
 
-    drops should take into account the room hardness of the room and the player modifiers to incrase the pool chances of dropping to help with balancing 
+    add a scrap item item 
+
+        drops should take into account the room hardness of the room and the player modifiers to incrase the pool chances of dropping to help with balancing 
 
     rather than add the rooms to the json of level instead add a maxHardnes and maxRooms to decide the rooms that go into the level (you could even factor in the player modifiers)
 
-    balance 3 ^ 
+        peermant unlocks can be purchased for gold coins you collect once you unlock permance mode you can pay to buy any item you unlocked 
+
 
         beat the game to unlock permance mode 
     so you cna buy the item you want for the next run you can also get really expensice items that are permant upgrades so upgrades are permant and active when you start a new run such as enemy names
