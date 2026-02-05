@@ -45,6 +45,10 @@
     "gunType": "peashooter",
     "inventory": {
         "keys": 5,
-        "bombs": 115
-    }
+        "bombs": 115,
+        "greenShards": 0,
+        "redShards": 0
+    },
+    "maxRedShards": 500,
+    "maxGreenShards": 100
 }

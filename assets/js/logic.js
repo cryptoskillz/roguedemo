@@ -12,6 +12,7 @@ const perfectEl = document.getElementById('perfect');
 const roomNameEl = document.getElementById('roomName');
 const bombsEl = document.getElementById('bombs');
 const ammoEl = document.getElementById('ammo');
+const gunEl = document.getElementById('gun');
 const mapCanvas = document.getElementById('minimapCanvas');
 const mctx = mapCanvas ? mapCanvas.getContext('2d') : null;
 const debugSelect = document.getElementById('debug-select');
@@ -212,19 +213,47 @@ function addRedShards(amount) {
     if (!player) return;
     if (!gameData.redShards) return;
 
-    player.redShards = (player.redShards || 0) + amount;
-    localStorage.setItem('currency_red', player.redShards);
+    // Use Inventory Field (primary) or legacy root property, or local storage fallback
+    // The user moved redShards to inventory, let's prioritize that but support legacy/fallback logic.
+    const current = player.inventory.redShards !== undefined ? player.inventory.redShards : (player.redShards || 0);
+    const max = player.maxRedShards || 500;
+
+    // Check Cap
+    if (current >= max) {
+        spawnFloatingText(player.x, player.y - 40, "MAX RED SHARDS", "gray");
+        return; // "Wasted"
+    }
+
+    // Apply Increment
+    let next = current + amount;
+    if (next > max) next = max;
+
+    player.inventory.redShards = next;
+    player.redShards = next; // Keep legacy sync for now just in case
+
+    localStorage.setItem('currency_red', next);
     spawnFloatingText(player.x, player.y - 40, `+${amount} RED SHARDS`, "#e74c3c");
-    log(`Red Shards Added: ${amount}. Total: ${player.redShards}`);
+    log(`Red Shards Added: ${amount}. Total: ${next}`);
 }
 
 function addGreenShards(amount) {
     if (!player) return;
     if (!gameData.greenShards) return;
 
-    player.inventory.greenShards = (player.inventory.greenShards || 0) + amount;
+    const current = player.inventory.greenShards || 0;
+    const max = player.maxGreenShards || 100;
+
+    if (current >= max) {
+        spawnFloatingText(player.x, player.y - 40, "MAX GREEN SHARDS", "gray");
+        return; // Wasted
+    }
+
+    let next = current + amount;
+    if (next > max) next = max;
+
+    player.inventory.greenShards = next;
     spawnFloatingText(player.x, player.y - 40, `+${amount} GREEN SHARDS`, "#2ecc71");
-    log(`Green Shards Added: ${amount}. Total: ${player.inventory.greenShards}`);
+    log(`Green Shards Added: ${amount}. Total: ${next}`);
 }
 
 function spawnShard(x, y, type, amount) {
@@ -618,13 +647,15 @@ async function updateUI() {
 
     if (redEl) {
         // Use persisted value immediately if available to fix "undefined" start
-        const rVal = (typeof player.redShards !== 'undefined') ? player.redShards : (localStorage.getItem('currency_red') || 0);
-        redEl.innerText = `♦ ${rVal}`;
+        const rVal = (typeof player.inventory.redShards !== 'undefined') ? player.inventory.redShards : (player.redShards || (localStorage.getItem('currency_red') || 0));
+        const rMax = player.maxRedShards || 500;
+        redEl.innerText = `♦ ${rVal} / ${rMax}`;
         redEl.style.display = gameData.redShards ? 'inline' : 'none';
     }
     if (greenEl) {
         const gVal = player.inventory.greenShards || 0;
-        greenEl.innerText = `◊ ${gVal}`;
+        const gMax = player.maxGreenShards || 100;
+        greenEl.innerText = `◊ ${gVal} / ${gMax}`;
         greenEl.style.display = gameData.greenShards ? 'inline' : 'none';
     }
 
@@ -663,12 +694,18 @@ async function updateUI() {
         ammoEl.style.color = "gray";
     }
 
-
-
-    //update cords only if debug mode is enabled otherwise hide this
-    if (DEBUG_WINDOW_ENABLED) {
-        roomEl.innerText = `Coords: ${player.roomX},${player.roomY}`;
+    // Gun Name Display
+    if (gun) {
+        let name = gun.name || "PEASHOOTER";
+        // Clean name
+        if (name.startsWith("gun_")) name = name.replace("gun_", "");
+        gunEl.innerText = name.toUpperCase();
+    } else {
+        gunEl.innerText = "--";
     }
+
+
+
     roomNameEl.innerText = roomData.name || "Unknown Room";
     updateDebugEditor();
 }
@@ -2606,7 +2643,6 @@ function changeRoom(dx, dy) {
     player.roomX += dx;
     player.roomY += dy;
     const nextCoord = `${player.roomX},${player.roomY}`;
-    roomEl.innerText = nextCoord;
 
     // --- GOLDEN PATH LOGIC ---
     if (nextCoord === "0,0") {
