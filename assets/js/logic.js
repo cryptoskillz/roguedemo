@@ -124,13 +124,18 @@ let loreData = null;
 let speechData = null;
 
 // --- HELPER: SPEECH TRIGGER ---
-function triggerSpeech(enemy, type, forceText = null) {
+function triggerSpeech(enemy, type, forceText = null, bypassCooldown = false) {
     if ((!speechData && !forceText) || enemy.isDead) return;
 
+    const now = Date.now();
+    // Cooldown Check (5 seconds), ignored if forced text or bypass flag is set
+    if (!forceText && !bypassCooldown && enemy.lastSpeechTime && now - enemy.lastSpeechTime < 5000) {
+        return;
+    }
+
     // Probability Checks (unless forced)
-    if (!forceText) {
-        if (type === 'idle' && Math.random() > 0.001) return; // Low chance for idle (0.1% per frame, ~3.6s adj for 60fps but logic runs fast?)
-        // actually logic runs at 60fps? 0.001 is 1 in 1000 frames -> ~16 seconds per enemy. Reasonable.
+    if (!forceText && !bypassCooldown) {
+        if (type === 'idle' && Math.random() > 0.001) return; // Low chance for idle
         if (type === 'hit' && Math.random() > 0.3) return; // 30% chance on hit
     }
 
@@ -142,7 +147,18 @@ function triggerSpeech(enemy, type, forceText = null) {
         // SPECIAL ENEMY OVERRIDE (Ghost, etc.)
         // If special, ONLY use type-specific lines. Ignore general/events like "Ouch"
         if (enemy.special) {
-            if (speechData.types && speechData.types[enemy.type]) {
+            // 1. Check for Specific Event Type for this Special Enemy (e.g. 'ghost_doors_close')
+            // This fixes the issue where they just say generic ghost lines for specific events
+            // We construct a key like type + "_" + eventType? Or just look for the raw type passed?
+            // The caller passed 'ghost_doors_close' as the type?
+            // Wait, previous call was triggerSpeech(ghost, 'ghost_doors_close'). 
+            // So 'type' IS 'ghost_doors_close'.
+
+            if (speechData.types && speechData.types[type]) {
+                pool = speechData.types[type];
+            }
+            // 2. Fallback to General Special Logic (e.g. idle ghost noises)
+            else if (speechData.types && speechData.types[enemy.type]) {
                 pool = speechData.types[enemy.type];
             }
             // If no specific lines, they stay silent.
@@ -187,6 +203,7 @@ function triggerSpeech(enemy, type, forceText = null) {
             maxTimer: 120,
             color: type === 'angry' ? '#e74c3c' : 'white'
         };
+        enemy.lastSpeechTime = now;
     }
 }
 
@@ -309,6 +326,7 @@ let isInitializing = false;
 let ghostSpawned = false;
 let roomFreezeUntil = 0; // Timestamp for room freeze expiration
 let ghostEntry = null;
+let wasRoomLocked = false; // Track previous lock state for events
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -3157,10 +3175,19 @@ function update() {
 
     //const now = Date.now(); // Check for item pickups
 
-    //const now = Date.now();
-    // const aliveEnemies = enemies.filter(en => !en.isDead);
     // const roomLocked = aliveEnemies.length > 0;
     const roomLocked = isRoomLocked();
+
+    // DETAIL: Trigger Ghost Speech on Door Close (Transition Unlocked -> Locked)
+    if (roomLocked && !wasRoomLocked) {
+        // Find active Ghost
+        const ghost = enemies.find(en => en.type === 'ghost' && !en.isDead);
+        if (ghost) {
+            triggerSpeech(ghost, 'ghost_doors_close', null, true);
+        }
+    }
+    wasRoomLocked = roomLocked;
+
     const aliveEnemies = enemies.filter(en => !en.isDead); // Keep for homing logic
     const doors = roomData.doors || {};
 

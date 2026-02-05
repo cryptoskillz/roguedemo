@@ -13,7 +13,14 @@
             "The void calls...",
             "Join us...",
             "Fading...",
-            "So cold..."
+            "So cold...",
+            "Why did you do this to me?"
+        ],
+        "ghost_doors_close": [
+            "Locked in...",
+            "No escape...",
+            "You are mine now...",
+            "Trapped..."
         ],
         "boss": [
             "I am the end!",

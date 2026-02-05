@@ -1,5 +1,4 @@
 bugs
-    after portal does that level start screen ebfore going to the next one
     pull the player still persissts seems to happen when you pick up an item / spawn an item 
     sometimes when you pick up an item they all despawn
     bomb goes blue when you leave the room and go back in
@@ -31,24 +30,28 @@ next up
 
 Balance
 
-    enemy health bar
 
-    make most items locked at the start and you can unlock x items at random everytime you beat a level, beat the game to unlock permance mode 
-    so you cna buy the item you want for the next run you can also get really expensice items that are permant upgrades so upgrades are permant and active when you start a new run such as enemy names
+    the same item should not drop twice if it should never spaw or spawn a random number of coins (add coins)
 
+        add a destroy for spawned items that turn it into a resources (and add resources)
+
+
+    make most items locked at the start and you can unlock x items at random everytime you beat a level, 
+    
     peermant unlocks can be purchased for gold coins you collect once you unlock permance mode you can pay to buy any item you unlocked 
     
     when you get a bonus (ie rare, uncommon etc trigger then you should only get the highest not multipile items spawned
 
-    the same item should not drop twice if it should never spaw or spawn a random number of coins (add coins)
 
-    add a destroy for spawned items that turn it into a resources (and add resources)
 
     drops should take into account the room hardness of the room and the player modifiers to incrase the pool chances of dropping to help with balancing 
 
     rather than add the rooms to the json of level instead add a maxHardnes and maxRooms to decide the rooms that go into the level (you could even factor in the player modifiers)
 
     balance 3 ^ 
+
+        beat the game to unlock permance mode 
+    so you cna buy the item you want for the next run you can also get really expensice items that are permant upgrades so upgrades are permant and active when you start a new run such as enemy names
 
     Add a canPickUp flag to enemy Json to steal and use your spawned items and guns 
     using the follow mechanic, gun modifier, canhurtplayer (set to false) and canhurt enemies (set to true) we can create pets that follow you and shoot at enemies
