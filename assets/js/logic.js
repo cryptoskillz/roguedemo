@@ -227,6 +227,40 @@ function addGreenShards(amount) {
     log(`Green Shards Added: ${amount}. Total: ${player.inventory.greenShards}`);
 }
 
+function spawnShard(x, y, type, amount) {
+    if (!gameData.redShards && type === 'red') return;
+    if (!gameData.greenShards && type === 'green') return;
+
+    // Push towards center slightly if near edges? 
+    // Nah, just simple physics.
+
+    // SPAWN OFFSET: Don't spawn exactly on top of player/source
+    const angle = Math.random() * Math.PI * 2;
+    const offset = 30 + Math.random() * 20; // 30-50px away
+    const spawnX = x + Math.cos(angle) * offset;
+    const spawnY = y + Math.sin(angle) * offset;
+
+    groundItems.push({
+        x: spawnX, y: spawnY,
+        roomX: player.roomX, roomY: player.roomY,
+        vx: (Math.random() - 0.5) * 10, // Stronger Pop
+        vy: (Math.random() - 0.5) * 10,
+        friction: 0.92, // Slide a bit more
+        solid: true,
+        moveable: true,
+        size: 10,
+        floatOffset: Math.random() * 100,
+        pickupCooldown: 60, // 1 Second Cooldown
+        data: {
+            type: 'shard',
+            shardType: type, // 'red' or 'green'
+            amount: amount,
+            name: type === 'red' ? "Red Shard" : "Green Shard",
+            rarity: 'common' // for glow color fallback
+        }
+    });
+}
+
 // --- HELPER: LORE GENERATION ---
 function generateLore(enemy) {
     if (!loreData) return null;
@@ -3260,7 +3294,8 @@ function update() {
         // Amount = Hardness + Random(0-Hardness)
         const base = gameData.hardness || 1;
         const reward = Math.ceil(base + Math.random() * base);
-        addGreenShards(reward);
+        // addGreenShards(reward); // OLD INTANT ADD
+        spawnShard(player.x, player.y, 'green', reward); // Drop at player feet? Or center? Player feet is rewarding.
     }
     wasRoomLocked = roomLocked;
 
@@ -3701,7 +3736,17 @@ function spawnRoomRewards(dropConfig, label = null) {
         if (isDuplicate) {
             const shardReward = 5; // Small amount
             spawnFloatingText(player.x, player.y - 60, "DUPLICATE ITEM", "#e74c3c");
-            addRedShards(shardReward);
+            // addRedShards(shardReward); // OLD
+            // Spawn at the location the item WOULD have dropped
+            // We don't have exact drop coords yet in the loop for the pending drops, 
+            // but we calcuated them inside the loop? 
+            // Wait, the loop calculates dropX/dropY AFTER this check?
+            // No, the check is inside the loop? 
+            // Ah, I added the check at the start of the loop item block.
+            // I need to decide where to spawn it.
+            // I'll spawn it near the player for now, or calculate a safe spot.
+            // Let's spawn near player to be safe.
+            spawnShard(player.x, player.y - 20, 'red', shardReward);
             return; // Skip spawn
         }
 
@@ -4849,7 +4894,8 @@ function updateEnemies() {
                 // RED SHARD REWARD
                 const base = gameData.hardness || 1;
                 const reward = Math.ceil((base * 5) + Math.random() * base * 2); // Big reward for boss
-                addRedShards(reward);
+                // addRedShards(reward); // OLD
+                spawnShard(en.x, en.y, 'red', reward);
 
                 bossKilled = true;
 
@@ -6080,6 +6126,21 @@ function drawItems() {
             ctx.lineTo(15, 10);
             ctx.lineTo(-15, 10);
             ctx.closePath();
+        } else if (item.data.type === 'shard') {
+            // Shard Visuals
+            if (item.data.shardType === 'red') {
+                ctx.fillStyle = "#e74c3c";
+                ctx.shadowColor = "#e74c3c";
+                // Diamond
+                ctx.rotate(Math.PI / 4);
+                ctx.rect(-7, -7, 14, 14);
+                ctx.rotate(-Math.PI / 4); // Restore
+            } else {
+                ctx.fillStyle = "#2ecc71";
+                ctx.shadowColor = "#2ecc71";
+                // Small Square / Gem
+                ctx.rect(-6, -6, 12, 12);
+            }
         } else {
             // Bomb / Default (Circle)
             ctx.arc(0, 0, 15, 0, Math.PI * 2);
@@ -6090,6 +6151,14 @@ function drawItems() {
         ctx.fillStyle = "white";
         ctx.font = "10px monospace";
         ctx.textAlign = "center";
+
+        // SKIP TEXT FOR SHARDS (too cluttery?) or just show amount?
+        if (item.data.type === 'shard') {
+            // Optional: Show amount
+            // ctx.fillText(item.data.amount, 0, -15);
+            ctx.restore(); // Exit early for shards (no name/space prompt)
+            return;
+        }
 
         // Clean name (remove 'gun_' prefix for display)
         let name = item.data.name || "Item";
@@ -6227,6 +6296,26 @@ function updateItems() {
             }
 
             // ALLOW MANUAL OVERRIDE (Space) OR HEAT TRIGGER
+            // EXCEPTION: Shards are auto-pickup
+            if (item.data.type === 'shard') {
+                // Check Cooldown
+                if (item.pickupCooldown && item.pickupCooldown > 0) continue;
+
+                // Auto Pickup Logic
+                if (item.data.shardType === 'red') {
+                    addRedShards(item.data.amount);
+                } else {
+                    addGreenShards(item.data.amount);
+                }
+                // Remove sound/effect? addRedShards has floating text/log.
+                // Maybe add a small sound here?
+                SFX.click(0.4);
+
+                // Remove item
+                groundItems.splice(i, 1);
+                continue;
+            }
+
             if (keys['Space'] || item.collisionHeat >= HEAT_MAX) {
                 keys['Space'] = false; // Consume input
                 pickupItem(item, i);

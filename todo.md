@@ -30,6 +30,9 @@ next up
 
 Balance
 
+    add red and green shard sys
+
+    unlock shards item (fake item)
 
     the same item should not drop twice if it should never spaw or spawn a random number of coins (add coins)
 

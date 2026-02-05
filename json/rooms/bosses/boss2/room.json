@@ -38,7 +38,6 @@
     "unlocks": [
         "itempickup",
         "minimap",
-        "shards",
         "startlevel3"
     ],
     "nextLevel": "",

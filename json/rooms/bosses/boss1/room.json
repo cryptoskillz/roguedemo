@@ -32,7 +32,8 @@
         "soundeffects",
         "pause",
         "firstboss",
-        "startlevel2"
+        "startlevel2",
+        "shards"
     ],
     "nextLevel": "",
     "endGame": true
