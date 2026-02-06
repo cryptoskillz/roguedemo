@@ -1,7 +1,8 @@
 {
     "name": "Boss Room 3",
     "description": "",
-    "keyBonus": 1.0,
+    "hardness": 2,
+    "keyBonus": 0,
     "speedGoal": 0,
     "item": {
         "common": {

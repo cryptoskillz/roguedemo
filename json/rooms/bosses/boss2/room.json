@@ -1,7 +1,8 @@
 {
     "name": "Boss Room 2",
     "description": "",
-    "keyBonus": 1.0,
+    "hardness": 1,
+    "keyBonus": 0,
     "speedGoal": 0,
     "item": {
         "common": {
@@ -21,8 +22,8 @@
             "dropChance": 0
         },
         "special": [
-            "json/rewards/items/gun_peashooter.json",
-            "json/rewards/items/bomb_normal.json"
+            "json/rewards/items/guns/player/peashooter.json",
+            "json/rewards/items/bombs/normal.json"
         ]
     },
     "isBoss": true,

@@ -1726,10 +1726,15 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
 
         try {
             if (player.gunType) {
-                const gunUrl = `/json/items/guns/player/${player.gunType}.json?t=` + Date.now();
+                const gunUrl = `/json/rewards/items/guns/player/${player.gunType}.json?t=` + Date.now();
                 const gRes = await fetch(gunUrl);
-                if (gRes.ok) fetchedGun = await gRes.json();
-                else console.error("Gun fetch failed:", gRes.status, gRes.statusText);
+                if (gRes.ok) {
+                    fetchedGun = await gRes.json();
+                    if (fetchedGun.location) {
+                        const realRes = await fetch(`json/${fetchedGun.location}?t=` + Date.now());
+                        if (realRes.ok) fetchedGun = await realRes.json();
+                    }
+                } else console.error("Gun fetch failed:", gRes.status, gRes.statusText);
             } else {
                 log("No player.gunType defined, skipping initial fetch.");
             }
@@ -1738,19 +1743,29 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
         if (!fetchedGun && !savedPlayerStats) {
             log("Attempting fallback to 'peashooter'...");
             try {
-                const res = await fetch(`/json/items/guns/player/peashooter.json?t=` + Date.now());
+                const res = await fetch(`/json/rewards/items/guns/player/peashooter.json?t=` + Date.now());
                 if (res.ok) {
                     fetchedGun = await res.json();
+                    if (fetchedGun.location) {
+                        const realRes = await fetch(`json/${fetchedGun.location}?t=` + Date.now());
+                        if (realRes.ok) fetchedGun = await realRes.json();
+                    }
                     player.gunType = 'peashooter'; // Update player state
                 }
             } catch (e) { }
         }
 
-        const bombUrl = player.bombType ? `/json/items/bombs/${player.bombType}.json?t=` + Date.now() : null;
+        const bombUrl = player.bombType ? `/json/rewards/items/bombs/${player.bombType}.json?t=` + Date.now() : null;
         if (bombUrl) {
             try {
                 const bRes = await fetch(bombUrl);
-                if (bRes.ok) fetchedBomb = await bRes.json();
+                if (bRes.ok) {
+                    fetchedBomb = await bRes.json();
+                    if (fetchedBomb.location) {
+                        const realRes = await fetch(`json/${fetchedBomb.location}?t=` + Date.now());
+                        if (realRes.ok) fetchedBomb = await realRes.json();
+                    }
+                }
             } catch (e) { }
         }
 
@@ -2156,8 +2171,26 @@ function startGame(keepState = false) {
             // If keepState is true, 'gun' and 'bomb' globals retain their runtime modifications (upgrades).
             if (!keepState) {
                 const [gData, bData] = await Promise.all([
-                    (player.gunType ? fetch(`/json/items/guns/player/${player.gunType}.json?t=` + Date.now()).then(res => res.json()) : Promise.resolve({ Bullet: { NoBullets: true } })),
-                    (player.bombType ? fetch(`/json/items/bombs/${player.bombType}.json?t=` + Date.now()).then(res => res.json()) : Promise.resolve({}))
+                    (player.gunType ? fetch(`/json/rewards/items/guns/player/${player.gunType}.json?t=` + Date.now())
+                        .then(res => res.json())
+                        .then(async (data) => {
+                            if (data.location) {
+                                const realRes = await fetch(`json/${data.location}?t=` + Date.now());
+                                if (realRes.ok) return await realRes.json();
+                            }
+                            return data;
+                        })
+                        : Promise.resolve({ Bullet: { NoBullets: true } })),
+                    (player.bombType ? fetch(`/json/rewards/items/bombs/${player.bombType}.json?t=` + Date.now())
+                        .then(res => res.json())
+                        .then(async (data) => {
+                            if (data.location) {
+                                const realRes = await fetch(`json/${data.location}?t=` + Date.now());
+                                if (realRes.ok) return await realRes.json();
+                            }
+                            return data;
+                        })
+                        : Promise.resolve({}))
                 ]);
                 gun = gData;
                 bomb = bData;
@@ -6877,7 +6910,7 @@ async function showNextUnlock() {
     try {
         // Handle "victory" specially or just ignore if file missing (user deleted it)
         // If file is missing, fetch throws or returns 404
-        const res = await fetch(`json/items/unlocks/${key}.json?t=${Date.now()}`);
+        const res = await fetch(`json/rewards/unlocks/${key}.json?t=${Date.now()}`);
         if (res.ok) {
             const data = await res.json();
 
