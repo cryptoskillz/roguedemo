@@ -1,0 +1,14 @@
+{
+    "name": "explode",
+    "description": "bullets that explode on impact",
+    "location": "items/modifiers/bullets/explode.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

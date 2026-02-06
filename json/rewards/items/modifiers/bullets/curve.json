@@ -1,0 +1,14 @@
+{
+    "name": "curve",
+    "description": "bullets that curve",
+    "location": "items/modifiers/bullets/curve.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

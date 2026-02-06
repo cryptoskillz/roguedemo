@@ -1,0 +1,14 @@
+{
+    "name": "Bomb +5",
+    "description": "Adds 5 bombs to your inventory",
+    "location": "items/inventory/bombs/add5.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "legendary"
+}

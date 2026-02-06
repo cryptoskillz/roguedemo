@@ -1,0 +1,18 @@
+{
+    "name": "peashooter",
+    "description": "the Basic gun",
+    "location": "items/guns/player/peashooter.json",
+    "type": "gun",
+    "starter": true,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": true,
+        "modifyType": "perm"
+    },
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "common"
+}

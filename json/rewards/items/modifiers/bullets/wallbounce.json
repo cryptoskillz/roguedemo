@@ -1,0 +1,14 @@
+{
+    "name": "Wall Bounce",
+    "description": "bullets that bounce off walls",
+    "location": "items/modifiers/bullets/wallbounce.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

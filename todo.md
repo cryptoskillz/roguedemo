@@ -36,7 +36,19 @@ next up
     unlocks / permance
     server     
 
+narartor
+    add narrator speech 
 
+    level 0 
+        You can hear me?  go through the portal
+    level 1
+        you found it again, intreting 
+    level 2
+        you will require some help
+    level 3
+        find the secrets
+
+    
 
        
 achivements
@@ -45,6 +57,7 @@ achivements
 
 
 Balance
+    add a idele state for player
     msui fade in / fade out 
     check gun unified
     upddate readme 

@@ -1,0 +1,14 @@
+{
+    "name": "360 fire",
+    "description": "bullets that fire in all directions",
+    "location": "items/modifiers/bullets/360.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

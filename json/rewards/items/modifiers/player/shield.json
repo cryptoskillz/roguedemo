@@ -1,0 +1,14 @@
+{
+    "name": "Shield",
+    "description": "the Basic shield",
+    "location": "items/modifiers/player/shield.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

@@ -233,8 +233,9 @@ async function loadAssetManifests() {
         }));
 
         // Load Item Manifest
-        const resItems = await fetch('json/items/manifest.json');
+        const resItems = await fetch('json/rewards/items/manifest.json');
         const manifestItems = await resItems.json();
+
         loadedAssets.items = manifestItems.items.map(i => ({
             id: i,
             file: `${i}.json`,
@@ -258,7 +259,7 @@ async function loadAssetManifests() {
         // Load Weapon Components (Nested Items)
         const loadWeaponType = async (category, subPath, keyName) => {
             try {
-                const res = await fetch(`json/weapons/${subPath}/manifest.json`);
+                const res = await fetch(`json/items/${subPath}/manifest.json`);
                 const manifest = await res.json();
                 // Assumes manifest has a key like "items", "guns", "modifiers", etc.
                 // We need to inspect the manifest structure. 
@@ -270,7 +271,7 @@ async function loadAssetManifests() {
 
                 loadedAssets.weapons[keyName] = list.map(i => ({
                     id: i,
-                    file: `json/weapons/${subPath}/${i}.json`,
+                    file: `json/items/${subPath}/${i}.json`,
                     type: 'item' // Treat as items for placement
                 }));
             } catch (err) {

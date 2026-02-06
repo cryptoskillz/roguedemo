@@ -1,0 +1,20 @@
+{
+    "name": "red bomb",
+    "description": "the red bomb good for doors",
+    "drawType": "arc",
+    "playerDraw": "arc",
+    "location": "items/bombs/red.json",
+    "type": "bomb",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "uncommon"
+}

@@ -1,0 +1,14 @@
+{
+    "name": "Freeze Chance",
+    "description": "bullets that freeze enemies for longer",
+    "location": "items/modifiers/bullets/freezeChance.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

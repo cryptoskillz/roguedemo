@@ -1,0 +1,19 @@
+{
+    "name": "golden bomb",
+    "description": "the biggest bomb we have",
+    "drawType": "arc",
+    "playerDraw": "arc",
+    "location": "items/bombs/golden.json",
+    "type": "bomb",
+    "starter": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "legendary"
+}

@@ -1,0 +1,14 @@
+{
+    "name": "Bullet +1",
+    "description": "Increase Number of bullets",
+    "location": "items/modifiers/bullets/number.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

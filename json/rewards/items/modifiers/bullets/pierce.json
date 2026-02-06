@@ -1,0 +1,14 @@
+{
+    "name": "pierce bullets",
+    "description": "bullets that pierce through enemies",
+    "location": "items/modifiers/bullets/pierce.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

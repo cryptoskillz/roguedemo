@@ -1,0 +1,14 @@
+{
+    "name": "size boost",
+    "description": "boosts bullet size",
+    "location": "items/modifiers/bullets/size.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

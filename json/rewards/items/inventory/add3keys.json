@@ -1,0 +1,14 @@
+{
+    "name": "Key +3",
+    "description": "Adds 3 keys to your inventory",
+    "location": "items/inventory/key/add3.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

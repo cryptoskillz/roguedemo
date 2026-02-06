@@ -1,0 +1,20 @@
+{
+    "name": "remote bomb",
+    "description": "the remote bomb become the time",
+    "drawType": "arc",
+    "playerDraw": "arc",
+    "location": "items/bombs/remote.json",
+    "type": "bomb",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "uncommon"
+}

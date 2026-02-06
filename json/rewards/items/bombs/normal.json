@@ -1,0 +1,19 @@
+{
+    "name": "normal bomb",
+    "description": "the Basic bomb",
+    "drawType": "arc",
+    "playerDraw": "arc",
+    "location": "items/bombs/normal.json",
+    "type": "bomb",
+    "starter": true,
+    "consumed": true,
+    "unlocked": {
+        "active": true,
+        "modifyType": "perm"
+    },
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "common"
+}

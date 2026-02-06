@@ -21,8 +21,8 @@
             "dropChance": 0
         },
         "special": [
-            "json/items/gun_peashooter.json",
-            "json/items/bomb_normal.json"
+            "json/rewards/items/gun_peashooter.json",
+            "json/rewards/items/bomb_normal.json"
         ]
     },
     "isBoss": true,

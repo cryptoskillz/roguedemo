@@ -1,0 +1,18 @@
+{
+    "name": "ghost gun",
+    "description": "the ghost gun, super powerful",
+    "location": "items/guns/player/ghost.json",
+    "type": "gun",
+    "starter": false,
+    "consumed": true,
+    "special": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "common"
+}

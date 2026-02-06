@@ -101,7 +101,7 @@ Player starting stats.
 - `perfectCount`: Number of perfect rooms.
 - `perfectTotalCount`: Total number of perfect rooms.
 - `bombType`: Reference to the starting bomb file (e.g., "normal").
-- `gunType`: Reference to the starting gun file (e.g., "geometry" loads `json/weapons/guns/geometry.json`).
+- `gunType`: Reference to the starting gun file (e.g., "geometry" loads `json/items/guns/geometry.json`).
 - `inventory`: Starting `keys` and `bombs`.
         "roomGhostTimer": 10000,
         "roomFollow": true
@@ -131,10 +131,10 @@ Player starting stats.
 - `perfectCount`: Number of perfect rooms.
 - `perfectTotalCount`: Total number of perfect rooms.
 - `bombType`: Reference to the starting bomb file (e.g., "normal").
-- `gunType`: Reference to the starting gun file (e.g., "geometry" loads `json/weapons/guns/geometry.json`).
+- `gunType`: Reference to the starting gun file (e.g., "geometry" loads `json/items/guns/geometry.json`).
 - `inventory`: Starting `keys` and `bombs`.
 
-### `json/weapons/guns/*.json` (e.g., `geometry.json`)
+### `json/items/guns/*.json` (e.g., `geometry.json`)
 Defines weapon behavior, bullet patterns, and special effects.
 - `name`: Human-readable name of the gun (e.g., "Pea Shooter").
 - `Bullet`:
@@ -159,7 +159,7 @@ Defines weapon behavior, bullet patterns, and special effects.
         - `active`: Enable particle trail.
         - `frequency`, `life`, `sizeMult`: Particle emission settings.
     - `ammo`:
-        - `active`: Enable ammo system.
+        - `active`: Enable ammo system (if false, weapon is infinite).
         - `type`: "reload" (magazine), "recharge" (infinite), "finite".
         - `amount`: Shots per clip/magazine.
         - `maxAmount`: Total reserve ammo.
@@ -179,7 +179,7 @@ Defines weapon behavior, bullet patterns, and special effects.
         - `size`, `damage`, `shardRange`: Shrapnel properties.
         - `wallExplode`: If `true`, explodes on striking walls.
 
-### `json/weapons/bombs/*.json` (e.g., `golden.json`)
+### `json/items/bombs/*.json` (e.g., `golden.json`)
 Defines bomb properties, explosion effects, and interactions.
 - `name`: Unique identifier (e.g., "golden").
 - `description`: Description of the bomb.

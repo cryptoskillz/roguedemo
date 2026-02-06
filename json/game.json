@@ -53,10 +53,10 @@
                 "damage": 1.5
             },
             "gunner": {
-                "gun": "json/weapons/guns/enemy/peashooter.json"
+                "gun": "json/items/guns/enemy/peashooter.json"
             },
             "turret": {
-                "gun": "json/weapons/guns/enemy/peashooter.json",
+                "gun": "json/items/guns/enemy/peashooter.json",
                 "moveType": "static"
             },
             "medium": {}

@@ -1,0 +1,14 @@
+{
+    "name": "homing bullets",
+    "description": "bullets that home in on enemies",
+    "location": "items/modifiers/bullets/homing.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}

@@ -1,0 +1,14 @@
+{
+    "name": "spread rate boost",
+    "description": "boosts bullet spread rate",
+    "location": "items/modifiers/bullets/spreadrate.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "rarity": "uncommon"
+}
