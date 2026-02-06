@@ -1,5 +1,6 @@
 bugs
-
+    add const paths to the json files so we dont require absolute urls as this can lead to errors
+    shield shows when you go into the portal
     bomb goes blue when you leave the room and go back in
     going to main menu and starting a new game keeps gun modifiers once you pick up a new gun, you correctly start with the peashooter or unarmed
     golden bomb statys on level relaod but not red 
@@ -57,9 +58,20 @@ achivements
 
 
 Balance
+
+
+onky spaw itesm that have 
+
+unlocked / active = true in the item josn or it has been unlocked as is in localstorage. 
+
+If it modifyType session then it is not a persistent upgrade so it only activates when you it pick it up during a game if it persistent then you apply it at gameinit
+ 
+    on game over restart get rid of all the session items
+
     only drop items that ulocked / active / true
     add unlock rarity to game json and give a unlock if nextlevel is set and the unlock url in room is blank
     add to the unlock and update the unlock state of the item
+    sound effects on / off
     add a idele state for player
     msui fade in / fade out 
     check gun unified
@@ -78,7 +90,7 @@ Balance
 
 
 
-    balance 4  ^ 
+    balance 5  ^ 
 
         drops should take into account the room hardness of the room and the player modifiers to incrase the pool chances of dropping to help with balancing 
 
