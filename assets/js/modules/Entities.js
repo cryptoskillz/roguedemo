@@ -692,8 +692,17 @@ export function fireBullet(direction, speed, vx, vy, angle) {
 
         const md = bulletConf.multiDirectional;
         const spawn = (dx, dy) => {
-            // simplified spawn
-            spawnBullet(Globals.player.x, Globals.player.y, dx, dy, Globals.gun, "player");
+            const barrelLength = Globals.player.size + 10;
+            // Normalize direction to get Unit Vector, then scale by barrelLength
+            const len = Math.hypot(dx, dy);
+            // Avoid divide by zero
+            const udx = len > 0 ? (dx / len) : 0;
+            const udy = len > 0 ? (dy / len) : 0;
+
+            const startX = Globals.player.x + udx * barrelLength;
+            const startY = Globals.player.y + udy * barrelLength;
+
+            spawnBullet(startX, startY, dx, dy, Globals.gun, "player");
         };
 
         if (md.fireNorth) spawn(0, -speed);
