@@ -16,7 +16,7 @@ bugs
     is death speech working?
     add player enter room speech for enemies
     add event to boss speech (entry and death)
-    max bukket+1 didnt stay on next level same with pierce , modify etc
+    max bullet+1 didnt stay on next level same with pierce , modify etc
     you lose the gun modifies on coplete level but if you pock another gun up the coem abck pn player restart
     you pick up 360 gun and drop 360 (the name)
     pull the player still persissts seems to happen when you pick up an item / spawn an item 
@@ -29,7 +29,7 @@ bugs
 
 
 next up 
-    balance 5 + room enemies
+    balance 6 + room enemies
     bug fix 6
     sfx & ui updates
         game settings
@@ -50,15 +50,13 @@ next up
     server    
 
 balance 6
-    change the display text for startlevel to start level is 0 etc
+    speech bubbles
     dont let hp be higer than max hp
     count the number of dead enemies and show on dead complete screen, scroll the dead enemy types up
     fix debug logs
     fix debug window
     restart to draw on intro screen remove the debug required
-    add sfx 9 to welcome screen
-    show red shards on welcome screen
-    red shards for dup items etc as in logic js 
+=    red shards for dup items etc as in logic js 
     add level 5
     only spaw itesm that have unlocked / active = true in the item josn or it has been unlocked as is in localstorage. 
     If it modifyType session then it is not a persistent upgrade so it only activates when you it pick it up during a game 
@@ -72,7 +70,6 @@ balance 6
     max bombs in player json
     
 Levels
-    level 4 standaed boss 
     Level 5 harder boss (with gun)
     level 6 is golcen path maze (it will say room name followed by dejavu)
     level 7 ghost chase
@@ -195,7 +192,8 @@ ghost
     non solid enemies can be shot by bullets
     solid enemies can be shot by bullets
     player can alos be solid or non solid    
-
+    ghost_restart if you try to press when the ghost is in the room
+    if y9ou are trapped with the ghost make the room smaller and smaller until you die or the ghost dies
 
 
 NPCsds

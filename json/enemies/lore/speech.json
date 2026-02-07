@@ -22,6 +22,9 @@
             "You are mine now...",
             "Trapped..."
         ],
+        "ghost_restart": [
+            "You cannot escape me that way!"
+        ],
         "boss": [
             "I am the end!",
             "Foolish mortal!",

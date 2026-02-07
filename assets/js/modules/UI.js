@@ -167,6 +167,9 @@ export function drawTutorial() {
     if (Globals.player.roomX === 0 && Globals.player.roomY === 0 && !Globals.roomData.isBoss && !STATES.DEBUG_START_BOSS && !STATES.DEBUG_TEST_ROOM) {
         Globals.ctx.save();
 
+        //uodate start room name in the UI
+        if (Globals.elements.roomName) Globals.elements.roomName.innerText = Globals.roomData.name;
+
         // Internal helper for keycaps
         const drawKey = (text, x, y) => {
             Globals.ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
@@ -220,15 +223,15 @@ export function drawTutorial() {
         if (Globals.gameData.itemPickup) actions.push({ label: "ITEM", key: "⎵" });
         if (Globals.gameData.pause !== false) actions.push({ label: "PAUSE", key: "P" });
         if (Globals.gameData.music) actions.push({ label: "MUSIC", key: "0" });
+        if (Globals.gameData.soundEffects) actions.push({ label: "SFX", key: "9" });
 
         if (Globals.player.bombType) {
             actions.push({ label: "BOMB", key: "B" });
         }
 
-        // Check if Debug Window is enabled (Need to import DEBUG_FLAGS if used, or use Globals.gameData fallback)
-        if (Globals.gameData.showDebugWindow) {
-            actions.push({ label: "RESTART", key: "R" });
-        }
+
+        actions.push({ label: "RESTART", key: "R" });
+
 
         actions.forEach(action => {
             Globals.ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
