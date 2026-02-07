@@ -84,7 +84,7 @@ export function updateWelcomeScreen() {
         <h1>ROUGE DEMO</h1>
         ${charSelectHtml}
         <p>${startText}</p>
-        <p style="font-size: 0.8em; color: #aaa; margin-top: 20px;">v93 | arrow keys to move | space to use | P to toggle debug</p>
+        <p style="font-size: 0.8em; color: #aaa; margin-top: 20px;">v93 | Press a key to start</p>
     `;
     }
 }

@@ -384,7 +384,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             Globals.player = JSON.parse(JSON.stringify(Globals.availablePlayers[0]));
         } else {
             console.error("No players found!");
-            player = { hp: 3, speed: 4, inventory: { keys: 0 }, gunType: 'geometry', bombType: 'normal' }; // Fallback
+            Globals.player = { hp: 3, speed: 4, inventory: { keys: 0 }, gunType: 'geometry', bombType: 'normal' }; // Fallback
         }
 
         // Restore Stats if kept
@@ -392,11 +392,11 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             log("Restoring Full Player State");
             // Merge saved state OVER the default template
             // This ensures we keep new defaults if valid, but restore all our progress
-            Object.assign(player, savedPlayerStats);
+            Object.assign(Globals.player, savedPlayerStats);
 
             // Explicitly ensure criticals if missing (shouldn't happen with full clone)
             if (savedPlayerStats.perfectStreak !== undefined) {
-                perfectStreak = savedPlayerStats.perfectStreak;
+                Globals.perfectStreak = savedPlayerStats.perfectStreak;
             }
         }
 
@@ -1311,7 +1311,9 @@ export function update() {
 
     // 1. Inputs & Music
     updateRestart();
-    // updateMusicToggle(); // Moved up
+    // updateMusicToggle(); // Moved up (called below now)
+    updateMusicToggle();
+    updateSFXToggle();
     updateRemoteDetonation(); // Remote Bombs - Check BEFORE Use consumes space
     updateBombInteraction(); // Kick/Interact with Bombs
     if (Globals.keys["Space"]) updateUse();
@@ -1474,7 +1476,7 @@ export function updateMusicToggle() {
     // If music is disabled in config, do not allow toggling
     if (!Globals.gameData.music) return;
 
-    if (keys['Digit0']) {
+    if (Globals.keys['Digit0']) {
         const now = Date.now();
         // 300ms cooldown so it doesn't toggle every frame
         if (now - Globals.lastMusicToggle > 300) {
@@ -1759,9 +1761,22 @@ function resetWeaponState() {
     }
 }
 
-export function restartGame() {
+export function updateSFXToggle() {
+    // Key 9 to toggle SFX
+    if (Globals.keys['Digit9']) {
+        const now = Date.now();
+        // 300ms cooldown
+        if (now - (Globals.lastSFXToggle || 0) > 300) {
+            Globals.sfxMuted = !Globals.sfxMuted;
+            log(`SFX Muted: ${Globals.sfxMuted}`);
+            Globals.lastSFXToggle = now;
+        }
+    }
+}
+
+export function restartGame(keepItems = false) {
     resetWeaponState();
-    initGame(true);
+    initGame(true, null, keepItems);
 }
 Globals.restartGame = restartGame;
 

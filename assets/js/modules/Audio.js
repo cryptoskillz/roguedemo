@@ -25,7 +25,7 @@ export function unlockAudio() {
 
 // SFX Helpers
 function playTone(freq, type, duration, vol = 0.1) {
-    if (!Globals.audioCtx) return;
+    if (!Globals.audioCtx || Globals.sfxMuted) return;
     const osc = Globals.audioCtx.createOscillator();
     const gain = Globals.audioCtx.createGain();
     osc.type = type;
@@ -44,7 +44,7 @@ export const SFX = {
     playerHit: (vol = 0.2) => playTone(150, 'sawtooth', 0.2, vol),
     click: (vol = 0.1) => playTone(800, 'sine', 0.05, vol),
     ghost: (vol = 0.3) => {
-        if (!Globals.audioCtx) return;
+        if (!Globals.audioCtx || Globals.sfxMuted) return;
         const osc = Globals.audioCtx.createOscillator();
         const gain = Globals.audioCtx.createGain();
         osc.type = 'sine';
@@ -58,7 +58,7 @@ export const SFX = {
         osc.stop(Globals.audioCtx.currentTime + 1.0);
     },
     scream: (vol = 0.2) => {
-        if (!Globals.audioCtx) return;
+        if (!Globals.audioCtx || Globals.sfxMuted) return;
         const osc = Globals.audioCtx.createOscillator();
         const gain = Globals.audioCtx.createGain();
         osc.type = 'sawtooth';

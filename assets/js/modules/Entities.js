@@ -1083,10 +1083,28 @@ export function checkRemoteExplosions() {
 }
 
 export function updateRestart() {
-    // --- 1. RESTART & UI CHECKS ---
-    // Moved to handleGlobalInputs to cover all states
-    if (typeof DEBUG_WINDOW_ENABLED !== 'undefined' && DEBUG_WINDOW_ENABLED && Globals.keys['KeyR']) {
-        if (Globals.restartGame) Globals.restartGame();
+    // --- 1. RESTART (Key R) ---
+    // User requested 'r' to restart (keep items if in debug mode)
+    if (Globals.keys['KeyR']) {
+        // Debounce? initGame handles debounce via isInitializing
+        // check debug mode
+        // Is DEBUG_WINDOW_ENABLED global or in Globals?
+        // logic.js used window.DEBUG_WINDOW_ENABLED. 
+        // We can check Globals.gameData.debug?.windowEnabled or use the DOM check
+        const isDebug = (window.DEBUG_WINDOW_ENABLED === true) || (Globals.elements.debugPanel && Globals.elements.debugPanel.style.display === 'flex');
+
+        // Pass keepItems = isDebug
+        // We need to call initGame, but we only have Globals.restartGame (which calls initGame(true))
+        // We might need to access initGame directly or update restartGame signature?
+        // Globals.restartGame is assigned in Game.js: restartGame() -> initGame(true)
+        // Let's rely on importing initGame or updating restartGame in Game.js?
+        // Game.js 1765: export function restartGame() { resetWeaponState(); initGame(true); }
+        // We can't pass scale args to that.
+        // But we can call initGame directly if we import it? Circular dependecy risk.
+        // Better: Update Game.js restartGame to accept keepItems.
+        if (Globals.restartGame) Globals.restartGame(isDebug);
+
+        Globals.keys['KeyR'] = false; // consume key
     }
 
     // Check for Space Bar interaction (Key Unlock)

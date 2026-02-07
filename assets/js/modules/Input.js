@@ -50,7 +50,8 @@ export function setupInput(callbacks) {
         }
         else if (Globals.gameState === STATES.START) {
             // Allow Arrow Keys for char select (handled in handleGlobalInputs, but prevent start on them?)
-            if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') return;
+            // Also prevent Music/SFX toggles (0/9) from starting game
+            if (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'Digit0' || e.code === 'Digit9') return;
 
             // Any other key starts game
             if (Globals.beginPlay) Globals.beginPlay();
