@@ -619,10 +619,10 @@ export function fireBullet(direction, speed, vx, vy, angle) {
 
     // --- REFACTORED FIRING LOGIC (Legacy Port) ---
     const bulletConf = Globals.gun.Bullet || {};
-    // log("FireBullet", { name: Globals.gun.name, reverse: bulletConf.reverseFire, number: bulletConf.number });
+    console.log("FireBullet", { name: Globals.gun.name, reverse: bulletConf.reverseFire, number: bulletConf.number, spread: bulletConf.spreadRate });
 
     const count = bulletConf.number || 1;
-    const spreadRate = bulletConf.spreadRate || 0.2; // Default to 0.2 rad if missing? Or use user value directly?
+    const spreadRate = bulletConf.spreadRate || 0.2;
     // logic.js used: (gun.Bullet?.spreadRate || 0.2)
     // If user has 1 in JSON, logic.js used 1 radian (~57deg). 
     // If user intended 1 degree, they should have put ~0.017. 
@@ -656,12 +656,14 @@ export function fireBullet(direction, speed, vx, vy, angle) {
 
         // 3. Reverse Fire (Per Bullet)
         if (bulletConf.reverseFire) {
+            console.log("Attempting Reverse Fire...");
             const revAngle = fanAngle + Math.PI;
             const rvx = Math.cos(revAngle) * bSpeed;
             const rvy = Math.sin(revAngle) * bSpeed;
             const rStartX = Globals.player.x + rvx * (barrelLength / bSpeed);
             const rStartY = Globals.player.y + rvy * (barrelLength / bSpeed);
             spawnBullet(rStartX, rStartY, rvx, rvy, Globals.gun, "player");
+            console.log("Spawned Reverse Bullet");
         }
     }
 
@@ -707,8 +709,10 @@ export function fireBullet(direction, speed, vx, vy, angle) {
         }
     }
 
-    bulletsInRoom++;
-    bulletsInRoom++;
+
+
+    Globals.bulletsInRoom++;
+    Globals.bulletsInRoom++;
 
     // --- RECOIL ---
     const recoil = Globals.gun.Bullet?.recoil || 0;
@@ -740,12 +744,12 @@ export function fireBullet(direction, speed, vx, vy, angle) {
 }
 
 export function reloadWeapon() {
-    if (player.reloading) return;
-    if (player.ammoMode === 'finite') return; // No reload for finite mode
+    if (Globals.player.reloading) return;
+    if (Globals.player.ammoMode === 'finite') return; // No reload for finite mode
 
-    player.reloading = true;
-    player.reloadStart = Date.now();
-    player.reloadDuration = player.reloadTime || 1000;
+    Globals.player.reloading = true;
+    Globals.player.reloadStart = Date.now();
+    Globals.player.reloadDuration = Globals.player.reloadTime || 1000;
 
     log("Reloading...");
     // Optional: Add sound here
@@ -916,24 +920,35 @@ export function updateShooting() {
             if (hasAmmo && !Globals.gun.Bullet?.NoBullets) SFX.shoot(0.05);
 
             let centerAngle = 0;
-            if (Globals.gun.frontLocked) centerAngle = Math.atan2(Globals.player.lastMoveY || 0, Globals.player.lastMoveX || 1);
-            else {
-                if (Globals.keys['ArrowUp']) centerAngle = -Math.PI / 2; else if (Globals.keys['ArrowDown']) centerAngle = Math.PI / 2;
-                else if (Globals.keys['ArrowLeft']) centerAngle = Math.PI; else if (Globals.keys['ArrowRight']) centerAngle = 0;
-            }
-            const count = Globals.gun.Bullet?.number || 1;
-            for (let i = 0; i < count; i++) {
-                let fanAngle = centerAngle + (count > 1 ? (i - (count - 1) / 2) * (Globals.gun.Bullet?.spreadRate || 0.2) : 0);
+            let dirCode = 0; // Default to mouse? No, this is keyboard logic.
+            // Map Keys to Direction Code
+            // 1=North, 2=East, 3=South, 4=West
+            // fireBullet uses these codes to set base angle.
+            // However, fireBullet also accepts vx/vy for mouse.
+            // If we pass dirCode 1-4, vx/vy are ignored in fireBullet logic I wrote?
+            // Let's check fireBullet: "else if (direction === 1) centerAngle = -Math.PI / 2;"
+            // Yes, it ignores vx/vy.
+
+            if (Globals.gun.frontLocked) {
+                // If front locked, aim matches movement?
+                // logic checks lastMoveY/X.
+                centerAngle = Math.atan2(Globals.player.lastMoveY || 0, Globals.player.lastMoveX || 1);
+                // We need to convert this angle to a Direction Code or pass it?
+                // fireBullet doesn't support arbitrary angle unless direction=0 and we pass vx/vy matching that angle.
                 const speed = Globals.gun.Bullet?.speed || 7;
-
-                const bvx = Math.cos(fanAngle) * speed;
-                const bvy = Math.sin(fanAngle) * speed;
-                const barrelLength = Globals.player.size + 10;
-                const startX = Globals.player.x + Math.cos(fanAngle) * barrelLength;
-                const startY = Globals.player.y + Math.sin(fanAngle) * barrelLength;
-
-                spawnBullet(startX, startY, bvx, bvy, Globals.gun, "player");
+                fireBullet(0, speed, Math.cos(centerAngle) * speed, Math.sin(centerAngle) * speed, centerAngle);
             }
+            else {
+                if (Globals.keys['ArrowUp']) dirCode = 1;
+                else if (Globals.keys['ArrowDown']) dirCode = 3;
+                else if (Globals.keys['ArrowLeft']) dirCode = 4;
+                else if (Globals.keys['ArrowRight']) dirCode = 2;
+
+                // Call unified logic
+                const speed = Globals.gun.Bullet?.speed || 7;
+                fireBullet(dirCode, speed, 0, 0, 0);
+            }
+
             Globals.player.lastShot = Date.now();
         }
     }
