@@ -932,14 +932,15 @@ export function updateShooting() {
 export function updateRemoteDetonation() {
     let detonated = false;
 
-    for (let i = 0; i < bombs.length; i++) {
-        const b = bombs[i];
+    for (let i = 0; i < Globals.bombs.length; i++) {
+        const b = Globals.bombs[i];
         if (!b.exploding && b.remoteDenoate?.active) {
             const keyName = b.remoteDenoate.key || "space";
 
             let isPressed = false;
-            if (keyName.toLowerCase() === "space" && keys["Space"]) isPressed = true;
-            else if (keys[keyName]) isPressed = true;
+            // Use Globals.keys
+            if (keyName.toLowerCase() === "space" && Globals.keys["Space"]) isPressed = true;
+            else if (Globals.keys[keyName]) isPressed = true;
 
             if (isPressed) {
                 b.exploding = true;
@@ -957,7 +958,7 @@ export function updateRemoteDetonation() {
 
     if (detonated) {
         SFX.explode(0.3);
-        if (keys["Space"]) keys["Space"] = false;
+        if (Globals.keys["Space"]) Globals.keys["Space"] = false;
     }
 }
 
