@@ -354,14 +354,27 @@ export async function dropBomb() {
 
     // Parse Timer Config
     let timerDuration = 1000;
-    let timerShow = false;
-    if (typeof Globals.bomb.timer === 'object') {
-        timerDuration = Globals.bomb.timer.time || 1000;
-        timerShow = !!Globals.bomb.timer.show;
-        if (Globals.bomb.timer.active === false) timerDuration = Infinity;
+    let timerShow = true;
+
+    // Safety check just in case Globals.bomb is minimal
+    const bombConf = Globals.bomb || {};
+
+    if (typeof bombConf.timer === 'object' && bombConf.timer !== null) {
+        timerDuration = Number(bombConf.timer.time) || 1000;
+        timerShow = bombConf.timer.show !== false;
+        if (bombConf.timer.active === false) timerDuration = Infinity;
     } else {
-        timerDuration = Globals.bomb.timer || 1000;
+        // Handle number or missing
+        timerDuration = Number(bombConf.timer);
+        // Handle number or missing
+        timerDuration = Number(bombConf.timer);
+        if (isNaN(timerDuration)) timerDuration = 1000;
     }
+
+    // DEBUG LOG
+    console.log("Dropping Bomb Config:", bombConf);
+    console.log("Calculated Timer Duration:", timerDuration);
+    console.log("Timer Show:", timerShow);
 
     const baseR = Globals.bomb.size || 20;
     const maxR = Globals.bomb.explosion?.radius || Globals.bomb.radius || 120;
@@ -469,8 +482,25 @@ export async function dropBomb() {
         canShoot: !!Globals.bomb.canShoot, // Shootable?
         solid: !!Globals.bomb.solid,       // Solid?
         remoteDenoate: Globals.bomb.remoteDenoate || null,
-        // ... any other props
-        friction: 0.9
+        explodeAt: Date.now() + timerDuration,
+        explosionDuration: Globals.bomb.explosion?.expirationDuration || Globals.bomb.explosion?.explosionDuration || 300,
+        explosionColour: Globals.bomb.explosion?.explosionColour || Globals.bomb.colour || 'white',
+        explosionRadius: Globals.bomb.explosion?.radius || Globals.bomb.radius || 100, // Explicit radius prop
+        canDamagePlayer: !!(Globals.bomb.explosion?.canDamagePlayer),
+
+        // Physics
+        moveable: !!Globals.bomb.moveable,
+        physics: Globals.bomb.physics || { friction: 0.9, mass: 1, restitution: 0.5 },
+        friction: Globals.bomb.physics?.friction || 0.9, // Direct access for convenience
+
+        // Interaction
+        canInteract: Globals.bomb.canInteract || {},
+
+        // Doors
+        doors: Globals.bomb.doors || {},
+        openLockedDoors: !!Globals.bomb.doors?.openLockedDoors,
+        openRedDoors: !!Globals.bomb.doors?.openRedDoors,
+        openSecretRooms: !!Globals.bomb.doors?.openSecretRooms
     };
 
     // Add to Active Bombs
@@ -2437,14 +2467,14 @@ export function drawBombs(doors) {
             ctx.fill();
 
             // Draw Fuse / Detail?
-            ctx.fillStyle = "black";
+            ctx.fillStyle = b.colour || b.color || "yellow"; // Match bomb color (no black hole)
             ctx.beginPath();
             ctx.arc(0, 0, b.baseR * 0.4, 0, Math.PI * 2);
             ctx.fill();
 
             // Draw Timer Text?
             if (b.timerShow) {
-                ctx.fillStyle = "white";
+                ctx.fillStyle = "black"; // High contrast text
                 ctx.font = "bold 12px Arial";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";

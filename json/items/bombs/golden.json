@@ -14,7 +14,7 @@
     },
     "maxDrop": 100,
     "solid": true,
-    "moveable": false,
+    "moveable": true,
     "physics": {
         "friction": 0.9,
         "mass": 1.5,
