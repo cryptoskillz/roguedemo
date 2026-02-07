@@ -79,7 +79,7 @@
     "itemPickup": false,
     "soundEffects": false,
     "showDebugWindow": true,
-    "showDebugLog": false,
+    "showDebugLog": true,
     "showMinimap": false,
     "showUI": false,
     "showWelcome": false,
