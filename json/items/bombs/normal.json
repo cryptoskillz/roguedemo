@@ -36,7 +36,7 @@
         "openSecretRooms": true
     },
     "canInteract": {
-        "active": false,
+        "active": true,
         "type": "kick",
         "distance": 100,
         "explodeOnImpact": false
