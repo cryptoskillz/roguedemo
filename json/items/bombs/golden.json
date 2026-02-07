@@ -32,12 +32,12 @@
         "openSecretRooms": true
     },
     "remoteDenoate": {
-        "active": false,
+        "active": true,
         "detonateAll": false,
         "key": "space"
     },
     "canInteract": {
-        "active": false,
+        "active": true,
         "type": "kick",
         "distance": 100,
         "explodeOnImpact": true

@@ -1090,7 +1090,7 @@ export function changeRoom(dx, dy) {
                 return;
             }
 
-            bombs.push({
+            Globals.bombs.push({
                 x: sb.x, y: sb.y,
                 explodeAt: sb.explodeAt, // Restore absolute
                 maxTimer: sb.maxTimer,
@@ -1111,7 +1111,7 @@ export function changeRoom(dx, dy) {
                 explosionDuration: sb.explosionDuration || 300
             });
         });
-        log(`Restored ${bombs.length} bombs in ${nextCoord}`);
+        log(`Restored ${Globals.bombs.length} bombs in ${nextCoord}`);
     }
 
     // RESTORE ITEMS

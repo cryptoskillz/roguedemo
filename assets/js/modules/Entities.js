@@ -2357,6 +2357,37 @@ export function drawBombs(doors) {
                 });
             }
 
+            // --- PLAYER PUSHBACK ---
+            // Treat explosion as expanding solid circle
+            const distToPlayer = Math.hypot(b.x - Globals.player.x, b.y - Globals.player.y);
+            const safetyRadius = r + Globals.player.size + 2; // +2 padding
+
+            if (distToPlayer < safetyRadius) {
+                // Push player out
+                let dx = Globals.player.x - b.x;
+                let dy = Globals.player.y - b.y;
+
+                // Handle perfect overlap
+                if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) {
+                    dx = (Math.random() - 0.5);
+                    dy = (Math.random() - 0.5);
+                }
+
+                const len = Math.hypot(dx, dy);
+                if (len > 0) {
+                    const nx = dx / len;
+                    const ny = dy / len;
+                    const pushDist = safetyRadius - len;
+
+                    Globals.player.x += nx * pushDist;
+                    Globals.player.y += ny * pushDist;
+
+                    // Clamp to bounds
+                    Globals.player.x = Math.max(BOUNDARY + Globals.player.size, Math.min(Globals.canvas.width - BOUNDARY - Globals.player.size, Globals.player.x));
+                    Globals.player.y = Math.max(BOUNDARY + Globals.player.size, Math.min(Globals.canvas.height - BOUNDARY - Globals.player.size, Globals.player.y));
+                }
+            }
+
             if (!b.didDamage) {
                 b.didDamage = true;
                 Globals.enemies.forEach(en => {
