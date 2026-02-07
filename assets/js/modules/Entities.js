@@ -2390,6 +2390,16 @@ export function drawBombs(doors) {
 
             if (!b.didDamage) {
                 b.didDamage = true;
+
+                // --- PLAYER DAMAGE ---
+                if (b.canDamagePlayer) {
+                    const distPlayer = Math.hypot(b.x - Globals.player.x, b.y - Globals.player.y);
+                    if (distPlayer < b.maxR) {
+                        // takeDamage handles invulnerability checks
+                        takeDamage(b.damage || 1);
+                    }
+                }
+
                 Globals.enemies.forEach(en => {
                     const distEn = Math.hypot(b.x - en.x, b.y - en.y);
                     if (distEn < b.maxR) {
