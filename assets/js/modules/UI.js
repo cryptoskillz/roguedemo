@@ -96,20 +96,25 @@ export async function updateUI() {
     if (Globals.elements.hp) Globals.elements.hp.innerText = `HP: ${Math.ceil(Globals.player.hp)} / ${Globals.player.maxHp}`;
 
     // Keys
-    if (Globals.elements.keys) Globals.elements.keys.innerText = `KEYS: ${Globals.player.inventory.keys || 0}`;
+    if (Globals.elements.keys) Globals.elements.keys.innerText = `${Globals.player.inventory.keys || 0}`;
 
     // Bombs
     if (Globals.elements.bombs) Globals.elements.bombs.innerText = `BOMBS: ${Globals.player.inventory.bombs || 0}`;
 
     // Gun & Ammo
-    let gunName = Globals.player.gunType || "Default";
-    // Check if player has upgrades? gun object is in Globals?
-    // Globals.gun is the UI element, I need the gun data.
-    // 'gun' variable from logic.js needs to be in Globals? Yes, I missed 'gun' and 'bomb' in Globals.
-    // I will assume Globals.gunConfig and Globals.bombConfig exist or just use player state if simplistic.
-    // logic.js used global 'gun' and 'bomb' objects.
-    // I should add them to Globals.js later. For now, assume access.
-    // Actually, updateUI needs 'gun' object.
+    const gunName = Globals.player.gunType || "Default";
+    if (Globals.elements.gun) Globals.elements.gun.innerText = gunName.toUpperCase();
+
+    let ammoText = "INF";
+    // Check Globals.gun for Ammo
+    if (Globals.gun && typeof Globals.gun.ammo !== 'undefined') {
+        ammoText = `${Globals.gun.ammo} / ${Globals.gun.maxAmmo || '?'}`;
+        // If ammo is infinite or very high? 
+        // Logic seems to allow finite ammo. 
+        if (Globals.gun.ammo === Infinity || Globals.gun.maxAmmo === Infinity) ammoText = "INF";
+    }
+
+    if (Globals.elements.ammo) Globals.elements.ammo.innerText = ammoText;
 }
 
 // ... DEBUG EDITOR ...

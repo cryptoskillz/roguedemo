@@ -45,7 +45,7 @@ next up
 
 
 refactor 
-    ui show correct
+    
     red and gree shards should update in UI and store in localstorage
     red shards for dup items etc as in logic js
  
