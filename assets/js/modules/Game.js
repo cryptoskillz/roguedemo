@@ -471,6 +471,14 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         }
         Globals.bomb = fetchedBomb || {};
 
+        // SAVE BASE LOADOUT (For Resets/Deaths)
+        if (!savedPlayerStats && !isRestart) {
+            if (Globals.player.gunType) localStorage.setItem('base_gun', Globals.player.gunType);
+            if (Globals.player.bombType) localStorage.setItem('base_bomb', Globals.player.bombType);
+            // Also save configs if needed, but type is usually enough to reload default
+            log("Saved Base Loadout:", Globals.player.gunType, Globals.player.bombType);
+        }
+
         if (Globals.gameData.music) {
             // --- 1. INSTANT AUDIO SETUP ---
             // Ensure global audio is ready

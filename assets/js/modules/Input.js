@@ -54,6 +54,20 @@ export function setupInput(callbacks) {
             if (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'Digit0' || e.code === 'Digit9') return;
 
             // Any other key starts game
+            // Any other key starts game
+            if (e.code === 'KeyN') {
+                // FORCE NEW GAME (Clear Data)
+                localStorage.removeItem('rogue_player_state');
+                localStorage.removeItem('rogue_transition');
+                localStorage.removeItem('current_gun');
+                localStorage.removeItem('current_bomb');
+                localStorage.removeItem('current_gun_config');
+                localStorage.removeItem('current_bomb_config');
+                localStorage.removeItem('base_gun'); // Optional: Clear base too if we want total reset
+                location.reload();
+                return;
+            }
+
             if (Globals.beginPlay) Globals.beginPlay();
         }
     });

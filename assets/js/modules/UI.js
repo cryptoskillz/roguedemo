@@ -393,6 +393,10 @@ export function showCredits() {
         // Clear Persistence to ensure fresh start
         localStorage.removeItem('rogue_player_state');
         localStorage.removeItem('rogue_transition');
+        localStorage.removeItem('current_gun');
+        localStorage.removeItem('current_bomb');
+        localStorage.removeItem('current_gun_config');
+        localStorage.removeItem('current_bomb_config');
 
         // Use Global Helper to Reset State & Go to Welcome
         if (Globals.goToWelcome) {
