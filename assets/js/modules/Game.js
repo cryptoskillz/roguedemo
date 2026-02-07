@@ -975,6 +975,22 @@ export function changeRoom(dx, dy) {
         } else {
             Globals.levelMap[currentCoord].savedBombs = null;
         }
+
+        // SAVE ITEMS (Ground Items)
+        if (Globals.groundItems && Globals.groundItems.length > 0) {
+            Globals.levelMap[currentCoord].savedItems = Globals.groundItems.map(i => ({
+                x: i.x, y: i.y,
+                type: i.type,
+                name: i.name,
+                data: i.data,
+                vx: i.vx, vy: i.vy,
+                color: i.color,
+                pickupCooldown: i.pickupCooldown
+            }));
+            log(`Saved ${Globals.groundItems.length} items in ${currentCoord}`);
+        } else {
+            Globals.levelMap[currentCoord].savedItems = null;
+        }
     }
 
     // Reset Room Specific Flags
@@ -1024,6 +1040,7 @@ export function changeRoom(dx, dy) {
 
     Globals.bullets = []; // Clear bullets on room entry
     Globals.bombs = []; // Clear bombs on room entry
+    Globals.groundItems = []; // Clear items on room entry (Fix persistence bug)
 
     // RESTORE BOMBS
     if (Globals.levelMap[nextCoord] && Globals.levelMap[nextCoord].savedBombs) {
@@ -1090,6 +1107,14 @@ export function changeRoom(dx, dy) {
             });
         });
         log(`Restored ${bombs.length} bombs in ${nextCoord}`);
+    }
+
+    // RESTORE ITEMS
+    if (Globals.levelMap[nextCoord] && Globals.levelMap[nextCoord].savedItems) {
+        Globals.levelMap[nextCoord].savedItems.forEach(si => {
+            Globals.groundItems.push(si);
+        });
+        log(`Restored ${Globals.levelMap[nextCoord].savedItems.length} items for ${nextCoord}`);
     }
 
     // Check if Ghost should follow
