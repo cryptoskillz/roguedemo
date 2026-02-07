@@ -3302,7 +3302,7 @@ export function spawnShards(b) {
 export function updateItems() {
     if (!Globals.groundItems) return;
 
-    const PICKUP_THRESHOLD = 50;
+    const PICKUP_THRESHOLD = 80; // Extended range for easier pickup
     const HEAT_MAX = 100;
 
     for (let i = Globals.groundItems.length - 1; i >= 0; i--) {
@@ -3452,7 +3452,7 @@ export function drawItems() {
 
         // Interact Prompt (Space)
         const dist = Math.hypot(Globals.player.x - item.x, Globals.player.y - item.y);
-        if (dist < 40 && (!item.data || (item.data.type !== 'shard' && item.data.type !== 'visual_shard'))) {
+        if (dist < 80 && (!item.data || (item.data.type !== 'shard' && item.data.type !== 'visual_shard'))) {
             Globals.ctx.fillStyle = "#f1c40f"; // Gold
             Globals.ctx.font = "bold 12px monospace";
             Globals.ctx.fillText("SPACE", 0, 30);
