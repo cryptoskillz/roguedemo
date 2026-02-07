@@ -3,6 +3,10 @@
     "description": "bullets that freeze enemies for longer",
     "location": "items/modifiers/bullets/freezeDuration.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "freezeDuration": "+0.1"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

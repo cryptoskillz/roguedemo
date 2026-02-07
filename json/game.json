@@ -105,7 +105,30 @@
     "room": {
         "freezeTimer": 100
     },
-    "bonuses": {
+    "rewards": {
+        "shards": {
+            "green": {
+                "killEnemy": {
+                    "minCount": 1,
+                    "maxCount": 1,
+                    "special": ""
+                }
+            },
+            "red": {
+                "killBoss": {
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "special": "",
+                    "custom": false
+                },
+                "enterPortal": {
+                    "minCount": 1,
+                    "maxCount": 5,
+                    "special": "",
+                    "custom": true
+                }
+            }
+        },
         "key": {
             "maxDrop": 1,
             "common": {
@@ -220,7 +243,7 @@
     "debug": {
         "startBoss": false,
         "player": true,
-        "godMode": true,
+        "godMode": false,
         "windowEnabled": true,
         "log": false,
         "spawn": {

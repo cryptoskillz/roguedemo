@@ -3,6 +3,10 @@
     "description": "boosts bullet speed",
     "location": "items/modifiers/bullets/speed.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "speed": "+1"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

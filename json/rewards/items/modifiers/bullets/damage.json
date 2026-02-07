@@ -3,6 +3,10 @@
     "description": "boosts bullet damage",
     "location": "items/modifiers/bullets/damage.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "damage": "+1"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

@@ -3,6 +3,10 @@
     "description": "Increase the recoil of the gun",
     "location": "items/modifiers/bullets/recoil.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "recoil": "+1"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

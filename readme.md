@@ -227,3 +227,5 @@ Defines individual enemy stats.
 - `deathDuration`: Duration of death animation.
 - `special`: If `true`, the enemy is special (e.g., boss, ghost).
 
+### Credits
+- `music`: grand_project (https://pixabay.com/users/grand_project-19033897/) 

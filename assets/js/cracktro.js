@@ -250,7 +250,8 @@ window.drawCredits = function () {
     const EXIT_T_SCROLL = 0;
     const EXIT_T_TEXT = 1.0;
     const EXIT_T_CUBE = 2.0;
-    const EXIT_T_LOGO = 3.5;
+    const EXIT_T_BAR_EXIT = 2.5; // NEW: Bar scrolls out
+    const EXIT_T_LOGO = 3.5;     // Delayed Logo exit (after bar starts/finishes)
 
     // 3. JELLY 3D CUBE (CONDITIONAL: 4s After Logo / 2s After Text)
     // HIDE IF EXITING (Old) -> ANIMATE OUT (New)
@@ -538,12 +539,48 @@ window.drawCredits = function () {
     ctx.fillRect(0, 0, cvs.width, cvs.height);
 
     // 8. Top Right Logo (Refined Melon Style)
-    // ANIMATION: Slide down from top
-    // Start at -50, end at 0. Speed depends on time.
-    let animY = Math.min(0, -50 + (time * 40));
+    // 8. Top Right Logo (Refined Melon Style)
+    // SEQUENCE:
+    // 0. Checkers Only [t=0 to 1.0]
+    // 1. White Bar Scrolls In (Left to Right) [t=1.0 to 2.5]
+    // 2. Logo Drops Down [t=2.5+]
+
+    const DELAY_BAR_START = 1.0;
+    const TIME_BAR_SCROLL = 1.5;
+
+    let barX = -cvs.width; // Start off-screen LEFT
+    let animY = -150;     // Start off-screen top
+
+    // A. Bar Scroll
+    if (time >= DELAY_BAR_START && time <= (DELAY_BAR_START + TIME_BAR_SCROLL)) {
+        // Ease out cubic
+        const p = Math.min(1.0, (time - DELAY_BAR_START) / TIME_BAR_SCROLL);
+        const ease = 1 - Math.pow(1 - p, 3);
+        barX = -cvs.width + (cvs.width * ease);
+    } else if (time > (DELAY_BAR_START + TIME_BAR_SCROLL)) {
+        barX = 0; // Finished
+    }
+
+    // B. Logo Drop (Starts after bar)
+    const LOGO_START = DELAY_BAR_START + TIME_BAR_SCROLL;
+    if (time > LOGO_START) {
+        const logoTime = time - LOGO_START;
+        // Drop fast
+        animY = Math.min(0, -100 + (logoTime * 80));
+    }
 
     // MODIFY ANIM Y IF EXITING (Slide UP) - DELAYED
     if (window.isExiting) {
+        // A. Bar Exit (Scrolls back to Left)
+        if (exitTime > EXIT_T_BAR_EXIT) {
+            const t = exitTime - EXIT_T_BAR_EXIT;
+            // Scroll OUT (Right to Left / Back to -width)
+            // 0 -> -width
+            barX = -(t * 1200); // Fast exit
+            if (barX < -cvs.width) barX = -cvs.width;
+        }
+
+        // B. Logo Exit (Slide UP) - Only after bar is mostly gone
         if (exitTime > EXIT_T_LOGO) {
             // TRIGGER EXIT SOUND (Reverse Ding)
             if (!playedExitSound) {
@@ -636,9 +673,9 @@ window.drawCredits = function () {
 
     // DRAW WHITE HEADER BAR HERE (Post-Vignette)
     // Ensures, it matches the logo white exactly.
-    // Animates with the logo
+    // Animates X scroll. Fixed Y=0.
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, animY, cvs.width, 40);
+    ctx.fillRect(barX, 0, cvs.width, 40);
 
     // - Black Box (Tight to Text)
     // - White Border (Large/Stroke)

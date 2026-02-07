@@ -3,6 +3,10 @@
     "description": "Increase Number of bullets",
     "location": "items/modifiers/bullets/number.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "number": "+1"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

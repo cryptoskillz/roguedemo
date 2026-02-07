@@ -3,6 +3,10 @@
     "description": "bullets that curve",
     "location": "items/modifiers/bullets/curve.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "curve": "+0.1"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

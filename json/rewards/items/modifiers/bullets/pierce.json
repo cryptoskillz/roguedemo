@@ -3,6 +3,10 @@
     "description": "bullets that pierce through enemies",
     "location": "items/modifiers/bullets/pierce.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "pierce": "true"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

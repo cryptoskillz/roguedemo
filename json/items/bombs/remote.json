@@ -2,7 +2,7 @@
     "name": "remote",
     "description": "A remote bomb",
     "size": 30,
-    "colour": "#ffffff",
+    "colour": "#cccccc",
     "range": 70,
     "damage": 2,
     "fireRate": 0.1,
@@ -36,7 +36,7 @@
         "openSecretRooms": true
     },
     "canInteract": {
-        "active": true,
+        "active": false,
         "type": "kick",
         "distance": 100,
         "explodeOnImpact": false

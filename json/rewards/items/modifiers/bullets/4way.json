@@ -3,6 +3,15 @@
     "description": "bullets that fire in forward, right, back, and left directions",
     "location": "items/modifiers/bullets/4way.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "multiDirectional.active": "true",
+        "multiDirectional.fireNorth": "true",
+        "multiDirectional.fireEast": "true",
+        "multiDirectional.fireSouth": "true",
+        "multiDirectional.fireWest": "true",
+        "multiDirectional.fire360": "false"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

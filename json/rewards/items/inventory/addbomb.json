@@ -3,6 +3,10 @@
     "description": "Adds a bomb to your inventory",
     "location": "items/inventory/bombs/add.json",
     "type": "modifier",
+    "modify": "player",
+    "modifiers": {
+        "inventory.bombs": "+1"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

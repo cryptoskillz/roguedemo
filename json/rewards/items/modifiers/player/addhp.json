@@ -10,5 +10,9 @@
         "active": false,
         "modifyType": "session"
     },
+    "modify": "player",
+    "modifiers": {
+        "hp": "+1"
+    },
     "rarity": "uncommon"
 }

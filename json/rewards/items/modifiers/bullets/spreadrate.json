@@ -3,6 +3,10 @@
     "description": "boosts bullet spread rate",
     "location": "items/modifiers/bullets/spreadrate.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "spreadRate": "+0.1"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

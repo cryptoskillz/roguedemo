@@ -3,6 +3,15 @@
     "description": "bullets that fire in all directions",
     "location": "items/modifiers/bullets/360.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "multiDirectional.active": "true",
+        "multiDirectional.fireNorth": "false",
+        "multiDirectional.fireEast": "false",
+        "multiDirectional.fireSouth": "false",
+        "multiDirectional.fireWest": "false",
+        "multiDirectional.fire360": "true"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

@@ -3,6 +3,10 @@
     "description": "bullets that deal more damage on critical hits",
     "location": "items/modifiers/bullets/critChance.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "critChance": "+0.1"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

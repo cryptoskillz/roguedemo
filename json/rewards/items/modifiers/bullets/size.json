@@ -3,6 +3,10 @@
     "description": "boosts bullet size",
     "location": "items/modifiers/bullets/size.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "size": "+1"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

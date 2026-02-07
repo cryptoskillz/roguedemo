@@ -3,6 +3,11 @@
     "description": "the Basic shield",
     "location": "items/modifiers/player/shield.json",
     "type": "modifier",
+    "modify": "player",
+    "modifiers": {
+        "shield.active": true,
+        "shield.regenActive": false
+    },
     "starter": false,
     "special": false,
     "consumed": true,

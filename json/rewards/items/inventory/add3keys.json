@@ -3,6 +3,10 @@
     "description": "Adds 3 keys to your inventory",
     "location": "items/inventory/key/add3.json",
     "type": "modifier",
+    "modify": "player",
+    "modifiers": {
+        "inventory.keys": "+3"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

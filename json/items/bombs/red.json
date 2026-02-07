@@ -2,7 +2,7 @@
     "name": "red",
     "description": "A red bomb",
     "size": 30,
-    "colour": "#ffffff",
+    "colour": "#FF0000",
     "range": 70,
     "damage": 2,
     "fireRate": 0.1,

@@ -4,17 +4,17 @@
     "size": 30,
     "colour": "#ffff00",
     "range": 70,
-    "damage": 2,
+    "damage": 5,
     "fireRate": 0.1,
-    "canShoot": true,
+    "canShoot": false,
     "timer": {
         "active": true,
         "show": true,
         "time": 3000
     },
-    "maxDrop": 100,
+    "maxDrop": 2,
     "solid": true,
-    "moveable": false,
+    "moveable": true,
     "physics": {
         "friction": 0.9,
         "mass": 1.5,
@@ -32,7 +32,7 @@
         "openSecretRooms": true
     },
     "remoteDenoate": {
-        "active": false,
+        "active": true,
         "detonateAll": false,
         "key": "space"
     },

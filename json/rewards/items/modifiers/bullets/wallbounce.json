@@ -3,6 +3,10 @@
     "description": "bullets that bounce off walls",
     "location": "items/modifiers/bullets/wallbounce.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "wallBounce": "true"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

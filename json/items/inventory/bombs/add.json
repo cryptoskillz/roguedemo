@@ -1,7 +1,3 @@
 {
-    "modify": "bomb",
-    "colour": "#000000",
-    "modifiers": {
-        "bombs": "+1"
-    }
+    "colour": "#000000"
 }

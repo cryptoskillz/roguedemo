@@ -12,14 +12,14 @@
             "active": true,
             "type": "recharge",
             "resetTimer": 1000,
-            "amount": 10,
+            "amount": 2,
             "maxAmount": 50
         },
         "geometry": {
             "shape": "circle",
             "shapes": [],
             "animated": false,
-            "filled": false
+            "filled": true
         },
         "canDamagePlayer": false,
         "speed": 10,
@@ -29,7 +29,7 @@
         "curve": 0,
         "spreadRate": 0,
         "number": 3,
-        "recoil": 1,
+        "recoil": 15,
         "homing": false,
         "fireRate": 1,
         "wallBounce": false,

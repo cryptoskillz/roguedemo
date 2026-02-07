@@ -1,7 +1,3 @@
 {
-    "modify": "gun",
-    "colour": "#000000",
-    "modifiers": {
-        "critChance": "+0.1"
-    }
+    "colour": "#000000"
 }

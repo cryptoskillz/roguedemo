@@ -43,7 +43,7 @@
     "bombType": "",
     "gunType": "",
     "inventory": {
-        "keys": 0,
+        "keys": 5,
         "bombs": 10,
         "greenShards": 0,
         "redShards": 0

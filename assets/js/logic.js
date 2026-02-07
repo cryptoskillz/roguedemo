@@ -1991,7 +1991,7 @@ async function initGame(isRestart = false, nextLevel = null, keepStats = false) 
     }
 }
 // Initial Start
-initGame();
+// initGame(); // DISABLED: Handled by main.js in module system
 
 // --- Input Handling ---
 window.addEventListener('keydown', e => {

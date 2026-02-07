@@ -1,7 +1,3 @@
 {
-    "modify": "key",
-    "colour": "#000000",
-    "modifiers": {
-        "keys": "+3"
-    }
+    "colour": "#000000"
 }

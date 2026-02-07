@@ -3,6 +3,10 @@
     "description": "bullets that explode on impact",
     "location": "items/modifiers/bullets/explode.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "Explode.active": "true"
+    },
     "starter": false,
     "special": false,
     "consumed": true,

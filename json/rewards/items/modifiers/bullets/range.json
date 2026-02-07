@@ -3,6 +3,10 @@
     "description": "boosts bullet range",
     "location": "items/modifiers/bullets/range.json",
     "type": "modifier",
+    "modify": "gun",
+    "modifiers": {
+        "range": "+10"
+    },
     "starter": false,
     "special": false,
     "consumed": true,
