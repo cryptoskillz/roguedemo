@@ -2,7 +2,7 @@
     "name": "remote",
     "description": "A remote bomb",
     "size": 30,
-    "colour": "#ffffff",
+    "colour": "#cccccc",
     "range": 70,
     "damage": 2,
     "fireRate": 0.1,

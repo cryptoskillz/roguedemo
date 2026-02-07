@@ -99,19 +99,33 @@ export async function updateUI() {
     if (Globals.elements.keys) Globals.elements.keys.innerText = `${Globals.player.inventory.keys || 0}`;
 
     // Bombs
-    if (Globals.elements.bombs) Globals.elements.bombs.innerText = `BOMBS: ${Globals.player.inventory.bombs || 0}`;
+    // Bombs
+    if (Globals.elements.bombs) {
+        Globals.elements.bombs.innerText = `BOMBS: ${Globals.player.inventory.bombs || 0}`;
+        const bombColor = Globals.bomb.colour || Globals.bomb.color || "white";
+        Globals.elements.bombs.style.color = bombColor;
+    }
 
     // Gun & Ammo
     const gunName = Globals.player.gunType || "Default";
     if (Globals.elements.gun) Globals.elements.gun.innerText = gunName.toUpperCase();
 
     let ammoText = "INF";
-    // Check Globals.gun for Ammo
-    if (Globals.gun && typeof Globals.gun.ammo !== 'undefined') {
-        ammoText = `${Globals.gun.ammo} / ${Globals.gun.maxAmmo || '?'}`;
-        // If ammo is infinite or very high? 
-        // Logic seems to allow finite ammo. 
-        if (Globals.gun.ammo === Infinity || Globals.gun.maxAmmo === Infinity) ammoText = "INF";
+
+    // Check Player State (Dynamic) vs Gun Config (Static)
+    // Finite / Recharge / Reload modes are stored on player
+    const mode = Globals.player.ammoMode;
+
+    if (Globals.player.reloading) {
+        ammoText = "RELOADING...";
+    } else if (!mode || mode === 'infinite') {
+        ammoText = "INF";
+    } else if (mode === 'recharge' || mode === 'finite') {
+        // Show Current / Max Clip
+        ammoText = `${Math.floor(Globals.player.ammo)} / ${Globals.player.maxMag}`;
+    } else if (mode === 'reload') {
+        // Show Current / Reserve
+        ammoText = `${Math.floor(Globals.player.ammo)} / ${Globals.player.reserveAmmo}`;
     }
 
     if (Globals.elements.ammo) Globals.elements.ammo.innerText = ammoText;
