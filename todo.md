@@ -43,11 +43,9 @@ refactor
 
   
        
-      end gane
-      remove bump to pick up items
+    remove bump to pick up items
     guns and bombs working
 
-remove mpm space tp pick up items shards are fine
     remove autostart = true from index call
   
     ui show correct

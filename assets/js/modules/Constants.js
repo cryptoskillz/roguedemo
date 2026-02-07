@@ -1,4 +1,4 @@
-export const STATES = { START: 0, PLAY: 1, GAMEOVER: 2, GAMEMENU: 3, WIN: 4 };
+export const STATES = { START: 0, PLAY: 1, GAMEOVER: 2, GAMEMENU: 3, WIN: 4, CREDITS: 5 };
 
 export const BOUNDARY = 20;
 export const DOOR_SIZE = 50;

@@ -1265,8 +1265,8 @@ export function update() {
     // Music Toggle (Global) - Allow toggling in Start, Play, etc.
     updateMusicToggle();
 
-    // 1. If already dead, stop all logic
-    if (Globals.gameState === STATES.GAMEOVER || Globals.gameState === STATES.WIN) return;
+    // 1. If already dead or in credits, stop all logic
+    if (Globals.gameState === STATES.GAMEOVER || Globals.gameState === STATES.WIN || Globals.gameState === STATES.CREDITS) return;
 
     // 2. TRIGGER GAME OVER
     if (Globals.player.hp <= 0) {

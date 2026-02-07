@@ -318,6 +318,85 @@ export function drawBossIntro() {
         Globals.ctx.shadowBlur = 0;
         Globals.ctx.fillText(bossDesc, Globals.canvas.width / 2, Globals.canvas.height / 2 + 30);
 
-        Globals.ctx.restore();
     }
+}
+
+export function showCredits() {
+    Globals.gameState = STATES.CREDITS;
+
+    // Hide Game UI
+    if (Globals.elements.ui) Globals.elements.ui.style.display = 'none';
+
+    // Create Credits Overlay if not exists
+    let creditsEl = document.getElementById('credits-overlay');
+    if (!creditsEl) {
+        creditsEl = document.createElement('div');
+        creditsEl.id = 'credits-overlay';
+        creditsEl.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; color: white; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 5000;
+            font-family: 'Courier New', monospace; text-align: center;
+        `;
+        document.body.appendChild(creditsEl);
+    } else {
+        creditsEl.style.display = 'flex';
+    }
+
+    creditsEl.innerHTML = `
+        <h1 style="font-size: 4em; color: #f1c40f; margin-bottom: 20px;">THE END</h1>
+        <div id="credits-scroll" style="height: 60%; width: 100%; overflow: hidden; position: relative; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);">
+            <div id="credits-content" style="position: absolute; width: 100%; text-align: center; top: 100%;">
+                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
+                <p style="color: #ccc;">Chris McCreadie</p>
+                <br>
+                <p style="font-size: 1.5em; margin: 20px 0; color: #e74c3c;">Art & Assets</p>
+                <p style="color: #ccc;">Generated with AI</p>
+                <br>
+                <p style="font-size: 1.5em; margin: 20px 0; color: #2ecc71;">Special Thanks</p>
+                <p style="color: #ccc;">Cryptoskillz</p>
+                <br><br><br>
+                <p style="font-size: 1.2em; color: #f1c40f;">Thanks for playing!</p>
+                <br><br><br><br>
+                <p style="font-size: 0.8em; color: #555;">Press any key to return to menu</p>
+            </div>
+        </div>
+    `;
+
+    // Animate
+    setTimeout(() => {
+        const content = document.getElementById('credits-content');
+        if (content) {
+            content.style.transition = "top 20s linear";
+            content.style.top = "-150%"; // Scroll completely out
+        }
+    }, 100);
+
+    // Input handling via global listener or explicit binding here?
+    // Game.js handleGlobalInputs doesn't cover CREDITS state yet.
+    // I'll add a one-off listener here for simplicity, or update Input.js.
+    // Let's use a one-off listener that removes itself.
+    Globals.creditsStartTime = Date.now();
+
+    // Cleanup old listener just in case
+    if (Globals.creditsListener) document.removeEventListener('keydown', Globals.creditsListener);
+
+    const closeCredits = (e) => {
+        // Debounce slightly to prevent immediate skip if key held
+        if (Date.now() - (Globals.creditsStartTime || 0) < 1500) return;
+
+        document.removeEventListener('keydown', closeCredits);
+        Globals.creditsListener = null;
+        creditsEl.style.display = 'none';
+
+        // Return to Welcome
+        // We need access to goToWelcome callback or logic.
+        // Globals.gameCallbacks usually holds it? Input.js sets it up.
+        // But UI.js doesn't have direct access.
+        // We can reload the page as a safe fallback for "End of Game".
+        location.reload();
+    };
+
+    Globals.creditsListener = closeCredits;
+    document.addEventListener('keydown', closeCredits);
 }

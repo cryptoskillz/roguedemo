@@ -3,7 +3,7 @@ import { log, spawnFloatingText, triggerSpeech } from './Utils.js';
 import { SFX } from './Audio.js';
 import { generateLore } from './Utils.js'; // Assuming generateLore is in Utils (or I need to extract it)
 import { CONFIG, STATES, BOUNDARY, DOOR_SIZE } from './Constants.js';
-import { updateUI } from './UI.js';
+import { updateWelcomeScreen, updateUI, drawTutorial, drawMinimap, drawBossIntro, updateFloatingTexts, drawFloatingTexts, showCredits } from './UI.js';
 
 // Functions will be appended below
 export function applyEnemyConfig(inst, group) {
@@ -1762,6 +1762,12 @@ export function handleLevelComplete() {
     // GUARD: Prevent multiple triggers
     if (Globals.portal && !Globals.portal.active) return;
     if (Globals.portal) Globals.portal.active = false;
+
+    // CREDITS CHECK (Before Unlocks or Next Level)
+    if (Globals.roomData.completedItMate) {
+        showCredits();
+        return;
+    }
 
     // 0. Handle Unlocks (First!)
     if (Globals.roomData.unlocks && Globals.roomData.unlocks.length > 0) {
