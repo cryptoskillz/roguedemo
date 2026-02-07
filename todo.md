@@ -42,8 +42,8 @@ next up
 refactor 
 
   
-    music fade in and out
     guns and bombs working
+    when you hit r is is copying peashooter to base gun in app storage but you still have th current gun (with debug om ut sould not copy only with debug off)
   
     ui show correct
     bombs drop 

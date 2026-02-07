@@ -7,7 +7,7 @@
             "life": 0.5,
             "sizeMult": 0.5
         },
-        "colour": "#000000",
+        "colour": "#FFFF00",
         "ammo": {
             "active": true,
             "type": "recharge",
@@ -19,7 +19,7 @@
             "shape": "circle",
             "shapes": [],
             "animated": false,
-            "filled": false
+            "filled": true
         },
         "canDamagePlayer": false,
         "speed": 1,

@@ -1,7 +1,7 @@
 import { Globals } from './Globals.js';
 import { STATES, BOUNDARY, DOOR_SIZE, DOOR_THICKNESS, CONFIG, DEBUG_FLAGS } from './Constants.js';
 import { log, deepMerge, triggerSpeech } from './Utils.js';
-import { SFX, introMusic, unlockAudio } from './Audio.js';
+import { SFX, introMusic, unlockAudio, fadeIn, fadeOut } from './Audio.js';
 import { setupInput, handleGlobalInputs } from './Input.js';
 import { updateUI, updateWelcomeScreen, showLevelTitle, drawMinimap, drawTutorial, drawBossIntro, drawDebugLogs, drawFloatingTexts, updateFloatingTexts } from './UI.js';
 import { renderDebugForm, updateDebugEditor } from './Debug.js';
@@ -500,7 +500,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
             // Fallback: Start music on the very first key press or click if autoplay failed
             const startAudio = () => {
-                if (introMusic.paused && !Globals.musicMuted) introMusic.play();
+                if (introMusic.paused && !Globals.musicMuted) fadeIn(introMusic, 5000);
                 if (Globals.audioCtx.state === 'suspended') Globals.audioCtx.resume();
                 window.removeEventListener('keydown', startAudio);
                 window.removeEventListener('mousedown', startAudio);
@@ -1515,19 +1515,18 @@ export function updateMusicToggle() {
     if (!Globals.gameData.music) return;
 
     if (Globals.keys['Digit0']) {
-        const now = Date.now();
-        // 300ms cooldown so it doesn't toggle every frame
-        if (now - Globals.lastMusicToggle > 300) {
-            if (introMusic.paused) {
-                introMusic.play();
-                Globals.musicMuted = false;
-                log("Music Playing");
-            } else {
-                introMusic.pause();
-                Globals.musicMuted = true;
-                log("Music Paused");
+        Globals.keys['Digit0'] = false; // consume key
+        Globals.musicMuted = !Globals.musicMuted;
+        if (Globals.musicMuted) {
+            log("Music Muted");
+            fadeOut(introMusic, 2000); // Smooth fade out
+            if (window.cracktroAudio) fadeOut(window.cracktroAudio, 2000);
+        } else {
+            log("Music Unmuted");
+            // Only play if we are in state where music should play
+            if (Globals.gameState === 1 || Globals.gameState === 2 || Globals.gameState === 4) {
+                fadeIn(introMusic, 5000); // Smooth fade in
             }
-            Globals.lastMusicToggle = now;
         }
     }
 }

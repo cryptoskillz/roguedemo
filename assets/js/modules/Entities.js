@@ -617,57 +617,90 @@ export function fireBullet(direction, speed, vx, vy, angle) {
         }
     }
 
-    // Helper to spawn bullet with correct offset
-    const spawn = (bvx, bvy) => {
-        const barrelLength = Globals.player.size + 10;
-        const bAngle = Math.atan2(bvy, bvx);
-        const startX = Globals.player.x + Math.cos(bAngle) * barrelLength;
-        const startY = Globals.player.y + Math.sin(bAngle) * barrelLength;
-        spawnBullet(startX, startY, bvx, bvy, Globals.gun, "player"); // Pass Globals.gun explicitly
-    };
+    // --- REFACTORED FIRING LOGIC ---
+    const spawnList = [];
+    const bulletConf = Globals.gun.Bullet || {};
+    // DEBUG LOG
+    log("FireBullet", { name: Globals.gun.name, reverse: bulletConf.reverseFire, number: bulletConf.number });
 
-    // 2. Spawning
-    if (direction === 0) {
-        spawn(vx, vy);
-        if (Globals.gun.Bullet?.reverseFire) spawn(-vx, -vy);
+    const count = bulletConf.number || 1;
+    const spread = (bulletConf.spreadRate || 10) * (Math.PI / 180); // Convert degrees to radians? Assuming degrees. 
+    // If strict radian usage elsewhere, valid. But spreadRate usually 0.1 etc. Let's assume Degrees for "spreadRate" usually implies integer like 10.
+    // However, if spreadRate is small (0.1), maybe it is radians.
+    // User JSON shows spreadRate: 1. Let's assume 1 degree? Or 1 radian?
+    // User shot gun has spreadRate: 1. 1 radian is HUGE (~57 deg). 1 degree is TINY.
+    // Let's assume it's a multiplier for a base spread? Or maybe it IS radians but usually small?
+    // Let's try flexible: if < 0.2 assume radians, else degrees. 
+    // Actually, traditionally in this code base? 
+    // Looking at previous code: "spreadRate: 1". 
+    // Let's interpret spreadRate as "Fan Angle Step in Degrees".
 
-        // MultiDirectional Logic
-        if (Globals.gun.Bullet?.multiDirectional?.active) {
-            const md = Globals.gun.Bullet.multiDirectional;
-            if (md.fireNorth) spawn(0, -speed);
-            if (md.fireEast) spawn(speed, 0);
-            if (md.fireSouth) spawn(0, speed);
-            if (md.fireWest) spawn(-speed, 0);
-            if (md.fire360) {
-                for (let i = 0; i < 360; i += 10) {
-                    const rad = i * Math.PI / 180;
-                    spawn(Math.cos(rad) * speed, Math.sin(rad) * speed);
-                }
+    // Actually logic.js legacy often used radians. 
+    // Let's try: spreadRate = 10 (degrees). 
+    // The user's shotgun json says "spreadRate": 1. 
+    // If that's 1 degree, it's a laser beam.
+    // If that's 1 radian, it's 60 degrees (wide).
+    // Let's stick to (spreadRate * 0.1 or something). 
+    // better: let's hardcode a base spread of 5 degrees * spreadRate.
+    const spreadRad = (bulletConf.spreadRate || 1) * 0.1; // 1 -> 0.1 rad (~5 deg). 
+
+    // 1. Determine Base Aim Angle
+    let baseAngle = 0;
+    if (direction === 0) { // Mouse
+        baseAngle = Math.atan2(vy, vx);
+    } else if (direction === 1) baseAngle = -Math.PI / 2; // North
+    else if (direction === 2) baseAngle = 0;             // East
+    else if (direction === 3) baseAngle = Math.PI / 2;   // South
+    else if (direction === 4) baseAngle = Math.PI;       // West
+
+    // 2. Primary Fire (Shotgun / Single)
+    for (let i = 0; i < count; i++) {
+        // Center the spread
+        // i=0, count=1 -> offset 0
+        // i=0, count=3 -> -1 * spread
+        // i=1, count=3 -> 0
+        // i=2, count=3 -> +1 * spread
+        const offset = (i - (count - 1) / 2) * spreadRad;
+        spawnList.push({ angle: baseAngle + offset });
+    }
+
+    // 3. Reverse Fire (Applicable to primary shots?)
+    if (bulletConf.reverseFire) {
+        // Clone current list and flip 180
+        const reversed = spawnList.map(s => ({ angle: s.angle + Math.PI }));
+        spawnList.push(...reversed);
+    }
+
+    // 4. Multi-Directional Logic (Global)
+    // Needs to fire independent of aim? or relative?
+    // Usually "fireNorth" means absolute North.
+    if (bulletConf.multiDirectional?.active) {
+        const md = bulletConf.multiDirectional;
+        if (md.fireNorth) spawnList.push({ angle: -Math.PI / 2 });
+        if (md.fireEast) spawnList.push({ angle: 0 });
+        if (md.fireSouth) spawnList.push({ angle: Math.PI / 2 });
+        if (md.fireWest) spawnList.push({ angle: Math.PI });
+
+        if (md.fire360) {
+            const step = 20; // 18 bullets
+            for (let d = 0; d < 360; d += step) {
+                spawnList.push({ angle: d * (Math.PI / 180) });
             }
         }
     }
-    else if (direction === 360) {
-        for (let i = 0; i < 360; i += 10) {
-            const rad = i * Math.PI / 180;
-            spawn(Math.cos(rad) * speed, Math.sin(rad) * speed);
-        }
-    }
-    else if (direction === 1) { // North
-        spawn(0, -speed);
-        if (Globals.gun.Bullet?.reverseFire) spawn(0, speed);
-    }
-    else if (direction === 2) { // East
-        spawn(speed, 0);
-        if (Globals.gun.Bullet?.reverseFire) spawn(-speed, 0);
-    }
-    else if (direction === 3) { // South
-        spawn(0, speed);
-        if (Globals.gun.Bullet?.reverseFire) spawn(0, -speed);
-    }
-    else if (direction === 4) { // West
-        spawn(-speed, 0);
-        if (Globals.gun.Bullet?.reverseFire) spawn(speed, 0);
-    }
+
+    // 5. Execute Spawns
+    spawnList.forEach(k => {
+        const bvx = Math.cos(k.angle) * speed;
+        const bvy = Math.sin(k.angle) * speed;
+
+        // Spawn calc
+        const barrelLength = Globals.player.size + 10;
+        const startX = Globals.player.x + bvx * (barrelLength / speed); // Normalize dir * barrel
+        const startY = Globals.player.y + bvy * (barrelLength / speed);
+
+        spawnBullet(startX, startY, bvx, bvy, Globals.gun, "player");
+    });
 
     bulletsInRoom++;
     bulletsInRoom++;
