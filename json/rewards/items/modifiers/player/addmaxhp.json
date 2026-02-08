@@ -12,8 +12,7 @@
     },
     "modify": "player",
     "modifiers": {
-        "maxHp": "+1",
-        "hp": "+1"
+        "maxHp": "+1"
     },
     "rarity": "uncommon"
 }
