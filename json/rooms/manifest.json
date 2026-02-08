@@ -1,16 +1,17 @@
 {
     "rooms": [
-        "1_a_crowded_room",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
+        "1_angry_tank",
+        "2_gun_room_1",
+        "3_fast_room_2",
+        "4_easy_room_2",
+        "5_hard_room_1",
+        "6_lots_of_turrets",
+        "7_fast_room_1",
         "8",
         "9",
         "10",
         "11",
-        "testit"
+        "testit",
+        "matrix"
     ]
 }

@@ -1,4 +1,11 @@
 bugs
+    gunner should have a fire delay so not all turrerts fire at once if there are many in the room
+    turrets should have line of site and only fire if they can see the player
+    turrets shoild have range and only fire if you are in range (stealth missions)
+    gunner should its own enemy type that way we can use small,large,mega etc.
+    gunners can shoot through  enemies
+    enemes spawm outside the room if they are very big
+    many turrts in the room we ahould have a way to define fire rate etc i am not sure the modifierf is working on the gun may require a seperate gun modifer
     drawtutoiral in load roomd
     add back old ghost gun
     fix debug logs
@@ -54,7 +61,7 @@ next up
     server    
 
 balance 6
-    rename rooms
+
     check 360 modifier it seems to have different stats to the 360 gun
     check the max hp+1 modifier add 1 hp as it maybe blocked as and working the same as addhp+1
     make most items locked at the start and you can unlock x items at random everytime you beat a level, 

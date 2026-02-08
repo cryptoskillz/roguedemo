@@ -101,6 +101,26 @@ export function applyEnemyConfig(inst, group) {
         }
     }
 
+    // 2b. Special Case for Turret Object Schema (New)
+    if (group.turret && group.turret.active) {
+        if (!inst.moveType) inst.moveType = {};
+        // Ensure it's an object if it was a string
+        if (typeof inst.moveType !== 'object') inst.moveType = { type: inst.moveType || 'static' };
+
+        inst.moveType.type = 'static';
+        inst.moveType.x = group.turret.x;
+        inst.moveType.y = group.turret.y;
+
+        // Force static properties
+        inst.speed = 0;
+
+        // Ensure it has a gun if not already assigned (by variant)
+        if (!inst.gun) {
+            const defaults = Globals.gameData.enemyConfig?.turretDefaults;
+            inst.gun = defaults?.gun || "json/rewards/items/guns/enemy/peashooter.json";
+        }
+    }
+
     // 3. Apply Shape (Only if NOT randomised)
     if (group.shape && !group.randomiseShape) {
         inst.shape = group.shape;
@@ -590,8 +610,8 @@ export function spawnBullet(x, y, vx, vy, weaponSource, ownerType = "player", ow
         size: (bulletConfig.size || 5),
         curve: bulletConfig.curve || 0,
         homing: bulletConfig.homing,
-        canDamagePlayer: bulletConfig.canDamagePlayer || false,
-        hasLeftPlayer: false,
+        canDamagePlayer: bulletConfig.canDamagePlayer !== undefined ? bulletConfig.canDamagePlayer : (ownerType === 'enemy'),
+        hasLeftPlayer: ownerType === 'enemy',
         shape: bulletShape,
         animated: bulletConfig.geometry?.animated || false,
         filled: bulletConfig.geometry?.filled !== undefined ? bulletConfig.geometry.filled : true,
@@ -800,6 +820,9 @@ export function updateBulletsAndShards(aliveEnemies) {
         } else {
             // Only check collision if it has safely left the player once
             if (distToPlayer < collisionThreshold) {
+                // Debug Log
+                if (b.canDamagePlayer) console.log("Bullet hitting player! Damage:", b.damage, "canDamagePlayer:", b.canDamagePlayer);
+
                 // Hit Player
                 if (b.canDamagePlayer) {
                     if (!Globals.player.invuln && Date.now() > (Globals.player.invulnUntil || 0)) {
@@ -1481,7 +1504,14 @@ export function updateEnemies() {
             if (en.gun && typeof en.gun === 'string' && !en.gunConfig) {
                 if (!en.gunLoading) {
                     en.gunLoading = true;
-                    fetch(en.gun).then(r => r.json()).then(d => { en.gunConfig = d; en.gunLoading = false; }).catch(e => { en.gunConfig = { error: true }; });
+                    fetch(en.gun + '?t=' + Date.now())
+                        .then(r => r.json())
+                        .then(d => {
+                            en.gunConfig = d;
+                            en.gunLoading = false;
+                            console.log(`Loaded Enemy Gun: ${en.gun}`, d.Bullet?.canDamagePlayer ? "Has Damage" : "NO DAMAGE", d);
+                        })
+                        .catch(e => { en.gunConfig = { error: true }; });
                 }
             }
             if (en.gunConfig && !en.gunConfig.error && Globals.player.hp > 0) {

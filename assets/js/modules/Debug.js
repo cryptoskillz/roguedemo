@@ -67,8 +67,8 @@ export function renderDebugForm() {
         };
 
         createBtn("TEST SFX", "#e67e22", () => {
-            console.log("TEST AUDIO CLICKED");
-            if (Globals.audioCtx && Globals.audioCtx.state === 'suspended') Globals.audioCtx.resume();
+            console.log("TEST SFX CLICKED");
+            if (Globals.audioCtx && Globasls.audioCtx.state === 'suspended') Globals.audioCtx.resume();
             if (Globals.audioCtx) {
                 const o = Globals.audioCtx.createOscillator();
                 o.frequency.value = 440;

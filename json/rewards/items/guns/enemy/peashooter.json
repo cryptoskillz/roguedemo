@@ -1,7 +1,7 @@
 {
     "name": "peashooter",
     "description": "the Basic gun",
-    "location": "rewards/items/guns/player/peashooter.json",
+    "location": "rewards/items/guns/enemy/peashooter.json",
     "type": "gun",
     "starter": true,
     "special": false,
@@ -36,7 +36,7 @@
             "animated": false,
             "filled": true
         },
-        "canDamagePlayer": false,
+        "canDamagePlayer": true,
         "speed": 5,
         "size": 10,
         "damage": 1,

@@ -4,9 +4,8 @@
     "startRoom": "json/rooms/start/room.json",
     "bossRoom": "json/rooms/bosses/boss4/room.json",
     "avalibleroons": [
-        "json/rooms/3/room.json",
-        "json/rooms/4/room.json",
-        "json/rooms/5/room.json"
+        "json/rooms/4_easy_room_1/room.json",
+        "json/rooms/4_easy_room_2/room.json"
     ],
     "specialrooms": [
         ""

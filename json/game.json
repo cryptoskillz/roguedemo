@@ -8,6 +8,7 @@
             "small",
             "large",
             "massive",
+            "mega",
             "gunner",
             "turret",
             "medium"
@@ -52,11 +53,17 @@
                 "hp": 2.0,
                 "damage": 1.5
             },
+            "mega": {
+                "size": 6.0,
+                "speed": 0.25,
+                "hp": 10.0,
+                "damage": 5.0
+            },
             "gunner": {
-                "gun": "json/rewards/items/guns/player/peashooter.json"
+                "gun": "json/rewards/items/guns/enemy/peashooter.json"
             },
             "turret": {
-                "gun": "json/rewards/items/guns/player/peashooter.json",
+                "gun": "json/rewards/items/guns/enemy/peashooter.json",
                 "moveType": "static"
             },
             "medium": {}
@@ -71,6 +78,9 @@
                 "fireRate": 0.5,
                 "angryTime": 5000
             }
+        },
+        "turretDefaults": {
+            "gun": "json/rewards/items/guns/enemy/peashooter.json"
         }
     },
     "music": false,

@@ -1,6 +1,6 @@
 {
-    "name": "Room 10",
-    "description": "",
+    "name": "Big Enemy Room 2",
+    "description": "He's brought his pals!",
     "hardness": 4,
     "keyBonus": 1.0,
     "speedGoal": 10000,
@@ -49,15 +49,25 @@
     "enemies": [
         {
             "type": "grunt",
-            "variant": "small",
+            "variant": "mega",
             "shape": "square",
             "mode": "normal",
             "randomiseVariant": false,
             "randomiseShape": false,
             "randomiseColour": false,
             "modifiers": {},
-            "count": 2,
-            "moveType": {}
+            "count": 1
+        },
+        {
+            "type": "grunt",
+            "variant": "gunner",
+            "shape": "triangle",
+            "mode": "normal",
+            "randomiseVariant": false,
+            "randomiseShape": false,
+            "randomiseColour": false,
+            "modifiers": {},
+            "count": 5
         }
     ]
 }
