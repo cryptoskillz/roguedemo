@@ -1496,7 +1496,7 @@ export async function draw() {
     }
 
     drawMinimap();
-    drawTutorial();
+    if (!DEBUG_FLAGS.TEST_ROOM) drawTutorial();
     drawBossIntro();
     drawPortal();
     drawFloatingTexts(); // Draw notification texts on top

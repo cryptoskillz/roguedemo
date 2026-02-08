@@ -11,7 +11,7 @@ export function updateDebugEditor() {
     // Only populate if empty
     if (selector.options.length === 0) {
         const options = [
-            { value: 'player', label: "Local Player" },
+            { value: 'player', label: "Player Data" },
             { value: 'room', label: "Room Data" },
             { value: 'spawn', label: "Spawn Item" },
             { value: 'spawnEnemy', label: "Spawn Enemy" },
@@ -352,6 +352,15 @@ export function renderDebugForm() {
             const opt = document.createElement('option');
             opt.value = r;
             opt.innerText = "Room " + r;
+            select.appendChild(opt);
+        });
+
+        // Append Boss Rooms
+        const bosses = ['boss0', 'boss1', 'boss2', 'boss3', 'boss4', 'boss5'];
+        bosses.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = "boss:" + b;
+            opt.innerText = b.toUpperCase();
             select.appendChild(opt);
         });
 
