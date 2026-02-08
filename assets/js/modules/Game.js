@@ -1763,8 +1763,27 @@ export function drawShake() {
     // 1. --- SHAKE ---
     if (Globals.screenShake.power > 0 && now < Globals.screenShake.endAt) {
         Globals.ctx.save();
-        const s = Globals.screenShake.power * ((Globals.screenShake.endAt - now) / 180);
+        let s = Globals.screenShake.power * ((Globals.screenShake.endAt - now) / 180);
+
+        // TELEPORT GLITCH BOOST
+        if (Globals.screenShake.teleport) {
+            s *= 3; // Super Shake
+            // Random Color Flash (Digital Artifact)
+            const color = Math.random() > 0.5 ? "cyan" : "magenta";
+            Globals.ctx.fillStyle = color;
+            Globals.ctx.globalAlpha = 0.2;
+            Globals.ctx.fillRect(0, 0, Globals.canvas.width, Globals.canvas.height);
+            Globals.ctx.globalAlpha = 1.0;
+        }
+
         Globals.ctx.translate((Math.random() - 0.5) * s, (Math.random() - 0.5) * s);
+    }
+    else {
+        // Reset Logic when shake ends
+        if (Globals.screenShake.power > 0) {
+            Globals.screenShake.power = 0;
+            Globals.screenShake.teleport = 0;
+        }
     }
 }
 
