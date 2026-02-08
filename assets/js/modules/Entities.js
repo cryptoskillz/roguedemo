@@ -3347,8 +3347,8 @@ export async function spawnUnlockItem(x, y) {
         log(`SpawnUnlockItem: Found ${allUnlocks.length} total, ${unlockedIds.length} unlocked. Available: ${available.length}`);
 
         if (available.length === 0) {
-            log("All items unlocked! Spawning Shards instead.");
-            spawnShard(x, y, 'red', 5);
+            log("All items unlocked! Spawning EXTRA Shards!");
+            spawnShard(x, y, 'red', 25);
             return;
         }
 
