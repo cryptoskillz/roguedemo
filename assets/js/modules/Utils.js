@@ -54,14 +54,18 @@ export function deepMerge(target, source) {
     return target;
 }
 
-export function spawnFloatingText(x, y, text, color = "white") {
+export function spawnFloatingText(x, y, text, color = "white", type = "normal") {
+    // Speech bubbles: Static, longer life
+    const isSpeech = type === 'speech';
+
     Globals.floatingTexts.push({
         x: x,
         y: y,
         text: text,
         color: color,
-        life: 1.0, // 100% opacity start
-        vy: -1.0 // Float up speed
+        type: type,
+        life: isSpeech ? 3.0 : 1.0, // Last longer
+        vy: isSpeech ? 0 : -1.0 // Don't float if speech
     });
 }
 export function generateLore(enemy) {
@@ -192,7 +196,7 @@ export function triggerSpeech(enemy, type, forceText = null, bypassCooldown = fa
     }
 
     if (text) {
-        spawnFloatingText(enemy.x, enemy.y - enemy.size - 10, text, "white");
+        spawnFloatingText(enemy.x, enemy.y - enemy.size - 20, text, "black", "speech");
         enemy.lastSpeechTime = now;
     }
 }

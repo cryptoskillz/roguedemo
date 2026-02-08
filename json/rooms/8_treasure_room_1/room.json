@@ -52,7 +52,7 @@
             "variant": "small",
             "shape": "square",
             "mode": "normal",
-            "randomiseVariant": true,
+            "randomiseVariant": false,
             "randomiseShape": false,
             "randomiseColour": true,
             "modifiers": {},

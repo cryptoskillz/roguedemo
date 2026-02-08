@@ -15,10 +15,59 @@ export function updateFloatingTexts() {
 export function drawFloatingTexts() {
     Globals.ctx.save();
     Globals.floatingTexts.forEach(ft => {
-        Globals.ctx.fillStyle = ft.color;
         Globals.ctx.globalAlpha = ft.life;
         Globals.ctx.font = "bold 12px monospace";
-        Globals.ctx.fillText(ft.text, ft.x, ft.y);
+
+        if (ft.type === 'speech') {
+            // Measure text
+            const metrics = Globals.ctx.measureText(ft.text);
+            const w = metrics.width + 10;
+            const h = 20;
+            const x = Math.floor(ft.x - w / 2); // Pixel perfect align
+            const y = Math.floor(ft.y - h);
+
+            Globals.ctx.lineWidth = 2; // Thicker border for 8-bit feel
+            Globals.ctx.strokeStyle = "black";
+            Globals.ctx.fillStyle = "white";
+
+            // Draw Box (Sharp Edges)
+            Globals.ctx.beginPath();
+            Globals.ctx.rect(x, y, w, h);
+            Globals.ctx.fill();
+            Globals.ctx.stroke();
+
+            // Draw Tail (Simple Triangle)
+            Globals.ctx.beginPath();
+            Globals.ctx.moveTo(Math.floor(ft.x), y + h);
+            Globals.ctx.lineTo(Math.floor(ft.x - 5), y + h + 6);
+            Globals.ctx.lineTo(Math.floor(ft.x + 5), y + h);
+            Globals.ctx.stroke(); // Stroke first for outline? No, complex.
+            // Fill tail to hide box stroke overlap
+            Globals.ctx.fill();
+
+            // Re-stroke box bottom segment to clean up? 
+            // Actually, for simple 8-bit, just a small triangle sticking out is fine.
+            // Let's just draw the tail shape filled and stroked.
+
+            Globals.ctx.beginPath();
+            Globals.ctx.moveTo(Math.floor(ft.x), y + h);
+            Globals.ctx.lineTo(Math.floor(ft.x + 4), y + h);
+            Globals.ctx.lineTo(Math.floor(ft.x), y + h + 6); // Pointy bit
+            Globals.ctx.lineTo(Math.floor(ft.x - 4), y + h);
+            Globals.ctx.fill();
+            Globals.ctx.stroke();
+
+            // Draw Text (Black, centered)
+            Globals.ctx.fillStyle = "black";
+            Globals.ctx.textAlign = "center"; // Align to center of bubble
+            Globals.ctx.textBaseline = "middle";
+            Globals.ctx.fillText(ft.text, Math.floor(ft.x), Math.floor(y + h / 2));
+        } else {
+            // Normal Floating Text
+            Globals.ctx.textAlign = "center"; // Ensure normal text is also centered?
+            Globals.ctx.fillStyle = ft.color;
+            Globals.ctx.fillText(ft.text, ft.x, ft.y);
+        }
     });
     Globals.ctx.restore();
 }

@@ -47,7 +47,7 @@
         "number": 1,
         "recoil": 0,
         "homing": false,
-        "fireRate": 0.5,
+        "fireRate": 1,
         "wallBounce": false,
         "pierce": false,
         "reverseFire": false,

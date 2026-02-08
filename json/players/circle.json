@@ -46,7 +46,9 @@
         "keys": 5,
         "bombs": 10,
         "greenShards": 0,
-        "redShards": 0
+        "redShards": 0,
+        "maxKeys": 5,
+        "maxBombs": 10
     },
     "maxRedShards": 500,
     "maxGreenShards": 100
