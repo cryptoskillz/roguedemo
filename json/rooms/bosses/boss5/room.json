@@ -41,6 +41,12 @@
     "width": 800,
     "height": 600,
     "unlocks": [],
+    "unlockItem": {
+        "active": true,
+        "count": 1,
+        "unlockChance": 1,
+        "rarity": "common"
+    },
     "nextLevel": "",
     "welcomeScreen": false,
     "completedItMate": true

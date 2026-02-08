@@ -60,13 +60,6 @@ export const STORAGE_KEYS = {
         'rogue_current_level',
         'base_gun',
         'base_bomb',
-        'debugRoomData',
-        'game_unlocked_ids',
-        'game_unlocks',
-        'base_gun',
-        'base_bomb_config',
-        'base_gun_config',
-        'currency_red',
         'rogue_stats'
     ]
 };

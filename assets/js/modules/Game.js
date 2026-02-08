@@ -137,6 +137,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     Globals.roomStartTime = Date.now();
     Globals.ghostSpawned = false; // Reset Ghost
     Globals.ghostKilled = false;
+    Globals.foundUnlocks = []; // Reset found unlocks
     Globals.ghostEntry = null;    // Reset Ghost Entry State
     Globals.roomFreezeUntil = 0;  // Reset Freeze Timer
     Globals.bossKilled = false;   // Reset Boss Kill State
@@ -2037,6 +2038,7 @@ Globals.spawnEnemy = (type, x, y, overrides = {}) => {
 };
 
 export async function handleUnlocks(unlockKeys) {
+    Globals.handleUnlocks = handleUnlocks; // Expose for Entities
     if (Globals.isUnlocking) return;
     Globals.isUnlocking = true;
     Globals.unlockQueue = [...unlockKeys]; // Copy

@@ -99,6 +99,9 @@ export const Globals = {
     bossKilled: false,
     ghostKilled: false,
 
+    // Unlock Queue
+    foundUnlocks: [],
+
     // Lore
     loreData: null,
     speechData: null, // Saw this in outline earlier

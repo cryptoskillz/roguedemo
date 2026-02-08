@@ -56,6 +56,12 @@
         "rooms",
         "startlevel1"
     ],
+    "unlockItem": {
+        "active": true,
+        "count": 1,
+        "unlockChance": 1,
+        "rarity": "common"
+    },
     "nextLevel": "",
     "welcomeScreen": true,
     "completedItMate": false

@@ -1758,6 +1758,23 @@ export function updateEnemies() {
 
                 Globals.bossKilled = true;
 
+                // UNLOCK ITEM DROP
+                if (Globals.roomData.unlockItem && Globals.roomData.unlockItem.active) {
+                    const chance = Globals.roomData.unlockItem.unlockChance || 1;
+                    log(`Boss Defeated! Checking unlock drop. Chance: ${chance}`);
+                    if (Math.random() <= chance) {
+                        const count = Globals.roomData.unlockItem.count || 1;
+                        log(`Roll Success! Spawning ${count} unlock items.`);
+                        for (let i = 0; i < count; i++) {
+                            spawnUnlockItem(en.x + (i * 20), en.y);
+                        }
+                    } else {
+                        log("Unlock Roll Failed.");
+                    }
+                } else {
+                    log("Unlock Config Missing or Inactive:", Globals.roomData.unlockItem);
+                }
+
                 // Clear Rooms
                 Object.keys(Globals.visitedRooms).forEach(key => {
                     if (key !== `${Globals.player.roomX},${Globals.player.roomY}`) {
@@ -1849,8 +1866,16 @@ export function updatePortal() {
                     Globals.portal.finished = true; // Prevent re-scrap
 
                     // EXPLICITLY TRIGGER COMPLETION (Don't wait for re-collision)
-                    if (Globals.roomData.unlocks && Globals.roomData.unlocks.length > 0) {
-                        Globals.handleUnlocks(Globals.roomData.unlocks);
+                    const roomUnlocks = Globals.roomData.unlocks || [];
+                    const foundUnlocks = Globals.foundUnlocks || [];
+                    const allUnlocks = [...roomUnlocks, ...foundUnlocks];
+
+                    // Determine if we have any unlocks to process
+                    // Filter duplicates? handleUnlocks calls showNextUnlock which checks history, so duplicates are fine but maybe cleaner to unique.
+                    const uniqueUnlocks = [...new Set(allUnlocks)];
+
+                    if (uniqueUnlocks.length > 0) {
+                        Globals.handleUnlocks(uniqueUnlocks);
                     } else {
                         handleLevelComplete();
                     }
@@ -1919,23 +1944,15 @@ export function handleLevelComplete() {
     if (Globals.portal && !Globals.portal.active) return;
     if (Globals.portal) Globals.portal.active = false;
 
-    // CREDITS CHECK (Before Unlocks or Next Level)
-    if (Globals.roomData.completedItMate) {
-        showCredits();
-        return;
-    }
+    // 0. Handle Unlocks (First priority as requested)
+    const roomUnlocks = Globals.roomData.unlocks || [];
+    const foundUnlocks = Globals.foundUnlocks || [];
+    const allUnlocks = [...roomUnlocks, ...foundUnlocks];
+    const uniqueUnlocks = [...new Set(allUnlocks)];
 
-    // 0. Handle Unlocks (First!)
-    if (Globals.roomData.unlocks && Globals.roomData.unlocks.length > 0) {
+    if (uniqueUnlocks.length > 0) {
         if (Globals.handleUnlocks) {
-            // We await it? handleUnlocks is async (UI overlay). 
-            // If we await, we pause the transition. That's desirable.
-            // But handleLevelComplete is not async. 
-            // We should make it async or handle the promise?
-            // Existing handleUnlocks returns a promise that resolves when UI closes.
-            Globals.handleUnlocks(Globals.roomData.unlocks).then(() => {
-                // Recursively call to proceed after unlock UI used (clearing unlocks to prevent loop?)
-                // OR just proceed logic here.
+            Globals.handleUnlocks(uniqueUnlocks).then(() => {
                 proceedLevelComplete();
             });
             return;
@@ -1948,43 +1965,33 @@ function proceedLevelComplete() {
     // 1. Next Level?
     if (Globals.roomData.nextLevel && Globals.roomData.nextLevel.trim() !== "") {
         log("Proceeding to Next Level:", Globals.roomData.nextLevel);
-
-        // Save State to LocalStorage (Robust Persistence)
         localStorage.setItem('rogue_transition', 'true');
-        // Save Next Level as the "Current" level for restarts
         localStorage.setItem('rogue_current_level', Globals.roomData.nextLevel);
-
-        // Ensure we save a clean copy without circular refs or huge data if any
-        // But player object is simple enough.
         localStorage.setItem('rogue_player_state', JSON.stringify(Globals.player));
-
-        // Load next level, Keep Stats
         initGame(true, Globals.roomData.nextLevel, true);
         return;
     }
 
-    // 1.5 Welcome Screen?
-    log("Checking Welcome Screen. Data:", Globals.roomData);
+    // 2. Welcome Screen?
     if (Globals.roomData.welcomeScreen) {
         log("Level Complete. Returning to Welcome Screen.");
         if (Globals.goToWelcome) Globals.goToWelcome();
         return;
     }
 
-    // 2. End Game / Victory?
+    // 3. Credits / Completed It Mate (Last priority)
+    if (Globals.roomData.completedItMate) {
+        showCredits();
+        return;
+    }
+
+    // 4. End Game / Victory (Legacy?)
     if (Globals.roomData.endGame) {
         Globals.gameState = STATES.WIN;
         updateUI();
         if (Globals.gameOver) Globals.gameOver();
-        else console.error("Globals.gameOver is missing!");
         return;
     }
-
-    // Default fallback: Just win/end if we hit the portal but no instructions (Legacy behavior)
-    Globals.gameState = STATES.WIN;
-    updateUI();
-    if (Globals.gameOver) Globals.gameOver();
-    else console.error("Globals.gameOver is missing!");
 }
 
 export function updateGhost() {
@@ -2936,6 +2943,17 @@ export async function pickupItem(item, index) {
         return;
     }
 
+    if (type === 'unlock') {
+        // Queue it for Portal Exit
+        if (!Globals.foundUnlocks) Globals.foundUnlocks = [];
+        Globals.foundUnlocks.push(data.unlockId);
+        spawnFloatingText(Globals.player.x, Globals.player.y - 40, "UNLOCK FOUND!", "gold");
+
+        if (Globals.audioCtx.state !== 'suspended' && SFX.coin) SFX.coin();
+        removeItem();
+        return;
+    }
+
     // --- COMPLEX ITEMS (Async) ---
     const location = data.location;
     log(`Picking up ${data.name}...`);
@@ -3313,6 +3331,54 @@ export function applyModifierToGun(gunObj, modConfig) {
 }
 // --- UNLOCK SYSTEM ---
 let unlockQueue = [];
+// Helper to spawn unlock item
+export async function spawnUnlockItem(x, y) {
+    try {
+        // 1. Fetch Manifest
+        const res = await fetch(`${JSON_PATHS.ROOT}rewards/unlocks/manifest.json?t=${Date.now()}`);
+        if (!res.ok) return;
+        const manifest = await res.json();
+        const allUnlocks = manifest.unlocks || [];
+
+        // 2. Filter Unlocked
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        const available = allUnlocks.filter(id => !unlockedIds.includes(id));
+
+        log(`SpawnUnlockItem: Found ${allUnlocks.length} total, ${unlockedIds.length} unlocked. Available: ${available.length}`);
+
+        if (available.length === 0) {
+            log("All items unlocked! Spawning Shards instead.");
+            spawnShard(x, y, 'red', 5);
+            return;
+        }
+
+        // 3. Pick Random
+        const nextUnlockId = available[Math.floor(Math.random() * available.length)];
+        log("Spawning Unlock Item:", nextUnlockId);
+
+        // 4. Spawn Physical Item
+        Globals.groundItems.push({
+            x: x, y: y,
+            roomX: Globals.player.roomX, roomY: Globals.player.roomY,
+            vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
+            friction: 0.9, solid: true, moveable: true, size: 20,
+            floatOffset: 0,
+            data: {
+                name: "Unlock Reward",
+                type: "unlock", // New Type
+                unlockId: nextUnlockId,
+                colour: "gold",
+                size: 20,
+                rarity: "legendary"
+            }
+        });
+        spawnFloatingText(x, y - 40, "UNLOCK REWARD!", "gold");
+
+    } catch (e) {
+        console.error("Failed to spawn unlock item:", e);
+    }
+}
+
 export function spawnRoomRewards(dropConfig, label = null) {
     if (!window.allItemTemplates) return false;
     // Debug MaxDrop
