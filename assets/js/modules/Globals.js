@@ -44,6 +44,7 @@ export const Globals = {
     // Audio
     audioCtx: null,
     musicMuted: false,
+    sfxMuted: false,
 
     // Methods
     restartGame: null,

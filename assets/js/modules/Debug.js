@@ -66,7 +66,7 @@ export function renderDebugForm() {
             debugForm.appendChild(btn);
         };
 
-        createBtn("TEST AUDIO", "#e67e22", () => {
+        createBtn("TEST SFX", "#e67e22", () => {
             console.log("TEST AUDIO CLICKED");
             if (Globals.audioCtx && Globals.audioCtx.state === 'suspended') Globals.audioCtx.resume();
             if (Globals.audioCtx) {
@@ -81,14 +81,18 @@ export function renderDebugForm() {
 
         const musicState = Globals.gameData.music ? 'ON' : 'OFF';
         createBtn(`TOGGLE MUSIC (${musicState})`, "#3498db", () => {
+            // Toggle Config
             Globals.gameData.music = !Globals.gameData.music;
+            // Sync Runtime Mute
+            Globals.musicMuted = !Globals.gameData.music;
+
             localStorage.setItem('setting_music', Globals.gameData.music);
 
             if (Globals.gameData.music) {
-                // If toggled ON, fade in
+                log("Music Enabled");
                 fadeIn(introMusic, 5000);
             } else {
-                // If toggled OFF, fade out
+                log("Music Disabled");
                 fadeOut(introMusic, 2000);
             }
             renderDebugForm();
@@ -96,8 +100,13 @@ export function renderDebugForm() {
 
         const sfxState = Globals.gameData.soundEffects ? 'ON' : 'OFF';
         createBtn(`TOGGLE SFX (${sfxState})`, "#9b59b6", () => {
+            // Toggle Config
             Globals.gameData.soundEffects = !Globals.gameData.soundEffects;
+            // Sync Runtime Mute
+            Globals.sfxMuted = !Globals.gameData.soundEffects;
+
             localStorage.setItem('setting_sfx', Globals.gameData.soundEffects);
+            log(Globals.gameData.soundEffects ? "SFX Enabled" : "SFX Disabled");
             renderDebugForm();
         });
 

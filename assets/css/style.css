@@ -76,7 +76,7 @@ canvas {
 }
 
 #debug-form {
-    max-height: 300px;
+    max-height: 600px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -328,7 +328,8 @@ canvas {
 
 .character-select p {
     margin: 5px 0;
-    animation: none !important; /* Override global p blink */
+    animation: none !important;
+    /* Override global p blink */
 }
 
 .char-nav {
@@ -343,11 +344,15 @@ canvas {
 .char-arrow {
     cursor: pointer;
     padding: 5px 15px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     transition: background 0.2s;
 }
-.char-arrow:hover { background: rgba(255,255,255,0.2); color: white; }
+
+.char-arrow:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
 
 .key-badge {
     display: inline-block;
@@ -361,7 +366,7 @@ canvas {
     font-weight: bold;
     color: #fff;
     font-size: 0.9em;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .welcome-instructions {
