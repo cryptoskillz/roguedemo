@@ -410,7 +410,8 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             log("Restoring Full Player State");
             // Merge saved state OVER the default template
             // This ensures we keep new defaults if valid, but restore all our progress
-            Object.assign(Globals.player, savedPlayerStats);
+            // Merge saved state OVER the default template (Deep Merge to preserve structure like inventory.maxKeys)
+            deepMerge(Globals.player, savedPlayerStats);
 
             // Explicitly ensure criticals if missing (shouldn't happen with full clone)
             if (savedPlayerStats.perfectStreak !== undefined) {

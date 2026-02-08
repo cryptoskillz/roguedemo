@@ -64,10 +64,7 @@ next up
 balance 6
     max keys in player json
     max bombs in player json
-    red shards for dup items etc as in logic js 
     add to the unlock and update the unlock state of the item
-    update credits with the session and global stats
-    add restarts to the session and global stats
     upddate readme 
 
     
@@ -105,6 +102,8 @@ achivements
 
 Balance
     add correct enemies to each room
+    update credits with the session and global stats
+    add restarts to the session and global stats
 
     implement seed system to regenerate exact level so we can debug whilst the boss room does not always spawn
     count the number of dead enemies and show on dead complete screen, scroll the dead enemy types up

@@ -2763,13 +2763,13 @@ export async function pickupItem(item, index) {
         const amount = data.amount || 1;
         if (data.shardType === 'red') {
             const current = Globals.player.inventory.redShards || 0;
-            const max = Globals.player.maxRedShards || 500;
+            const max = Globals.player.inventory.maxRedShards || 500;
             Globals.player.inventory.redShards = Math.min(max, current + amount);
             localStorage.setItem('currency_red', Globals.player.inventory.redShards);
             spawnFloatingText(Globals.player.x, Globals.player.y - 40, `+${amount} RED`, "#e74c3c");
         } else {
             const current = Globals.player.inventory.greenShards || 0;
-            const max = Globals.player.maxGreenShards || 100;
+            const max = Globals.player.inventory.maxGreenShards || 100;
             const newVal = Math.min(max, current + amount);
             log(`Picking up Green Shard. Current: ${current}, Max: ${max}, New: ${newVal}`);
             Globals.player.inventory.greenShards = newVal;
@@ -2971,7 +2971,17 @@ export async function pickupItem(item, index) {
                 // Key Pickup
                 const amountProp = (data.modifiers && data.modifiers.keys) ? data.modifiers.keys : "+1";
                 const amount = parseInt(amountProp) || 1;
-                Globals.player.inventory.keys = (Globals.player.inventory.keys || 0) + amount;
+
+                const current = Globals.player.inventory.keys || 0;
+                const max = Globals.player.inventory.maxKeys || 5;
+
+                if (current >= max) {
+                    if (SFX && SFX.cantPickup) SFX.cantPickup();
+                    item.pickingUp = false;
+                    return; // Full
+                }
+
+                Globals.player.inventory.keys = Math.min(max, current + amount);
                 spawnFloatingText(Globals.player.x, Globals.player.y - 40, `+${amount} KEY`, "#f1c40f");
                 if (Globals.elements.keys) Globals.elements.keys.innerText = Globals.player.inventory.keys;
             }
@@ -3016,11 +3026,31 @@ export async function pickupItem(item, index) {
                             }
                             if (valid) {
                                 const leaf = parts[parts.length - 1];
+
+                                // SPECIAL CHECK: Max Bombs
+                                if (targetKey === 'inventory.bombs') {
+                                    const maxBombs = Globals.player.inventory.maxBombs || 10;
+                                    const currentBombs = typeof current[leaf] === 'number' ? current[leaf] : 0;
+
+                                    if (currentBombs >= maxBombs && (isRelative ? val > 0 : val > currentBombs)) {
+                                        if (SFX && SFX.cantPickup) SFX.cantPickup();
+                                        item.pickingUp = false;
+                                        return; // Full
+                                    }
+                                }
+
                                 if (isRelative && typeof current[leaf] === 'number') {
                                     current[leaf] += val;
                                 } else {
                                     current[leaf] = val;
                                 }
+
+                                // Clamp Bombs after add (just in case)
+                                if (targetKey === 'inventory.bombs') {
+                                    const maxBombs = Globals.player.inventory.maxBombs || 10;
+                                    if (current[leaf] > maxBombs) current[leaf] = maxBombs;
+                                }
+
                                 applied = true;
                                 log(`Player Mod: Set ${targetKey} to ${current[leaf]}`);
                             }
