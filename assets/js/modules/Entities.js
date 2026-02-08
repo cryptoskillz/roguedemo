@@ -1215,7 +1215,7 @@ export function updateRestart() {
         // BUT if Debug is ON, we want to Keep Weapon (handled in Game.js via resetWeaponState check)
 
         if (Globals.restartGame) Globals.restartGame(false);
-        const shakePower = 10;
+        const shakePower = 5;
         Globals.screenShake.power = Math.max(Globals.screenShake.power, shakePower);
         Globals.screenShake.endAt = Date.now() + 500;
         Globals.screenShake.teleport = 1; // Trigger Teleport Effect
