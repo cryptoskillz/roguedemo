@@ -102,7 +102,7 @@ Balance
 when you beat the level unlock something all hame unlocks are session persistnet must be bought
     upddate readme 
     add correct enemies to each room
-    update credits with the session and global stats
+    update credits with the session and global stat
     add restarts to the session and global stats
  implement seed system to regenerate exact level so we can debug whilst the boss room does not always spawn
      add a timer (as unlock and store time for each level)
@@ -185,23 +185,18 @@ enemies
 
 ghost
     when you drop a bomb inside the ghost when it eats you as its not solid it never explodes (maybe kick mechanic is firing)
-    another ghost spawens every 10 seconds if you dont kill the first ghost ghost timer should stop when the ghost spawns (only ever spawns max 2 ghosts)
     ghost non solid enmeies should be able to pass through bombs (they dont explode)
-    ghost appears when you stay on th ewelcoem screen for 10 seconds stopping ghost from spawining in start room will fix this 
-    ghost does not appear in boss rooms
     if you go through multiple room and back track you will see multiple ghosts
     if you leave a room and come back the ghost should be the same place + closer to you basedo on the speed the ghost moves. 
     if you kill some of the enemeis and leave a room and back there should only be the remaining enemies left (with ghost or blowing doors)
     door is gone
-    ghost timer is running when you are on the welcome screen
     ghost wont enter a room with an indestrcutible eemies
     if an enemy is nor sold (ie ghost) he should nor try to around enemies just go through them
     solid enemies cant go through each other, player or objects
     non solid enemies can be shot by bullets
     solid enemies can be shot by bullets
     player can alos be solid or non solid    
-    ghost_restart if you try to press when the ghost is in the room
-    if y9ou are trapped with the ghost make the room smaller and smaller until you die or the ghost dies
+    if you are trapped with the ghost make the room smaller and smaller until you die or the ghost dies
 
 
 NPCsds
