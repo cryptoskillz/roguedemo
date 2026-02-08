@@ -855,6 +855,21 @@ export function startGame(keepState = false) {
         return;
     }
 
+    // Increment Run Count (Persisted)
+    if (!keepState && !Globals.isRestart) {
+        // Only count as new run if not a level transition (keepState) 
+        // Adjust logic: keepState is true for level transition? 
+        // Wait, startGame(true) is used for next level? 
+        // Let's check call sites. 
+        // actually restartGame() sets isRestart=true. 
+        // But a new game from menu? 
+
+        // Simpler: Just check if we are resetting logic.
+        // If keepState is FALSE, it's a fresh run (or restart).
+        Globals.NumberOfRuns++;
+        localStorage.setItem('numberOfRuns', Globals.NumberOfRuns);
+    }
+
     // Show Loading Screen immediately to block input/visuals
     const loadingEl = document.getElementById('loading');
     if (loadingEl) loadingEl.style.display = 'flex';

@@ -38,10 +38,14 @@ export const Globals = {
     killEnemySessionCount: 0,
     killBossCount: 0,
     killBossSessionCount: 0,
-    NunerOfRuns: 0,
-    NunerOfSessionRuns: 0,
+    killBossCount: 0,
+    killBossSessionCount: 0,
+
+    // Stats (Persisted)
+    NumberOfRuns: parseInt(localStorage.getItem('numberOfRuns') || '0'),
+    NumberOfSessionRuns: 0,
     SessionRunTime: 0,
-    BestRunTime: 0,
+    BestRunTime: parseInt(localStorage.getItem('bestRunTime') || '0'),
 
 
 

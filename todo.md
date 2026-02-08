@@ -100,11 +100,8 @@ achivements
 
 
 Balance
-
-     add a run timer
-
-Balance 7 ^
-
+    add what killed you to the game over screen
+    tweak guns and bombs
     add correct enemies to each room
 
  implement seed system to regenerate exact level so we can debug whilst the boss room does not always spawn

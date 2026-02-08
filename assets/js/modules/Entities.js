@@ -1981,6 +1981,20 @@ function proceedLevelComplete() {
 
     // 3. Credits / Completed It Mate (Last priority)
     if (Globals.roomData.completedItMate) {
+        // Update Win Stats
+        const endTime = Date.now();
+        const duration = endTime - Globals.runStartTime;
+
+        Globals.SessionRunTime = duration;
+        Globals.NumberOfSessionRuns++;
+
+        if (Globals.BestRunTime === 0 || duration < Globals.BestRunTime) {
+            Globals.BestRunTime = duration;
+            localStorage.setItem('bestRunTime', duration);
+        }
+        // Ensure total runs is saved
+        localStorage.setItem('numberOfRuns', Globals.NumberOfRuns);
+
         showCredits();
         return;
     }

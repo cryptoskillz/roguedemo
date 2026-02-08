@@ -494,6 +494,14 @@ export function showCredits() {
         creditsEl.style.display = 'flex';
     }
 
+    const formatTime = (ms) => {
+        if (!ms) return "00:00.00";
+        const minutes = Math.floor(ms / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000);
+        const milliseconds = Math.floor((ms % 1000) / 10);
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+    };
+
     creditsEl.innerHTML = `
         <h1 style="font-size: 4em; color: #f1c40f; margin-bottom: 20px;">THE END</h1>
         <div id="credits-scroll" style="height: 60%; width: 100%; overflow: hidden; position: relative; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);">
@@ -508,6 +516,14 @@ export function showCredits() {
                      <p>Total Bosses Defeated: <span style="color: #f1c40f">${Globals.killBossCount}</span></p>
                      <p>Total Deaths: <span style="color: #95a5a6">${Globals.playerDeathCount}</span></p>
                 </div>
+
+                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Run Statistics</p>
+                <div style="color: #ccc; font-family: monospace; text-align: left; display: inline-block; margin: 0 auto;">
+                     <p>Run Time: <span style="color: #f1c40f">${formatTime(Globals.SessionRunTime)}</span></p>
+                     <p>Best Time: <span style="color: #f1c40f">${formatTime(Globals.BestRunTime)}</span></p>
+                     <p>Total Runs: <span style="color: #95a5a6">${Globals.NumberOfRuns}</span></p>
+                </div>
+
                    <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
                 <p style="color: #ccc;">Cryptoskillz</p>
                 <br>
