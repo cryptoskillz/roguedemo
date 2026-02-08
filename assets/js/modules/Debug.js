@@ -1,6 +1,6 @@
 import { Globals } from './Globals.js';
 import { JSON_PATHS } from './Constants.js';
-import { SFX } from './Audio.js'; // Assuming SFX is exported
+import { SFX, introMusic, fadeIn, fadeOut } from './Audio.js'; // Assuming SFX is exported
 import { log } from './Utils.js';
 import { updateUI } from './UI.js';
 
@@ -11,6 +11,7 @@ export function updateDebugEditor() {
     // Only populate if empty
     if (selector.options.length === 0) {
         const options = [
+            { value: 'main', label: "Main Menu" },
             { value: 'player', label: "Player Data" },
             { value: 'room', label: "Room Data" },
             { value: 'spawn', label: "Spawn Item" },
@@ -41,31 +42,6 @@ export function renderDebugForm() {
     if (!debugForm || !debugSelect) return;
     debugForm.innerHTML = '';
 
-    // Add Audio Test Button
-    const btn = document.createElement('button');
-    btn.innerText = "TEST AUDIO";
-    btn.onclick = () => {
-        console.log("TEST AUDIO CLICKED");
-        if (Globals.audioCtx && Globals.audioCtx.state === 'suspended') {
-            Globals.audioCtx.resume();
-            console.log("Audio Resumed via Test Button");
-        }
-        // Raw Oscillator Test
-        if (Globals.audioCtx) {
-            const o = Globals.audioCtx.createOscillator();
-            o.frequency.value = 440;
-            o.connect(Globals.audioCtx.destination);
-            o.start();
-            o.stop(Globals.audioCtx.currentTime + 0.5);
-        }
-
-        // Game SFX
-        SFX.shoot();
-        SFX.yelp();
-    };
-    btn.style.marginBottom = "10px";
-    btn.style.width = "100%";
-    debugForm.appendChild(btn);
 
     const type = debugSelect.value;
 
@@ -75,6 +51,72 @@ export function renderDebugForm() {
         el.style.background = "#333";
         el.style.color = "#fff";
         el.style.border = "1px solid #555";
+        el.style.padding = "5px";
+    }
+
+    // MAIN MENU
+    if (type === 'main') {
+        const createBtn = (label, color, onClick) => {
+            const btn = document.createElement('button');
+            btn.innerText = label;
+            createInputStyle(btn);
+            if (color) btn.style.background = color;
+            btn.style.cursor = "pointer";
+            btn.onclick = () => { btn.blur(); onClick(); };
+            debugForm.appendChild(btn);
+        };
+
+        createBtn("TEST AUDIO", "#e67e22", () => {
+            console.log("TEST AUDIO CLICKED");
+            if (Globals.audioCtx && Globals.audioCtx.state === 'suspended') Globals.audioCtx.resume();
+            if (Globals.audioCtx) {
+                const o = Globals.audioCtx.createOscillator();
+                o.frequency.value = 440;
+                o.connect(Globals.audioCtx.destination);
+                o.start();
+                o.stop(Globals.audioCtx.currentTime + 0.5);
+            }
+            SFX.shoot();
+        });
+
+        const musicState = Globals.gameData.music ? 'ON' : 'OFF';
+        createBtn(`TOGGLE MUSIC (${musicState})`, "#3498db", () => {
+            Globals.gameData.music = !Globals.gameData.music;
+            localStorage.setItem('setting_music', Globals.gameData.music);
+
+            if (Globals.gameData.music) {
+                // If toggled ON, fade in
+                fadeIn(introMusic, 5000);
+            } else {
+                // If toggled OFF, fade out
+                fadeOut(introMusic, 2000);
+            }
+            renderDebugForm();
+        });
+
+        const sfxState = Globals.gameData.soundEffects ? 'ON' : 'OFF';
+        createBtn(`TOGGLE SFX (${sfxState})`, "#9b59b6", () => {
+            Globals.gameData.soundEffects = !Globals.gameData.soundEffects;
+            localStorage.setItem('setting_sfx', Globals.gameData.soundEffects);
+            renderDebugForm();
+        });
+
+        createBtn("NEW GAME (RESET & RELOAD)", "#2ecc71", () => {
+            if (confirm("Reset game data and reload?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        });
+
+        createBtn("LOAD MATRIX ROOM", "#c0392b", () => {
+            const path = "json/rooms/special/matrix/room.json";
+            log("Debug Loading Matrix Room:", path);
+            if (Globals.gameData) Globals.gameData.startRoom = null;
+            if (window.DEBUG_FLAGS) window.DEBUG_FLAGS.TEST_ROOM = true;
+            if (Globals.loadRoom) Globals.loadRoom(true, path, true);
+        });
+
+        return;
     }
 
     // SPAWN LOGIC

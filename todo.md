@@ -1,5 +1,5 @@
 bugs
-
+    Game.js:1356 Critical: Room not found in levelMap at 0,-1s
     speech used to be speech bubbles now it is text on screen
     if you drop a gun with modifers such as homing if you pick it back up it should have those modifiers still
     at end of level / game when you go to the next one you see the room previous room after any key it should go back to the loading screen
@@ -51,7 +51,11 @@ next up
     server    
 
 balance 6
-    restart should start you on the level you on not the unlocked start level (add restart level to localstorage)
+    add back old ghost gun
+    fix music sfx and save game toggle
+    fix debug logs
+    Game.js:1356 Critical: Room not found in levelMap at 0,-1
+    rename rooms
     check 360 modifier it seems to have different stats to the 360 gun
     check the max hp+1 modifier add 1 hp as it maybe blocked as and working the same as addhp+1
     make most items locked at the start and you can unlock x items at random everytime you beat a level, 
@@ -65,8 +69,7 @@ balance 6
     add to the unlock and update the unlock state of the item
     update credits with the session and global stats
     add restarts to the session and global stats
-    fix debug logs
-    fix debug window
+
 
     upddate readme 
 

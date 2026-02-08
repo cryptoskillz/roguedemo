@@ -711,6 +711,37 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             spawnEnemies(Globals.roomData);
         }
 
+        // MATRIX ROOM: Spawn ALL Items
+        if (Globals.roomData.item && Globals.roomData.item.matrix) {
+            console.log("MATRIX ROOM DETECTED: Spawning all items...");
+            const items = window.allItemTemplates || Globals.itemTemplates || [];
+            if (items.length > 0) {
+                const cols = 10; // Items per row
+                const spacing = 50;
+                const startX = 100;
+                const startY = 100;
+
+                items.forEach((itemTemplate, idx) => {
+                    if (!itemTemplate) return;
+
+                    const col = idx % cols;
+                    const row = Math.floor(idx / cols);
+
+                    Globals.groundItems.push({
+                        x: startX + (col * spacing),
+                        y: startY + (row * spacing),
+                        data: JSON.parse(JSON.stringify(itemTemplate)),
+                        roomX: Globals.roomData.x || 0, // Should be 0,0 locally
+                        roomY: Globals.roomData.y || 0,
+                        vx: 0, vy: 0,
+                        solid: true, moveable: true, friction: 0.9, size: 15,
+                        floatOffset: Math.random() * 100
+                    });
+                });
+                console.log(`Spawned ${items.length} items for Matrix Room.`);
+            }
+        }
+
         Globals.canvas.width = Globals.roomData.width || 800;
         Globals.canvas.height = Globals.roomData.height || 600;
 
@@ -1324,8 +1355,8 @@ export function changeRoom(dx, dy) {
     } else {
         console.error("Critical: Room not found in levelMap at", nextCoord);
         // Fallback: stay in current room but reset coords
-        player.roomX -= dx;
-        player.roomY -= dy;
+        Globals.player.roomX -= dx;
+        Globals.player.roomY -= dy;
     }
 }
 // update loop
