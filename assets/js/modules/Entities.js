@@ -1771,6 +1771,7 @@ export function updateEnemies() {
                 });
             } else if (en.type === 'ghost') {
                 log("Ghost Defeated!");
+                Globals.ghostKilled = true;
                 if (Globals.gameData.rewards && Globals.gameData.rewards.ghost) {
                     spawnRoomRewards(Globals.gameData.rewards.ghost, "GHOST BONUS");
 

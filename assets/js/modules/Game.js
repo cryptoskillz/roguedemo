@@ -136,6 +136,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     if (Globals.elements.perfect) Globals.elements.perfect.style.display = 'none';
     Globals.roomStartTime = Date.now();
     Globals.ghostSpawned = false; // Reset Ghost
+    Globals.ghostKilled = false;
     Globals.ghostEntry = null;    // Reset Ghost Entry State
     Globals.roomFreezeUntil = 0;  // Reset Freeze Timer
     Globals.bossKilled = false;   // Reset Boss Kill State

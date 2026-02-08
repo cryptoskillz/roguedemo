@@ -3,6 +3,46 @@
     "description": "the Basic bomb",
     "drawType": "arc",
     "playerDraw": "arc",
+    "size": 30,
+    "colour": "#ffffff",
+    "range": 70,
+    "damage": 2,
+    "fireRate": 0.1,
+    "canShoot": false,
+    "timer": {
+        "active": true,
+        "show": true,
+        "time": 3000
+    },
+    "maxDrop": 3,
+    "solid": true,
+    "moveable": true,
+    "physics": {
+        "friction": 0.9,
+        "mass": 1.5,
+        "restitution": 0.5
+    },
+    "remoteDenoate": {
+        "active": false,
+        "key": "space"
+    },
+    "explosion": {
+        "radius": 100,
+        "explosionDuration": 1000,
+        "explosionColour": "#FF0000",
+        "canDamagePlayer": true
+    },
+    "doors": {
+        "openLockedDoors": false,
+        "openRedDoors": false,
+        "openSecretRooms": true
+    },
+    "canInteract": {
+        "active": false,
+        "type": "kick",
+        "distance": 100,
+        "explodeOnImpact": false
+    },
     "location": "rewards/items/bombs/normal.json",
     "type": "bomb",
     "starter": true,
