@@ -1,5 +1,5 @@
 import { Globals } from './Globals.js';
-import { STATES, BOUNDARY, DOOR_SIZE, DOOR_THICKNESS, CONFIG, DEBUG_FLAGS, JSON_PATHS } from './Constants.js';
+import { STATES, BOUNDARY, DOOR_SIZE, DOOR_THICKNESS, CONFIG, DEBUG_FLAGS, JSON_PATHS, STORAGE_KEYS } from './Constants.js';
 import { log, deepMerge, triggerSpeech } from './Utils.js';
 import { SFX, introMusic, unlockAudio, fadeIn, fadeOut } from './Audio.js';
 import { setupInput, handleGlobalInputs } from './Input.js';
@@ -2038,14 +2038,8 @@ export function saveUnlockOverride(file, attr, value) {
 }
 
 export function confirmNewGame() {
-    localStorage.removeItem('rogue_player_state');
-    localStorage.removeItem('rogue_transition');
-    localStorage.removeItem('current_gun');
-    localStorage.removeItem('current_bomb');
-    localStorage.removeItem('current_gun_config');
-    localStorage.removeItem('current_bomb_config');
-    localStorage.removeItem('base_gun');
-    localStorage.removeItem('rogue_current_level');
+    // Clear Persistence to ensure fresh start
+    STORAGE_KEYS.RESET_ON_NEW_GAME.forEach(key => localStorage.removeItem(key));
 
     location.reload();
 }

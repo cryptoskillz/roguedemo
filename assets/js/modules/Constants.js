@@ -42,3 +42,25 @@ export const DEBUG_FLAGS = {
     SPAWN_MODS_PLAYER: false,
     SPAWN_MODS_BULLET: true
 };
+
+export const STORAGE_KEYS = {
+    RESET_ON_NEW_GAME: [
+        'rogue_player_state',
+        'rogue_transition',
+        'current_gun',
+        'current_bomb',
+        'current_gun_config',
+        'current_bomb_config',
+        'rogue_current_level',
+        'base_gun',
+        'base_bomb',
+        'debugRoomData',
+        'game_unlocked_ids',
+        'game_unlocks',
+        'base_gun',
+        'base_bomb_config',
+        'base_gun_config',
+        'currency_red',
+        'rogue_stats'
+    ]
+};

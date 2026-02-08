@@ -1,5 +1,5 @@
 import { Globals } from './Globals.js';
-import { STATES, CONFIG } from './Constants.js';
+import { STATES, CONFIG, STORAGE_KEYS } from './Constants.js';
 // Utils might be needed if logging
 import { log } from './Utils.js';
 
@@ -458,12 +458,7 @@ export function showCredits() {
 
         // Return to Welcome
         // Clear Persistence to ensure fresh start
-        localStorage.removeItem('rogue_player_state');
-        localStorage.removeItem('rogue_transition');
-        localStorage.removeItem('current_gun');
-        localStorage.removeItem('current_bomb');
-        localStorage.removeItem('current_gun_config');
-        localStorage.removeItem('current_bomb_config');
+        STORAGE_KEYS.RESET_ON_NEW_GAME.forEach(key => localStorage.removeItem(key));
 
         // Use Global Helper to Reset State & Go to Welcome
         if (Globals.goToWelcome) {
