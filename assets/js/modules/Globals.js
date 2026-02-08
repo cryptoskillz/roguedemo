@@ -126,7 +126,7 @@ export const Globals = {
     bombsInRoom: 0,
     bulletsInRoom: 0,
     hitsInRoom: 0, // Added
-    screenShake: { power: 0, endAt: 0 },
+    screenShake: { power: 0, endAt: 0, teleport: 0 },
     ghostEntry: null, // Added
 
     // Special Entities

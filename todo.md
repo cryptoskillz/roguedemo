@@ -99,7 +99,6 @@ achivements
 
 
 Balance
-if you try to drop a bomb, or open a door when inventroy is 0 you get the cant do it sound effect
 when you beat the level unlock something all hame unlocks are session persistnet must be bought
     upddate readme 
     add correct enemies to each room

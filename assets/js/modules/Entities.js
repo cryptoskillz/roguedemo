@@ -537,7 +537,11 @@ export async function dropBomb() {
         }
     }
 
-    if (!canDrop) return false;
+    if (!canDrop) {
+        log("Can't drop bomb");
+        SFX.cantDoIt();
+        return false;
+    }
 
     // Check Delay
     const bombDelay = (Globals.bomb?.fireRate || 2) * 1000;
@@ -1156,8 +1160,10 @@ export function updateUse() {
             d.locked = 0;
             d.unlockedByKey = true;
             log(`${target.dir} door unlocked via USE (Space)`);
+            SFX.doorUnlocked();
         } else {
             log("Door is locked - no keys");
+            SFX.doorLocked();
         }
         return;
     }
@@ -1209,7 +1215,11 @@ export function updateRestart() {
         // BUT if Debug is ON, we want to Keep Weapon (handled in Game.js via resetWeaponState check)
 
         if (Globals.restartGame) Globals.restartGame(false);
-
+        const shakePower = 10;
+        Globals.screenShake.power = Math.max(Globals.screenShake.power, shakePower);
+        Globals.screenShake.endAt = Date.now() + 500;
+        Globals.screenShake.teleport = 1; // Trigger Teleport Effect
+        SFX.restart();
         Globals.keys['KeyR'] = false; // consume key
     }
 
@@ -2626,13 +2636,28 @@ export function drawBombs(doors) {
 
 
 export function updateBombDropping() {
-    if (Globals.keys['KeyB'] && Globals.player.inventory?.bombs > 0 && Globals.player.bombType) {
-        // dropBomb handles delay checks, overlap checks, and valid position checks
-        dropBomb().then(dropped => {
-            if (dropped) {
-                Globals.player.inventory.bombs--;
+    if (Globals.keys['KeyB']) {
+        // 1. Check Inventory
+        const bombCount = Globals.player.inventory?.bombs || 0;
+
+        if (bombCount <= 0) {
+            // Error Sound (Debounced)
+            const now = Date.now();
+            if (now - (Globals.player.lastBombError || 0) > 500) {
+                SFX.cantDoIt();
+                Globals.player.lastBombError = now;
             }
-        });
+            return;
+        }
+
+        // 2. Check Type (Should always exist)
+        if (Globals.player.bombType) {
+            dropBomb().then(dropped => {
+                if (dropped) {
+                    Globals.player.inventory.bombs--;
+                }
+            });
+        }
     }
 }
 export function updateMovementAndDoors(doors, roomLocked) {
