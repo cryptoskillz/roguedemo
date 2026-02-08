@@ -288,105 +288,142 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         Globals.roomManifest = mData;
 
         // LOAD STARTING ITEMS
+        // LOAD STARTING ITEMS & UNLOCKS
         Globals.groundItems = [];
+        let allItems = [];
+
+        // 1. Manifest Items
         if (itemMan && itemMan.items) {
             log("Loading Items Manifest:", itemMan.items.length);
             const itemPromises = itemMan.items.map(i =>
-                fetch(`${JSON_PATHS.ROOT}rewards/items/${i}.json?t=` + Date.now()).then(r => r.json()).catch(e => {
-                    console.error("Failed to load item:", i, e);
-                    return null;
-                })
+                fetch(`${JSON_PATHS.ROOT}rewards/items/${i}.json?t=` + Date.now())
+                    .then(r => r.json())
+                    .catch(e => {
+                        console.error("Failed to load item:", i, e);
+                        return null;
+                    })
             );
-            const allItems = await Promise.all(itemPromises);
-            window.allItemTemplates = allItems; // Expose for room drops
-
-            // ENHANCE: Fetch color from target config
-            await Promise.all(allItems.map(async (item) => {
-                if (!item || !item.location) return;
-                try {
-                    const url = item.location.startsWith(JSON_PATHS.ROOT) ? item.location : `${JSON_PATHS.ROOT}${item.location}`;
-                    const res = await fetch(`${url}?t=${Date.now()}`);
-                    const config = await res.json();
-
-                    // Check Top Level (Bombs/Modifiers) OR Bullet Level (Guns)
-                    const color = config.colour || config.color ||
-                        (config.Bullet && (config.Bullet.colour || config.Bullet.color));
-
-                    if (color) {
-                        item.colour = color;
-                    }
-                } catch (e) {
-                    // console.warn("Could not load config for color:", item.name);
-                }
-            }));
-
-            // Filter starters
-            // Legacy: Previously spawned all 'starter:false' items.
-            // NOW: Only spawn if DEBUG flag is set.
-            // Filter starters
-            // Legacy: Previously spawned all 'starter:false' items.
-            // NOW: Spawn based on granular DEBUG flags.
-            const starters = allItems.filter(i => {
-                if (!i) return false;
-
-                // 1. Explicitly enabled by ALL flag
-                if (DEBUG_FLAGS.SPAWN_ALL_ITEMS) return true;
-
-                // 2. Category Checks
-                const isGun = i.type === 'gun';
-                const isBomb = i.type === 'bomb';
-                const isMod = i.type === 'modifier';
-                const loc = (i.location || "").toLowerCase();
-
-                // Inventory (Keys/Bombs/Consumables) - often identified by path or lack of "modifier" type?
-                // Actually user defines them as type="modifier" usually. 
-                // Let's look for "inventory" in path.
-                const isInventory = isMod && loc.includes('inventory');
-
-                // Player Mods (Stats, Shields)
-                const isPlayerMod = isMod && loc.includes('modifiers/player') && !isInventory;
-
-                // Bullet Mods (Homing, FireRate, etc)
-                const isBulletMod = isMod && loc.includes('modifiers/bullets');
-
-                if (DEBUG_FLAGS.SPAWN_GUNS && isGun) return true;
-                if (DEBUG_FLAGS.SPAWN_BOMBS && isBomb) return true;
-                if (DEBUG_FLAGS.SPAWN_INVENTORY && isInventory) return true;
-                if (DEBUG_FLAGS.SPAWN_MODS_PLAYER && isPlayerMod) return true;
-                if (DEBUG_FLAGS.SPAWN_MODS_BULLET && isBulletMod) return true;
-
-                return false;
-            });
-            log(`Found ${allItems.length} total items. Spawning ${starters.length} floor items.`);
-
-            // Spawn them in a row
-            // Spawn them in a grid within safe margins
-            const marginX = Globals.canvas.width * 0.2;
-            const marginY = Globals.canvas.height * 0.2;
-            const safeW = Globals.canvas.width - (marginX * 2);
-            const itemSpacing = 80;
-            const cols = Math.floor(safeW / itemSpacing);
-
-            starters.forEach((item, idx) => {
-                const c = idx % cols;
-                const r = Math.floor(idx / cols);
-
-                groundItems.push({
-                    x: marginX + (c * itemSpacing) + (itemSpacing / 2),
-                    y: marginY + (r * itemSpacing) + (itemSpacing / 2),
-                    data: item,
-                    roomX: 0,
-                    roomY: 0,
-                    // Add physics properties immediately
-                    vx: 0, vy: 0,
-                    solid: true, moveable: true, friction: 0.9, size: 15,
-                    floatOffset: Math.random() * 100
-                });
-            });
-            log(`Spawned ${starters.length} starter items.`);
-        } else {
-            log("No item manifest found!");
+            const manifestItems = await Promise.all(itemPromises);
+            allItems = allItems.concat(manifestItems);
         }
+
+        // 2. Spawnable Unlocks
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        if (unlockedIds.length > 0) {
+            log(`Checking ${unlockedIds.length} unlocks for spawnables...`);
+            const unlockPromises = unlockedIds.map(id =>
+                fetch(`${JSON_PATHS.ROOT}rewards/unlocks/${id}.json?t=` + Date.now())
+                    .then(r => r.json())
+                    .then(async data => {
+                        if (data.spawnable && data.json) {
+                            const path = data.json;
+                            // Ensure path logic matches other loaders
+                            const res = await fetch(`${JSON_PATHS.ROOT}${path}?t=` + Date.now());
+                            if (res.ok) {
+                                const item = await res.json();
+                                item._isUnlock = true; // Tag it debug
+                                return item;
+                            }
+                        }
+                        return null;
+                    })
+                    .catch(e => {
+                        // console.warn("Failed to load unlock:", id); // Expected for non-item unlocks
+                        return null;
+                    })
+            );
+            const unlockedItems = await Promise.all(unlockPromises);
+            const valid = unlockedItems.filter(i => i);
+            log(`Loaded ${valid.length} spawnable unlocks.`);
+            allItems = allItems.concat(valid);
+        }
+        window.allItemTemplates = allItems; // Expose for room drops
+
+        // ENHANCE: Fetch color from target config
+        await Promise.all(allItems.map(async (item) => {
+            if (!item || !item.location) return;
+            try {
+                const url = item.location.startsWith(JSON_PATHS.ROOT) ? item.location : `${JSON_PATHS.ROOT}${item.location}`;
+                const res = await fetch(`${url}?t=${Date.now()}`);
+                const config = await res.json();
+
+                // Check Top Level (Bombs/Modifiers) OR Bullet Level (Guns)
+                const color = config.colour || config.color ||
+                    (config.Bullet && (config.Bullet.colour || config.Bullet.color));
+
+                if (color) {
+                    item.colour = color;
+                }
+            } catch (e) {
+                // console.warn("Could not load config for color:", item.name);
+            }
+        }));
+
+        // Filter starters
+        // Legacy: Previously spawned all 'starter:false' items.
+        // NOW: Only spawn if DEBUG flag is set.
+        // Filter starters
+        // Legacy: Previously spawned all 'starter:false' items.
+        // NOW: Spawn based on granular DEBUG flags.
+        const starters = allItems.filter(i => {
+            if (!i) return false;
+
+            // 1. Explicitly enabled by ALL flag
+            if (DEBUG_FLAGS.SPAWN_ALL_ITEMS) return true;
+
+            // 2. Category Checks
+            const isGun = i.type === 'gun';
+            const isBomb = i.type === 'bomb';
+            const isMod = i.type === 'modifier';
+            const loc = (i.location || "").toLowerCase();
+
+            // Inventory (Keys/Bombs/Consumables) - often identified by path or lack of "modifier" type?
+            // Actually user defines them as type="modifier" usually. 
+            // Let's look for "inventory" in path.
+            const isInventory = isMod && loc.includes('inventory');
+
+            // Player Mods (Stats, Shields)
+            const isPlayerMod = isMod && loc.includes('modifiers/player') && !isInventory;
+
+            // Bullet Mods (Homing, FireRate, etc)
+            const isBulletMod = isMod && loc.includes('modifiers/bullets');
+
+            if (DEBUG_FLAGS.SPAWN_GUNS && isGun) return true;
+            if (DEBUG_FLAGS.SPAWN_BOMBS && isBomb) return true;
+            if (DEBUG_FLAGS.SPAWN_INVENTORY && isInventory) return true;
+            if (DEBUG_FLAGS.SPAWN_MODS_PLAYER && isPlayerMod) return true;
+            if (DEBUG_FLAGS.SPAWN_MODS_BULLET && isBulletMod) return true;
+
+            return false;
+        });
+        log(`Found ${allItems.length} total items. Spawning ${starters.length} floor items.`);
+
+        // Spawn them in a row
+        // Spawn them in a grid within safe margins
+        const marginX = Globals.canvas.width * 0.2;
+        const marginY = Globals.canvas.height * 0.2;
+        const safeW = Globals.canvas.width - (marginX * 2);
+        const itemSpacing = 80;
+        const cols = Math.floor(safeW / itemSpacing);
+
+        starters.forEach((item, idx) => {
+            const c = idx % cols;
+            const r = Math.floor(idx / cols);
+
+            groundItems.push({
+                x: marginX + (c * itemSpacing) + (itemSpacing / 2),
+                y: marginY + (r * itemSpacing) + (itemSpacing / 2),
+                data: item,
+                roomX: 0,
+                roomY: 0,
+                // Add physics properties immediately
+                vx: 0, vy: 0,
+                solid: true, moveable: true, friction: 0.9, size: 15,
+                floatOffset: Math.random() * 100
+            });
+        });
+        log(`Spawned ${starters.length} starter items.`);
+
 
         // Load all players
         Globals.availablePlayers = [];

@@ -3420,7 +3420,7 @@ export function spawnRoomRewards(dropConfig, label = null) {
                 (i.rarity || 'common').toLowerCase() === rarity.toLowerCase() &&
                 i.starter === false &&
                 i.special !== true &&
-                isUnlocked(i)
+                (i._isUnlock === true || isUnlocked(i))
             );
 
             if (candidates.length > 0) {

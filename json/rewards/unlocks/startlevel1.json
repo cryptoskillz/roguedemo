@@ -4,5 +4,6 @@
     "unlock": "startlevel1",
     "json": "game.json",
     "attr": "startLevel",
-    "value": "json/levels/1.json"
+    "value": "json/levels/1.json",
+    "spawnable": false
 }

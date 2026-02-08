@@ -6,7 +6,7 @@
     "speedGoal": 10000,
     "item": {
         "common": {
-            "count": 1,
+            "count": 10,
             "dropChance": 0.7
         },
         "uncommon": {

@@ -4,5 +4,6 @@
     "unlock": "pause",
     "json": "game.json",
     "attr": "pause",
-    "value": true
+    "value": true,
+    "spawnable": false
 }

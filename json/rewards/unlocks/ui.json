@@ -4,5 +4,6 @@
     "unlock": "ui",
     "json": "game.json",
     "attr": "showUI",
-    "value": true
+    "value": true,
+    "spawnable": false
 }

@@ -4,5 +4,6 @@
     "unlock": "rooms",
     "json": "",
     "attr": "",
-    "value": ""
+    "value": "",
+    "spawnable": false
 }

@@ -4,5 +4,6 @@
     "unlock": "firstboss",
     "json": "",
     "attr": "",
-    "value": ""
+    "value": "",
+    "spawnable": false
 }

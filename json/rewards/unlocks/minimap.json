@@ -4,5 +4,6 @@
     "unlock": "minimap",
     "json": "game.json",
     "attr": "showMinimap",
-    "value": true
+    "value": true,
+    "spawnable": false
 }

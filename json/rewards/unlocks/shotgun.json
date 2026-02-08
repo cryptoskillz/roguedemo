@@ -4,5 +4,6 @@
     "unlock": "shotgun",
     "json": "rewards/items/guns/player/shotgun.json",
     "attr": "",
-    "value": true
+    "value": true,
+    "spawnable": true
 }
