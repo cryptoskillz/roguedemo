@@ -1,7 +1,7 @@
 {
     "name": "spread rate boost",
     "description": "boosts bullet spread rate",
-    "location": "items/modifiers/bullets/spreadrate.json",
+    "location": "rewards/items/modifiers/bullets/spreadrate.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

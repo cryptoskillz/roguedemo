@@ -53,10 +53,10 @@
                 "damage": 1.5
             },
             "gunner": {
-                "gun": "json/items/guns/enemy/peashooter.json"
+                "gun": "json/rewards/items/guns/player/peashooter.json"
             },
             "turret": {
-                "gun": "json/items/guns/enemy/peashooter.json",
+                "gun": "json/rewards/items/guns/player/peashooter.json",
                 "moveType": "static"
             },
             "medium": {}
@@ -236,7 +236,7 @@
                 "dropChance": 1
             },
             "special": {
-                "item": "/items/gun_ghost.json"
+                "item": "json/rewards/items/guns/player/ghost.json"
             }
         }
     },

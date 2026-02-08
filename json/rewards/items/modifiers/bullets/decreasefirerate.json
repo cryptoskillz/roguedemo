@@ -1,7 +1,7 @@
 {
     "name": "Fire Rate -0.1",
     "description": "decreases fire rate by 0.1",
-    "location": "items/modifiers/bullets/decreasefirerate.json",
+    "location": "rewards/items/modifiers/bullets/decreasefirerate.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

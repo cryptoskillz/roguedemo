@@ -1,7 +1,7 @@
 {
     "name": "damage boost",
     "description": "boosts bullet damage",
-    "location": "items/modifiers/bullets/damage.json",
+    "location": "rewards/items/modifiers/bullets/damage.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

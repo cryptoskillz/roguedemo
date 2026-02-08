@@ -1,7 +1,7 @@
 {
     "name": "Critical Chance",
     "description": "bullets that deal more damage on critical hits",
-    "location": "items/modifiers/bullets/critChance.json",
+    "location": "rewards/items/modifiers/bullets/critChance.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

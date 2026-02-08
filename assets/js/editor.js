@@ -238,7 +238,7 @@ async function loadAssetManifests() {
 
         loadedAssets.items = manifestItems.items.map(i => ({
             id: i,
-            file: `${i}.json`,
+            file: `json/rewards/items/${i}.json`,
             type: 'item'
         }));
 
@@ -259,19 +259,33 @@ async function loadAssetManifests() {
         // Load Weapon Components (Nested Items)
         const loadWeaponType = async (category, subPath, keyName) => {
             try {
-                const res = await fetch(`json/items/${subPath}/manifest.json`);
+                // Adjust path for inventory which is flattened in rewards/items
+                let fetchPath = `json/rewards/items/${subPath}/manifest.json`;
+                if (keyName.includes('inventory')) {
+                    fetchPath = `json/rewards/items/inventory/manifest.json`; // Consolidated inventory manifest? Or just read directory?
+                    // Actually, rewards/items/inventory has individual item files but maybe no manifest?
+                    // Let's assume we use the main items manifest or we check if a per-folder manifest exists. 
+                    // To keep it simple for now, we'll try to load the specific folder manifest if it exists, 
+                    // OR we might need to rely on manual mappings if manifests are missing.
+                    // Given the structure, let's try the subPath as requested but with "rewards/items".
+                }
+
+                // If inventory/bombs or inventory/key, they are now just in "inventory"
+                // So we map subPath:
+                let finalSubPath = subPath;
+                if (subPath === 'inventory/bombs' || subPath === 'inventory/key') {
+                    finalSubPath = 'inventory';
+                }
+
+                const res = await fetch(`json/rewards/items/${finalSubPath}/manifest.json`);
+                if (!res.ok) return; // Skip if missing
+
                 const manifest = await res.json();
-                // Assumes manifest has a key like "items", "guns", "modifiers", etc.
-                // We need to inspect the manifest structure. 
-                // Based on `json/weapons/guns/enemy/manifest.json` cursor: let's assumes standard arrays.
-                // Or just use Object.values(manifest)[0] if key varies.
-                // But for safety, let's assume specific keys if known or just iterate.
-                // Actually, cleaner V1: map whatever array is found.
                 const list = manifest.guns || manifest.items || manifest.modifiers || manifest.bombs || manifest.keys || [];
 
                 loadedAssets.weapons[keyName] = list.map(i => ({
                     id: i,
-                    file: `json/items/${subPath}/${i}.json`,
+                    file: `json/rewards/items/${finalSubPath}/${i}.json`,
                     type: 'item' // Treat as items for placement
                 }));
             } catch (err) {

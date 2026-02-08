@@ -1,7 +1,7 @@
 {
     "name": "360 fire",
     "description": "bullets that fire in all directions",
-    "location": "items/modifiers/bullets/360.json",
+    "location": "rewards/items/modifiers/bullets/360.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

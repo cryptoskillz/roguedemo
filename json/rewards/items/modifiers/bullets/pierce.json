@@ -1,7 +1,7 @@
 {
     "name": "pierce bullets",
     "description": "bullets that pierce through enemies",
-    "location": "items/modifiers/bullets/pierce.json",
+    "location": "rewards/items/modifiers/bullets/pierce.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

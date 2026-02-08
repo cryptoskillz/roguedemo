@@ -1,7 +1,7 @@
 {
     "name": "speed boost",
     "description": "boosts bullet speed",
-    "location": "items/modifiers/bullets/speed.json",
+    "location": "rewards/items/modifiers/bullets/speed.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

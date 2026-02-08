@@ -1,5 +1,5 @@
 import { Globals } from './Globals.js';
-import { STATES, BOUNDARY, DOOR_SIZE, DOOR_THICKNESS, CONFIG, DEBUG_FLAGS } from './Constants.js';
+import { STATES, BOUNDARY, DOOR_SIZE, DOOR_THICKNESS, CONFIG, DEBUG_FLAGS, JSON_PATHS } from './Constants.js';
 import { log, deepMerge, triggerSpeech } from './Utils.js';
 import { SFX, introMusic, unlockAudio, fadeIn, fadeOut } from './Audio.js';
 import { setupInput, handleGlobalInputs } from './Input.js';
@@ -148,13 +148,13 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
     try {
         // 1. Load Game Config First
-        let gData = await fetch('/json/game.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ perfectGoal: 3, NoRooms: 11 }));
+        let gData = await fetch(JSON_PATHS.GAME + '?t=' + Date.now()).then(res => res.json()).catch(() => ({ perfectGoal: 3, NoRooms: 11 }));
 
         // 1b. Load Lore & Speech Data
         try {
             const [lData, sData] = await Promise.all([
-                fetch('/json/enemies/lore/names.json?t=' + Date.now()).then(r => r.json()).catch(() => null),
-                fetch('/json/enemies/lore/speech.json?t=' + Date.now()).then(r => r.json()).catch(() => null)
+                fetch(JSON_PATHS.ENEMIES.LORE_NAMES + '?t=' + Date.now()).then(r => r.json()).catch(() => null),
+                fetch(JSON_PATHS.ENEMIES.LORE_SPEECH + '?t=' + Date.now()).then(r => r.json()).catch(() => null)
             ]);
             Globals.loreData = lData;
             Globals.speechData = sData;
@@ -189,7 +189,8 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             const saved = localStorage.getItem('game_unlocks');
             if (saved) {
                 const overrides = JSON.parse(saved);
-                const targetKeys = ['json/game.json', 'game.json', '/json/game.json'];
+                // Target keys might still be old format in storage, so we keep compatibility or just check new
+                const targetKeys = [JSON_PATHS.GAME, 'game.json', '/json/game.json'];
                 targetKeys.forEach(k => {
                     if (overrides[k]) {
                         log("Applying Unlock Overrides for:", k, overrides[k]);
@@ -218,7 +219,13 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         if (levelFile) {
             try {
                 log("Loading Level:", levelFile);
-                const url = levelFile.startsWith('json/') ? levelFile : `json/${levelFile}`;
+                // Normalize path to prevent double prefixing
+                let normalized = levelFile;
+                if (normalized.startsWith('json/')) normalized = normalized.substring(5);
+                if (normalized.startsWith('/json/')) normalized = normalized.substring(6);
+                if (normalized.startsWith('/')) normalized = normalized.substring(1);
+
+                const url = `${JSON_PATHS.ROOT}${normalized}`;
                 const levelRes = await fetch(`${url}?t=${Date.now()}`);
                 if (levelRes.ok) {
                     const levelData = await levelRes.json();
@@ -245,9 +252,9 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
         // 3. Load Manifests in Parallel
         const [manData, mData, itemMan] = await Promise.all([
-            fetch('/json/players/manifest.json?t=' + Date.now()).then(res => res.json()),
-            fetch('json/rooms/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] })),
-            fetch('json/rewards/items/manifest.json?t=' + Date.now()).then(res => res.json()).catch(() => ({ items: [] }))
+            fetch(JSON_PATHS.MANIFESTS.PLAYERS + '?t=' + Date.now()).then(res => res.json()),
+            fetch(JSON_PATHS.MANIFESTS.ROOMS + '?t=' + Date.now()).then(res => res.json()).catch(() => ({ rooms: [] })),
+            fetch(JSON_PATHS.MANIFESTS.ITEMS + '?t=' + Date.now()).then(res => res.json()).catch(() => ({ items: [] }))
         ]);
 
 
@@ -289,7 +296,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         if (itemMan && itemMan.items) {
             log("Loading Items Manifest:", itemMan.items.length);
             const itemPromises = itemMan.items.map(i =>
-                fetch(`json/rewards/items/${i}.json?t=` + Date.now()).then(r => r.json()).catch(e => {
+                fetch(`${JSON_PATHS.ROOT}rewards/items/${i}.json?t=` + Date.now()).then(r => r.json()).catch(e => {
                     console.error("Failed to load item:", i, e);
                     return null;
                 })
@@ -301,7 +308,8 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             await Promise.all(allItems.map(async (item) => {
                 if (!item || !item.location) return;
                 try {
-                    const res = await fetch(`json/${item.location}?t=` + Date.now());
+                    const url = item.location.startsWith(JSON_PATHS.ROOT) ? item.location : `${JSON_PATHS.ROOT}${item.location}`;
+                    const res = await fetch(`${url}?t=${Date.now()}`);
                     const config = await res.json();
 
                     // Check Top Level (Bombs/Modifiers) OR Bullet Level (Guns)
@@ -439,7 +447,9 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
                 if (gRes.ok) {
                     fetchedGun = await gRes.json();
                     if (fetchedGun.location) {
-                        const realRes = await fetch(`json/${fetchedGun.location}?t=` + Date.now());
+                        let loc = fetchedGun.location;
+                        if (loc.startsWith('items/')) loc = 'rewards/' + loc;
+                        const realRes = await fetch(`${JSON_PATHS.ROOT}${loc}?t=` + Date.now());
                         if (realRes.ok) fetchedGun = await realRes.json();
                     }
                 } else console.error("Gun fetch failed:", gRes.status, gRes.statusText);
@@ -455,7 +465,10 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
                 if (res.ok) {
                     fetchedGun = await res.json();
                     if (fetchedGun.location) {
-                        const realRes = await fetch(`json/${fetchedGun.location}?t=` + Date.now());
+                        // Normalize location path
+                        let loc = fetchedGun.location;
+                        if (loc.startsWith('items/')) loc = 'rewards/' + loc;
+                        const realRes = await fetch(`${JSON_PATHS.ROOT}${loc}?t=` + Date.now());
                         if (realRes.ok) fetchedGun = await realRes.json();
                     }
                     player.gunType = 'peashooter'; // Update player state
@@ -470,7 +483,9 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
                 if (bRes.ok) {
                     fetchedBomb = await bRes.json();
                     if (fetchedBomb.location) {
-                        const realRes = await fetch(`json/${fetchedBomb.location}?t=` + Date.now());
+                        let loc = fetchedBomb.location;
+                        if (loc.startsWith('items/')) loc = 'rewards/' + loc;
+                        const realRes = await fetch(`${JSON_PATHS.ROOT}${loc}?t=` + Date.now());
                         if (realRes.ok) fetchedBomb = await realRes.json();
                     }
                 }

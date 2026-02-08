@@ -3,7 +3,7 @@
     "description": "the biggest bomb we have",
     "drawType": "arc",
     "playerDraw": "arc",
-    "location": "items/bombs/golden.json",
+    "location": "rewards/items/bombs/golden.json",
     "type": "bomb",
     "starter": false,
     "consumed": true,

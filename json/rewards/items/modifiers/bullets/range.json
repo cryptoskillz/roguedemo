@@ -1,7 +1,7 @@
 {
     "name": "range boost",
     "description": "boosts bullet range",
-    "location": "items/modifiers/bullets/range.json",
+    "location": "rewards/items/modifiers/bullets/range.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

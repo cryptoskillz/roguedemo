@@ -3,7 +3,7 @@
     "description": "the remote bomb become the time",
     "drawType": "arc",
     "playerDraw": "arc",
-    "location": "items/bombs/remote.json",
+    "location": "rewards/items/bombs/remote.json",
     "type": "bomb",
     "starter": false,
     "special": false,

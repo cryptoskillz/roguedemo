@@ -3,7 +3,7 @@
     "description": "the red bomb good for doors",
     "drawType": "arc",
     "playerDraw": "arc",
-    "location": "items/bombs/red.json",
+    "location": "rewards/items/bombs/red.json",
     "type": "bomb",
     "starter": false,
     "special": false,

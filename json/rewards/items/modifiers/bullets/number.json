@@ -1,7 +1,7 @@
 {
     "name": "Bullet +1",
     "description": "Increase Number of bullets",
-    "location": "items/modifiers/bullets/number.json",
+    "location": "rewards/items/modifiers/bullets/number.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

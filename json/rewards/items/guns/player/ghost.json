@@ -1,7 +1,7 @@
 {
     "name": "ghost gun",
     "description": "the ghost gun, super powerful",
-    "location": "items/guns/player/ghost.json",
+    "location": "rewards/items/guns/player/ghost.json",
     "type": "gun",
     "starter": false,
     "consumed": true,

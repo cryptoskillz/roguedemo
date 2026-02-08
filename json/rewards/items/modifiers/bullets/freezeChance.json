@@ -1,7 +1,7 @@
 {
     "name": "Freeze Chance",
     "description": "bullets that freeze enemies for longer",
-    "location": "items/modifiers/bullets/freezeChance.json",
+    "location": "rewards/items/modifiers/bullets/freezeChance.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

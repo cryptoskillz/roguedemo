@@ -1,7 +1,7 @@
 {
     "name": "size boost",
     "description": "boosts bullet size",
-    "location": "items/modifiers/bullets/size.json",
+    "location": "rewards/items/modifiers/bullets/size.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

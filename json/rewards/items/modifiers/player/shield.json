@@ -1,7 +1,7 @@
 {
     "name": "Shield",
     "description": "the Basic shield",
-    "location": "items/modifiers/player/shield.json",
+    "location": "rewards/items/modifiers/player/shield.json",
     "type": "modifier",
     "modify": "player",
     "modifiers": {

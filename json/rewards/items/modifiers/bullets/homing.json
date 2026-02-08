@@ -1,7 +1,7 @@
 {
     "name": "homing bullets",
     "description": "bullets that home in on enemies",
-    "location": "items/modifiers/bullets/homing.json",
+    "location": "rewards/items/modifiers/bullets/homing.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

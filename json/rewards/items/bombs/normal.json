@@ -3,7 +3,7 @@
     "description": "the Basic bomb",
     "drawType": "arc",
     "playerDraw": "arc",
-    "location": "items/bombs/normal.json",
+    "location": "rewards/items/bombs/normal.json",
     "type": "bomb",
     "starter": true,
     "consumed": true,

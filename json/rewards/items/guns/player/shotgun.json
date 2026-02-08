@@ -1,7 +1,7 @@
 {
     "name": "Shotgun",
     "description": "the shotgun",
-    "location": "items/guns/player/shotgun.json",
+    "location": "rewards/items/guns/player/shotgun.json",
     "type": "gun",
     "starter": false,
     "special": false,

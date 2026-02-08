@@ -4,11 +4,21 @@ export const BOUNDARY = 20;
 export const DOOR_SIZE = 50;
 export const DOOR_THICKNESS = 15;
 
-//json constants
-
-export const JSON_PATH = "/json/";
-export const JSON_ENEMIES = `${JSON_PATH}enemies.json`;
-export const JSON_ENEMIES_SPECIAL = `${JSON_PATH}enemies/special/`;
+// JSON Paths
+export const JSON_PATHS = {
+    ROOT: "/json/",
+    GAME: "/json/game.json",
+    ENEMIES: {
+        LORE_NAMES: "/json/enemies/lore/names.json",
+        LORE_SPEECH: "/json/enemies/lore/speech.json",
+        SPECIAL_DIR: "/json/enemies/special/"
+    },
+    MANIFESTS: {
+        PLAYERS: "/json/players/manifest.json",
+        ROOMS: "json/rooms/manifest.json",
+        ITEMS: "json/rewards/items/manifest.json"
+    }
+};
 
 
 export const CONFIG = {

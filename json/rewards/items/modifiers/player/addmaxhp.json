@@ -1,7 +1,7 @@
 {
     "name": "Max Hp+1",
     "description": "Increases max hp by 1",
-    "location": "items/modifiers/player/addmaxhp.json",
+    "location": "rewards/items/modifiers/player/addmaxhp.json",
     "type": "modifier",
     "starter": false,
     "special": false,

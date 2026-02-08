@@ -1,7 +1,7 @@
 {
     "name": "Key +3",
     "description": "Adds 3 keys to your inventory",
-    "location": "items/inventory/key/add3.json",
+    "location": "rewards/items/inventory/add3keys.json",
     "type": "modifier",
     "modify": "player",
     "modifiers": {

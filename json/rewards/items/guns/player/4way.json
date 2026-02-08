@@ -1,7 +1,7 @@
 {
     "name": "4 way gun",
     "description": "the 4 way gun",
-    "location": "items/guns/player/4way.json",
+    "location": "rewards/items/guns/player/4way.json",
     "type": "gun",
     "starter": false,
     "special": false,

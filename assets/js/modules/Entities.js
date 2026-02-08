@@ -2,7 +2,7 @@ import { Globals } from './Globals.js';
 import { log, spawnFloatingText, triggerSpeech } from './Utils.js';
 import { SFX } from './Audio.js';
 import { generateLore } from './Utils.js'; // Assuming generateLore is in Utils (or I need to extract it)
-import { CONFIG, STATES, BOUNDARY, DOOR_SIZE } from './Constants.js';
+import { CONFIG, STATES, BOUNDARY, DOOR_SIZE, JSON_PATHS } from './Constants.js';
 import { updateWelcomeScreen, updateUI, drawTutorial, drawMinimap, drawBossIntro, updateFloatingTexts, drawFloatingTexts, showCredits, updateGameStats } from './UI.js';
 
 // Functions will be appended below
@@ -2734,7 +2734,7 @@ export async function pickupItem(item, index) {
     try {
         if (!location) throw new Error("No location definition for complex item");
 
-        const res = await fetch(`json/${location}?t=${Date.now()}`);
+        const res = await fetch(`${JSON_PATHS.ROOT}${location}?t=${Date.now()}`);
         const config = await res.json();
 
         if (type === 'gun') {
@@ -2765,7 +2765,7 @@ export async function pickupItem(item, index) {
                     data: {
                         name: "gun_" + oldName,
                         type: "gun",
-                        location: `items/guns/player/${oldName}.json`,
+                        location: `rewards/items/guns/player/${oldName}.json`,
                         rarity: "common",
                         starter: false, // Old gun is no longer starter?
                         colour: (Globals.gun.Bullet && (Globals.gun.Bullet.colour || Globals.gun.Bullet.color)) || Globals.gun.colour || Globals.gun.color || "gold"
@@ -2814,7 +2814,7 @@ export async function pickupItem(item, index) {
             // PERSIST UNLOCKS ONLY (Peashooter)
             try {
                 const saved = JSON.parse(localStorage.getItem('game_unlocks') || '{}');
-                const key = 'json/game.json';
+                const key = JSON_PATHS.GAME;
                 if (!saved[key]) saved[key] = {};
                 if (location.endsWith('peashooter.json')) {
                     saved[key].unlocked_peashooter = true;

@@ -1,7 +1,7 @@
 {
     "name": "2 way fire",
     "description": "bullets that fire in forward and reverse directions",
-    "location": "items/modifiers/bullets/2way.json",
+    "location": "rewards/items/modifiers/bullets/2way.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {

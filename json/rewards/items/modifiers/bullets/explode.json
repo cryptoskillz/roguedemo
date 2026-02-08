@@ -1,7 +1,7 @@
 {
     "name": "explode",
     "description": "bullets that explode on impact",
-    "location": "items/modifiers/bullets/explode.json",
+    "location": "rewards/items/modifiers/bullets/explode.json",
     "type": "modifier",
     "modify": "gun",
     "modifiers": {
