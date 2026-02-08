@@ -112,11 +112,9 @@ export const Globals = {
     isUnlocking: false,
     isRestart: false,
 
-    // Timers
-    lastInputTime: 0,
-    roomStartTime: 0,
     roomFreezeUntil: 0,
     bossIntroEndTime: 0,
+
     perfectStreak: 0,
     pauseStartTime: 0,
     lastMusicToggle: 0,

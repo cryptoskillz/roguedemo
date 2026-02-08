@@ -798,6 +798,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
         // if (gameState === STATES.PLAY) { spawnEnemies(); ... } 
         // Logic removed: startGame() handles spawning now.
+        Globals.isGameStarting = false;
 
         if (!Globals.gameLoopStarted) {
             Globals.gameLoopStarted = true;
@@ -1697,6 +1698,10 @@ export function updateRoomTransitions(doors, roomLocked) {
     // Increased threshold to account for larger player sizes (Triangle=20)
     const t = 50;
 
+    // PREVENT INSTANT BACK-TRANSITION
+    // Wait for 500ms after room start before allowing another transition
+    if (Date.now() - Globals.roomStartTime < 500) return;
+
     // Debug Door Triggers
     if (Globals.player.x < t + 10 && doors.left?.active) {
         // log(`Left Door Check: X=${Math.round(player.x)} < ${t}? Locked=${doors.left.locked}, RoomLocked=${roomLocked}`);
@@ -1883,7 +1888,6 @@ export function gameOver() {
     const h1 = document.querySelector('#overlay h1');
     if (Globals.gameState === STATES.WIN) {
         h1.innerText = "VICTORY!";
-        h1.style.color = "#f1c40f"; // Gold
     } else {
         h1.innerText = "Game Over";
         h1.style.color = "red";
@@ -2097,6 +2101,8 @@ export async function handleUnlocks(unlockKeys) {
     // Process first unlock
     await showNextUnlock();
 }
+
+
 
 
 export async function showNextUnlock() {

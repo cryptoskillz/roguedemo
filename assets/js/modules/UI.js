@@ -476,12 +476,7 @@ export function showCredits() {
         <h1 style="font-size: 4em; color: #f1c40f; margin-bottom: 20px;">THE END</h1>
         <div id="credits-scroll" style="height: 60%; width: 100%; overflow: hidden; position: relative; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);">
             <div id="credits-content" style="position: absolute; width: 100%; text-align: center; top: 100%;">
-                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
-                <p style="color: #ccc;">Cryptoskillz</p>
-                <br>
-                <p style="font-size: 1.5em; margin: 20px 0; color: #e74c3c;">Art & Assets</p>
-                <p style="color: #ccc;">Generated with AI (thanks Antigravity!)</p>
-                <br>
+             
                 <p style="font-size: 1.5em; margin: 20px 0; color: #2ecc71;">You slaughtered the following innocent creatures</p>
                 <div style="color: #ccc; font-family: monospace; text-align: left; display: inline-block; margin: 0 auto;">
                      <p>Enemies Killed (Session): <span style="color: #e74c3c">${Globals.killEnemySessionCount}</span></p>
@@ -491,8 +486,14 @@ export function showCredits() {
                      <p>Total Bosses Defeated: <span style="color: #f1c40f">${Globals.killBossCount}</span></p>
                      <p>Total Deaths: <span style="color: #95a5a6">${Globals.playerDeathCount}</span></p>
                 </div>
+                   <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
+                <p style="color: #ccc;">Cryptoskillz</p>
+                <br>
+                <p style="font-size: 1.5em; margin: 20px 0; color: #e74c3c;">Art & Assets</p>
+                <p style="color: #ccc;">Generated with AI (thanks Antigravity!)</p>
+                <br>
                 <br><br><br>
-                <p style="font-size: 1.2em; color: #f1c40f;">Goodbye, friend :]</p>
+                <p style="font-size: 1.2em; color: #f1c40f;">Goodbye, you psychopath</p>
                 <br><br><br><br>
                 <p style="font-size: 0.8em; color: #555;">Press any key to return to menu</p>
             </div>

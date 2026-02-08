@@ -43,8 +43,7 @@ bugs
 
 
 next up 
-    balance 7
-    bug fix 6
+  
     sfx & ui updates
         game settings
             inventory
@@ -56,6 +55,7 @@ next up
             unlocked rooms
             unlocked guns
             unlocked bombs
+    bug fix 6
     ghost
     rooms
     items
@@ -101,9 +101,7 @@ achivements
 
 Balance
 
-    upddate readme 
-    update credits with the session and global stat
-     add a timer (as unlock and store time for each level)
+     add a run timer
 
 Balance 7 ^
 
