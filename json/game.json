@@ -242,7 +242,7 @@
         "startBoss": false,
         "player": true,
         "godMode": false,
-        "windowEnabled": false,
+        "windowEnabled": true,
         "log": false,
         "spawn": {
             "allItems": false,
