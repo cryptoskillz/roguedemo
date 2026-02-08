@@ -805,6 +805,10 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             draw();
         }
 
+        // Start Run Timer
+        Globals.runStartTime = Date.now();
+        Globals.runElapsedTime = 0;
+
         // AUTO START IF CONFIGURED (After everything is ready)
     } finally {
         Globals.isInitializing = false;
@@ -1504,6 +1508,11 @@ export function update() {
     updateReload(); // Add reload state check
     updateBulletsAndShards(aliveEnemies); // Pass enemies for homing check
     updateEnemies(); // Enemy movement + player collision handled inside
+
+    // Update Run Timer
+    if (Globals.runStartTime > 0) {
+        Globals.runElapsedTime = Date.now() - Globals.runStartTime;
+    }
 
     // 4. Transitions
     updateRoomTransitions(doors, roomLocked);

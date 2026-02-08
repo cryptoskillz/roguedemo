@@ -22,7 +22,8 @@ export const Globals = {
         debugSelect: null,
         debugForm: null,
         debugPanel: null,
-        debugLog: null
+        debugLog: null,
+        timer: null
     },
 
 
@@ -36,6 +37,11 @@ export const Globals = {
     killEnemySessionCount: 0,
     killBossCount: 0,
     killBossSessionCount: 0,
+    NunerOfRuns: 0,
+    NunerOfSessionRuns: 0,
+    SessionRunTime: 0,
+    BestRunTime: 0,
+
 
 
 
@@ -114,6 +120,9 @@ export const Globals = {
 
     roomFreezeUntil: 0,
     bossIntroEndTime: 0,
+    // Run Timer
+    runStartTime: 0,
+    runElapsedTime: 0,
 
     perfectStreak: 0,
     pauseStartTime: 0,
@@ -150,7 +159,7 @@ export const Globals = {
 
         const ids = ['hp', 'keys', 'room', 'overlay', 'welcome', 'ui',
             'stats', 'perfect', 'roomName', 'bombs', 'ammo', 'gun',
-            'debug-select', 'debug-form', 'debug-panel', 'debug-log'];
+            'debug-select', 'debug-form', 'debug-panel', 'debug-log', 'timer'];
 
         ids.forEach(id => {
             // camelCase conversion for property name

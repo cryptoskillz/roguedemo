@@ -214,6 +214,25 @@ export async function updateUI() {
 
     if (redEl) redEl.innerHTML = `<span style="color: #e74c3c">♦</span> ${redShards} / ${maxRed}`;
     if (greenEl) greenEl.innerHTML = `<span style="color: #2ecc71">◊</span> ${greenShards} / ${maxGreen}`;
+
+    // Timer
+    if (Globals.elements.timer) {
+        // Check Unlock Status or Config
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        const showTimer = Globals.gameData.showTimer || unlockedIds.includes('timer');
+
+        if (showTimer) {
+            Globals.elements.timer.style.display = 'block';
+            const elapsed = Globals.runElapsedTime || 0;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            const ms = Math.floor((elapsed % 1000) / 10);
+            Globals.elements.timer.innerText =
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+        } else {
+            Globals.elements.timer.style.display = 'none';
+        }
+    }
 }
 
 // ... DEBUG EDITOR ...
