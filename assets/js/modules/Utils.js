@@ -54,7 +54,7 @@ export function deepMerge(target, source) {
     return target;
 }
 
-export function spawnFloatingText(x, y, text, color = "white", type = "normal") {
+export function spawnFloatingText(x, y, text, color = "white", type = "normal", target = null) {
     // Speech bubbles: Static, longer life
     const isSpeech = type === 'speech';
 
@@ -64,8 +64,9 @@ export function spawnFloatingText(x, y, text, color = "white", type = "normal") 
         text: text,
         color: color,
         type: type,
-        life: isSpeech ? 3.0 : 1.0, // Last longer
-        vy: isSpeech ? 0 : -1.0 // Don't float if speech
+        life: 1.0,
+        vy: isSpeech ? -0.5 : -1, // Speech floats slower
+        target: target // Store target for following
     });
 }
 export function generateLore(enemy) {
@@ -196,7 +197,7 @@ export function triggerSpeech(enemy, type, forceText = null, bypassCooldown = fa
     }
 
     if (text) {
-        spawnFloatingText(enemy.x, enemy.y - enemy.size - 20, text, "black", "speech");
+        spawnFloatingText(enemy.x, enemy.y - enemy.size - 20, text, "black", "speech", enemy);
         enemy.lastSpeechTime = now;
     }
 }

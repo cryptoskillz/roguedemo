@@ -6,7 +6,16 @@ import { log } from './Utils.js';
 export function updateFloatingTexts() {
     for (let i = Globals.floatingTexts.length - 1; i >= 0; i--) {
         const ft = Globals.floatingTexts[i];
-        ft.y += ft.vy;
+
+        // Follow Target Logic
+        if (ft.target && !ft.target.isDead) {
+            ft.x = ft.target.x;
+            ft.y = ft.target.y - ft.target.size - 20; // Maintain offset
+        } else {
+            // Only drift if no target or target dead
+            ft.y += ft.vy;
+        }
+
         ft.life -= 0.02;
         if (ft.life <= 0) Globals.floatingTexts.splice(i, 1);
     }

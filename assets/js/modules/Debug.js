@@ -66,21 +66,10 @@ export function renderDebugForm() {
             debugForm.appendChild(btn);
         };
 
-        createBtn("TEST SFX", "#e67e22", () => {
-            console.log("TEST SFX CLICKED");
-            if (Globals.audioCtx && Globasls.audioCtx.state === 'suspended') Globals.audioCtx.resume();
-            if (Globals.audioCtx) {
-                const o = Globals.audioCtx.createOscillator();
-                o.frequency.value = 440;
-                o.connect(Globals.audioCtx.destination);
-                o.start();
-                o.stop(Globals.audioCtx.currentTime + 0.5);
-            }
-            SFX.shoot();
-        });
+
 
         const musicState = Globals.gameData.music ? 'ON' : 'OFF';
-        createBtn(`TOGGLE MUSIC (${musicState})`, "#3498db", () => {
+        createBtn(`TOGGLE MUSIC (${musicState}) (0 key)`, "#3498db", () => {
             // Toggle Config
             Globals.gameData.music = !Globals.gameData.music;
             // Sync Runtime Mute
@@ -99,7 +88,7 @@ export function renderDebugForm() {
         });
 
         const sfxState = Globals.gameData.soundEffects ? 'ON' : 'OFF';
-        createBtn(`TOGGLE SFX (${sfxState})`, "#9b59b6", () => {
+        createBtn(`TOGGLE SFX (${sfxState}) (9 key)`, "#9b59b6", () => {
             // Toggle Config
             Globals.gameData.soundEffects = !Globals.gameData.soundEffects;
             // Sync Runtime Mute

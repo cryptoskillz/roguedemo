@@ -1,4 +1,5 @@
 bugs
+    if yo press 0 or 9 it should update the debug buttons to on / off
     decide if modifiers that are effecvivetly the same as guns want to look the same ie 360 modifier it seems to have different stats to the 360 gun
     gunner should have a fire delay so not all turrerts fire at once if there are many in the room
     turrets should have line of site and only fire if they can see the player
@@ -41,7 +42,7 @@ bugs
 
 
 next up 
-    balance 6 + room enemies
+    balance 7
     bug fix 6
     sfx & ui updates
         game settings
@@ -62,8 +63,7 @@ next up
     server    
 
 balance 6
-    when you beat the level unlock something all hame unlocks are session persistnet must be bought
-    upddate readme 
+    
 
     
 Levels
@@ -99,19 +99,25 @@ achivements
 
 
 Balance
+if you try to drop a bomb, or open a door when inventroy is 0 you get the cant do it sound effect
+when you beat the level unlock something all hame unlocks are session persistnet must be bought
+    upddate readme 
     add correct enemies to each room
     update credits with the session and global stats
     add restarts to the session and global stats
+ implement seed system to regenerate exact level so we can debug whilst the boss room does not always spawn
+     add a timer (as unlock and store time for each level)
+    beat the game to unlock permance mode 
+Balance 7 ^
 
-    implement seed system to regenerate exact level so we can debug whilst the boss room does not always spawn
+   
     count the number of dead enemies and show on dead complete screen, scroll the dead enemy types up
-    add a timer (as unlock and store time for each level)
         This will be the first thing we store on the server we will store the players name, level and time and have a speed run leaderboard
     drops should take into account the room hardness of the room and the player modifiers to incrase the pool chances of dropping to help with balancing 
     rather than add the rooms to the json of level instead add a maxHardnes and maxRooms to decide the rooms that go into the level (you could even factor in the player modifiers)
     peermant unlocks can be purchased for red shards you collect once you unlock permance mode you can pay to buy any item you unlocked 
-    beat the game to unlock permance mode 
-    so you cna buy the item you want for the next run you can also get really expensive items that are permanent upgrades so upgrades are permanent and active when you start a new run such as enemy names
+
+
     Add a canPickUp flag to enemy Json to steal and use your spawned items and guns 
     using the follow mechanic, gun modifier, canhurtplayer (set to false) and canhurt enemies (set to true) we can create pets that follow you and shoot at enemies
     Add a charisma stat / item that can be used to turn enemies into pets / friends useful for the pacacifer runs
