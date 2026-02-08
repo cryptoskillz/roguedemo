@@ -22,7 +22,9 @@ export const Globals = {
         debugSelect: null,
         debugForm: null,
         debugPanel: null,
-        debugLog: null
+        debugLog: null,
+        timer: null,
+        tMin: null, tSec: null, tMs: null
     },
 
 
@@ -36,6 +38,15 @@ export const Globals = {
     killEnemySessionCount: 0,
     killBossCount: 0,
     killBossSessionCount: 0,
+    killBossCount: 0,
+    killBossSessionCount: 0,
+
+    // Stats (Persisted)
+    NumberOfRuns: parseInt(localStorage.getItem('numberOfRuns') || '0'),
+    NumberOfSessionRuns: 0,
+    SessionRunTime: 0,
+    BestRunTime: parseInt(localStorage.getItem('bestRunTime') || '0'),
+
 
 
 
@@ -97,6 +108,10 @@ export const Globals = {
 
     // Logic Flags
     bossKilled: false,
+    ghostKilled: false,
+
+    // Unlock Queue
+    foundUnlocks: [],
 
     // Lore
     loreData: null,
@@ -108,11 +123,12 @@ export const Globals = {
     isUnlocking: false,
     isRestart: false,
 
-    // Timers
-    lastInputTime: 0,
-    roomStartTime: 0,
     roomFreezeUntil: 0,
     bossIntroEndTime: 0,
+    // Run Timer
+    runStartTime: 0,
+    runElapsedTime: 0,
+
     perfectStreak: 0,
     pauseStartTime: 0,
     lastMusicToggle: 0,
@@ -121,13 +137,15 @@ export const Globals = {
     // Runtime Counters/Flags
     gameLoopStarted: false,
     ghostSpawned: false,
+    ghostRoomShrinkCount: false,
     wasRoomLocked: false,
     bombsInRoom: 0,
     bombsInRoom: 0,
     bulletsInRoom: 0,
     hitsInRoom: 0, // Added
-    screenShake: { power: 0, endAt: 0 },
+    screenShake: { power: 0, endAt: 0, teleport: 0 },
     ghostEntry: null, // Added
+    roomShrinkSize: 0, // Decreases playable area when Ghost is active
 
     // Special Entities
     portal: { active: false, x: 0, y: 0, scrapping: false },
@@ -146,7 +164,8 @@ export const Globals = {
 
         const ids = ['hp', 'keys', 'room', 'overlay', 'welcome', 'ui',
             'stats', 'perfect', 'roomName', 'bombs', 'ammo', 'gun',
-            'debug-select', 'debug-form', 'debug-panel', 'debug-log'];
+            'debug-select', 'debug-form', 'debug-panel', 'debug-log', 'timer',
+            't-min', 't-sec', 't-ms'];
 
         ids.forEach(id => {
             // camelCase conversion for property name

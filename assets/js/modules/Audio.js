@@ -86,6 +86,8 @@ export const SFX = {
     explode: (vol = 0.1) => playTone(100, 'sawtooth', 0.3, vol),
     playerHit: (vol = 0.2) => playTone(150, 'sawtooth', 0.2, vol),
     click: (vol = 0.1) => playTone(800, 'sine', 0.05, vol),
+    doorLocked: (vol = 0.1) => playTone(150, 'sawtooth', 0.2, vol),
+    doorUnlocked: (vol = 0.1) => playTone(800, 'triangle', 0.1, vol),
     ghost: (vol = 0.3) => {
         if (!Globals.audioCtx || Globals.sfxMuted) return;
         const osc = Globals.audioCtx.createOscillator();
@@ -99,6 +101,26 @@ export const SFX = {
         gain.connect(Globals.audioCtx.destination);
         osc.start();
         osc.stop(Globals.audioCtx.currentTime + 1.0);
+    },
+    ghostSpeak: (vol = 0.3) => {
+        if (!Globals.audioCtx || Globals.sfxMuted) return;
+        const osc = Globals.audioCtx.createOscillator();
+        const gain = Globals.audioCtx.createGain();
+        osc.type = 'triangle'; // Clearer "voice"
+
+        // Randomized pitch for "talking" variation
+        const baseFreq = 300 + Math.random() * 200;
+
+        osc.frequency.setValueAtTime(baseFreq, Globals.audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, Globals.audioCtx.currentTime + 0.4); // Drop pitch
+
+        gain.gain.setValueAtTime(vol, Globals.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, Globals.audioCtx.currentTime + 0.4);
+
+        osc.connect(gain);
+        gain.connect(Globals.audioCtx.destination);
+        osc.start();
+        osc.stop(Globals.audioCtx.currentTime + 0.4);
     },
     scream: (vol = 0.2) => {
         if (!Globals.audioCtx || Globals.sfxMuted) return;
@@ -130,6 +152,35 @@ export const SFX = {
         osc.connect(gain);
         gain.connect(Globals.audioCtx.destination);
         osc.start();
-        osc.stop(Globals.audioCtx.currentTime + 0.2);
+        osc.stop(Globals.audioCtx.currentTime + 0.3);
+    },
+    restart: (vol = 0.2) => {
+        // Sci-Fi "Teleport" Sound (Warp Up)
+        if (!Globals.audioCtx || Globals.sfxMuted) return;
+        const osc = Globals.audioCtx.createOscillator();
+        const gain = Globals.audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(100, Globals.audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, Globals.audioCtx.currentTime + 0.5); // Warp!
+        gain.gain.setValueAtTime(vol, Globals.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, Globals.audioCtx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(Globals.audioCtx.destination);
+        osc.start();
+        osc.stop(Globals.audioCtx.currentTime + 0.5);
+    },
+    cantDoIt: (vol = 0.2) => {
+        if (!Globals.audioCtx || Globals.sfxMuted) return;
+        const osc = Globals.audioCtx.createOscillator();
+        const gain = Globals.audioCtx.createGain();
+        osc.type = 'square'; // Harsh "computer" error
+        osc.frequency.setValueAtTime(150, Globals.audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(50, Globals.audioCtx.currentTime + 0.3); // Pitch Drop failure
+        gain.gain.setValueAtTime(vol, Globals.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, Globals.audioCtx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(Globals.audioCtx.destination);
+        osc.start();
+        osc.stop(Globals.audioCtx.currentTime + 0.3);
     }
 };

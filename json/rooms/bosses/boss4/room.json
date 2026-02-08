@@ -41,6 +41,12 @@
     "width": 800,
     "height": 600,
     "unlocks": [],
+    "unlockItem": {
+        "active": true,
+        "count": 1,
+        "unlockChance": 1,
+        "rarity": "common"
+    },
     "nextLevel": "json/levels/5.json",
     "welcomeScreen": false,
     "completedItMate": false

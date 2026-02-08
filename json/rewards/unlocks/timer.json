@@ -1,0 +1,9 @@
+{
+    "name": "Timer",
+    "description": "Unlocks timer",
+    "unlock": "timer",
+    "json": "game.json",
+    "attr": "showTimer",
+    "value": true,
+    "spawnable": false
+}

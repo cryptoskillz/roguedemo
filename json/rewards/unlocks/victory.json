@@ -4,5 +4,6 @@
     "unlock": "victory",
     "json": "",
     "attr": "",
-    "value": ""
+    "value": "",
+    "spawnable": false
 }

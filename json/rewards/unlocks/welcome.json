@@ -4,5 +4,6 @@
     "unlock": "welcome",
     "json": "game.json",
     "attr": "showWelcome",
-    "value": true
+    "value": true,
+    "spawnable": false
 }

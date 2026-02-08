@@ -4,5 +4,6 @@
     "unlock": "enemies",
     "json": "game.json",
     "attr": "ghost.spawn",
-    "value": true
+    "value": true,
+    "spawnable": false
 }

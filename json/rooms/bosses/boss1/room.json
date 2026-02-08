@@ -36,6 +36,12 @@
         "startlevel2",
         "shards"
     ],
+    "unlockItem": {
+        "active": false,
+        "count": 1,
+        "unlockChance": 1,
+        "rarity": "common"
+    },
     "nextLevel": "",
     "welcomeScreen": true,
     "completedItMate": false

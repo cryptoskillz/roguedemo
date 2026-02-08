@@ -168,6 +168,7 @@ export function renderDebugForm() {
             const idx = select.value;
             if (idx === "") return;
             const itemTemplate = items[idx];
+            log("Debug Spawn Template:", itemTemplate);
 
             Globals.groundItems.push({
                 x: Globals.player.x + (Math.random() * 60 - 30),

@@ -4,5 +4,6 @@
     "unlock": "music",
     "json": "game.json",
     "attr": "music",
-    "value": true
+    "value": true,
+    "spawnable": false
 }

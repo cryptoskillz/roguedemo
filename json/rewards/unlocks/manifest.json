@@ -1,15 +1,24 @@
 {
-    "unlocls": [
-        "soundEffects",
+    "unlocks": [
+        "enemies",
+        "firstboss",
+        "itempickup",
+        "minimap",
         "music",
-        "welcome",
+        "pause",
         "rooms",
-        "text",
-        "victory",
+        "shards",
+        "soundeffects",
         "startlevel1",
         "startlevel2",
         "startlevel3",
-        "itempickup",
-        "shards"
+        "startlevel4",
+        "text",
+        "ui",
+        "welcome",
+        "victory",
+        "welcome",
+        "shotgun",
+        "timer"
     ]
 }

@@ -1,5 +1,6 @@
 import { Globals } from './Globals.js';
 import { CONFIG, DEBUG_FLAGS } from './Constants.js';
+import { SFX } from './Audio.js';
 
 export function log(...args) {
     if (!DEBUG_FLAGS.LOG) return;
@@ -197,6 +198,11 @@ export function triggerSpeech(enemy, type, forceText = null, bypassCooldown = fa
     }
 
     if (text) {
+        // Trigger SFX for Ghost & Uppercase
+        if (enemy.type === 'ghost') {
+            SFX.ghostSpeak();
+        }
+
         spawnFloatingText(enemy.x, enemy.y - enemy.size - 20, text, "black", "speech", enemy);
         enemy.lastSpeechTime = now;
     }

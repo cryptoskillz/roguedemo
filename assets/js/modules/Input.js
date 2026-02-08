@@ -96,7 +96,7 @@ export function setupInput(callbacks) {
 export function handleGlobalInputs(callbacks) {
     // Restart
     if (Globals.keys['KeyR']) {
-        if (Globals.gameState === STATES.GAMEOVER || Globals.gameState === STATES.WIN || Globals.gameState === STATES.GAMEMENU) {
+        if (Globals.gameState === STATES.GAMEOVER || Globals.gameState === STATES.WIN || Globals.gameState === STATES.GAMEMENU || Globals.ghostKilled) {
             callbacks.restartGame();
             return true;
         }

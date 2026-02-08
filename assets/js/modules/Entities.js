@@ -537,7 +537,11 @@ export async function dropBomb() {
         }
     }
 
-    if (!canDrop) return false;
+    if (!canDrop) {
+        log("Can't drop bomb");
+        SFX.cantDoIt();
+        return false;
+    }
 
     // Check Delay
     const bombDelay = (Globals.bomb?.fireRate || 2) * 1000;
@@ -1156,8 +1160,10 @@ export function updateUse() {
             d.locked = 0;
             d.unlockedByKey = true;
             log(`${target.dir} door unlocked via USE (Space)`);
+            SFX.doorUnlocked();
         } else {
             log("Door is locked - no keys");
+            SFX.doorLocked();
         }
         return;
     }
@@ -1208,8 +1214,30 @@ export function updateRestart() {
         // We want to reset HP/Keys/Bombs (initGame(false))
         // BUT if Debug is ON, we want to Keep Weapon (handled in Game.js via resetWeaponState check)
 
-        if (Globals.restartGame) Globals.restartGame(false);
+        //check if the ghost is in the room and we are not in debug mode
+        //note the debug flag isnt working but i dont mind that the GHOST is more powerful than the CODE!!!
+        if (Globals.ghostSpawned && !window.DEBUG_WINDOW_ENABLED) {
+            //pick the ghost lore from ghost_restart
+            const ghostLore = Globals.speechData.types?.ghost_restart || ["You cannot escape me!!"];
+            //pick a random line from the ghost lore
+            const ghostLine = ghostLore[Math.floor(Math.random() * ghostLore.length)];
 
+            // Find the ghost entity
+            const ghost = Globals.enemies.find(e => e.type === 'ghost');
+            if (ghost) {
+                triggerSpeech(ghost, "ghost_restart", ghostLine, true);
+            }
+
+        }
+        else {
+            if (Globals.restartGame) Globals.restartGame(false);
+            const shakePower = 5;
+            Globals.screenShake.power = Math.max(Globals.screenShake.power, shakePower);
+            Globals.screenShake.endAt = Date.now() + 500;
+            Globals.screenShake.teleport = 1; // Trigger Teleport Effect
+            SFX.restart();
+
+        }
         Globals.keys['KeyR'] = false; // consume key
     }
 
@@ -1730,6 +1758,23 @@ export function updateEnemies() {
 
                 Globals.bossKilled = true;
 
+                // UNLOCK ITEM DROP
+                if (Globals.roomData.unlockItem && Globals.roomData.unlockItem.active) {
+                    const chance = Globals.roomData.unlockItem.unlockChance || 1;
+                    log(`Boss Defeated! Checking unlock drop. Chance: ${chance}`);
+                    if (Math.random() <= chance) {
+                        const count = Globals.roomData.unlockItem.count || 1;
+                        log(`Roll Success! Spawning ${count} unlock items.`);
+                        for (let i = 0; i < count; i++) {
+                            spawnUnlockItem(en.x + (i * 20), en.y);
+                        }
+                    } else {
+                        log("Unlock Roll Failed.");
+                    }
+                } else {
+                    log("Unlock Config Missing or Inactive:", Globals.roomData.unlockItem);
+                }
+
                 // Clear Rooms
                 Object.keys(Globals.visitedRooms).forEach(key => {
                     if (key !== `${Globals.player.roomX},${Globals.player.roomY}`) {
@@ -1743,20 +1788,30 @@ export function updateEnemies() {
                 });
             } else if (en.type === 'ghost') {
                 log("Ghost Defeated!");
+                Globals.ghostKilled = true;
                 if (Globals.gameData.rewards && Globals.gameData.rewards.ghost) {
                     spawnRoomRewards(Globals.gameData.rewards.ghost, "GHOST BONUS");
-                    perfectEl.innerText = "GHOST BONUS!";
-                    triggerPerfectText();
+
+                    if (Globals.elements.perfect) {
+                        Globals.elements.perfect.innerText = "GHOST BONUS!";
+                        Globals.elements.perfect.classList.add('show');
+                        setTimeout(() => Globals.elements.perfect.classList.remove('show'), 2000);
+                    }
 
                     const specialPath = Globals.gameData.rewards.ghost.special?.item;
                     if (specialPath) {
                         (async () => {
                             try {
-                                const url = "json" + (specialPath.startsWith('/') ? specialPath : '/' + specialPath);
+                                const cleanPath = specialPath.trim();
+                                const url = (cleanPath.startsWith('json') || cleanPath.startsWith('/json'))
+                                    ? cleanPath
+                                    : ("json" + (cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath));
+                                log("Loading Special Ghost Item:", cleanPath, "->", url);
+
                                 const res = await fetch(`${url}?t=${Date.now()}`);
                                 if (res.ok) {
                                     const itemData = await res.json();
-                                    groundItems.push({
+                                    Globals.groundItems.push({
                                         x: en.x, y: en.y,
                                         data: itemData,
                                         roomX: Globals.player.roomX, roomY: Globals.player.roomY,
@@ -1811,8 +1866,16 @@ export function updatePortal() {
                     Globals.portal.finished = true; // Prevent re-scrap
 
                     // EXPLICITLY TRIGGER COMPLETION (Don't wait for re-collision)
-                    if (Globals.roomData.unlocks && Globals.roomData.unlocks.length > 0) {
-                        Globals.handleUnlocks(Globals.roomData.unlocks);
+                    const roomUnlocks = Globals.roomData.unlocks || [];
+                    const foundUnlocks = Globals.foundUnlocks || [];
+                    const allUnlocks = [...roomUnlocks, ...foundUnlocks];
+
+                    // Determine if we have any unlocks to process
+                    // Filter duplicates? handleUnlocks calls showNextUnlock which checks history, so duplicates are fine but maybe cleaner to unique.
+                    const uniqueUnlocks = [...new Set(allUnlocks)];
+
+                    if (uniqueUnlocks.length > 0) {
+                        Globals.handleUnlocks(uniqueUnlocks);
                     } else {
                         handleLevelComplete();
                     }
@@ -1881,23 +1944,15 @@ export function handleLevelComplete() {
     if (Globals.portal && !Globals.portal.active) return;
     if (Globals.portal) Globals.portal.active = false;
 
-    // CREDITS CHECK (Before Unlocks or Next Level)
-    if (Globals.roomData.completedItMate) {
-        showCredits();
-        return;
-    }
+    // 0. Handle Unlocks (First priority as requested)
+    const roomUnlocks = Globals.roomData.unlocks || [];
+    const foundUnlocks = Globals.foundUnlocks || [];
+    const allUnlocks = [...roomUnlocks, ...foundUnlocks];
+    const uniqueUnlocks = [...new Set(allUnlocks)];
 
-    // 0. Handle Unlocks (First!)
-    if (Globals.roomData.unlocks && Globals.roomData.unlocks.length > 0) {
+    if (uniqueUnlocks.length > 0) {
         if (Globals.handleUnlocks) {
-            // We await it? handleUnlocks is async (UI overlay). 
-            // If we await, we pause the transition. That's desirable.
-            // But handleLevelComplete is not async. 
-            // We should make it async or handle the promise?
-            // Existing handleUnlocks returns a promise that resolves when UI closes.
-            Globals.handleUnlocks(Globals.roomData.unlocks).then(() => {
-                // Recursively call to proceed after unlock UI used (clearing unlocks to prevent loop?)
-                // OR just proceed logic here.
+            Globals.handleUnlocks(uniqueUnlocks).then(() => {
                 proceedLevelComplete();
             });
             return;
@@ -1910,43 +1965,47 @@ function proceedLevelComplete() {
     // 1. Next Level?
     if (Globals.roomData.nextLevel && Globals.roomData.nextLevel.trim() !== "") {
         log("Proceeding to Next Level:", Globals.roomData.nextLevel);
-
-        // Save State to LocalStorage (Robust Persistence)
         localStorage.setItem('rogue_transition', 'true');
-        // Save Next Level as the "Current" level for restarts
         localStorage.setItem('rogue_current_level', Globals.roomData.nextLevel);
-
-        // Ensure we save a clean copy without circular refs or huge data if any
-        // But player object is simple enough.
         localStorage.setItem('rogue_player_state', JSON.stringify(Globals.player));
-
-        // Load next level, Keep Stats
         initGame(true, Globals.roomData.nextLevel, true);
         return;
     }
 
-    // 1.5 Welcome Screen?
-    log("Checking Welcome Screen. Data:", Globals.roomData);
+    // 2. Welcome Screen?
     if (Globals.roomData.welcomeScreen) {
         log("Level Complete. Returning to Welcome Screen.");
         if (Globals.goToWelcome) Globals.goToWelcome();
         return;
     }
 
-    // 2. End Game / Victory?
+    // 3. Credits / Completed It Mate (Last priority)
+    if (Globals.roomData.completedItMate) {
+        // Update Win Stats
+        const endTime = Date.now();
+        const duration = endTime - Globals.runStartTime;
+
+        Globals.SessionRunTime = duration;
+        Globals.NumberOfSessionRuns++;
+
+        if (Globals.BestRunTime === 0 || duration < Globals.BestRunTime) {
+            Globals.BestRunTime = duration;
+            localStorage.setItem('bestRunTime', duration);
+        }
+        // Ensure total runs is saved
+        localStorage.setItem('numberOfRuns', Globals.NumberOfRuns);
+
+        showCredits();
+        return;
+    }
+
+    // 4. End Game / Victory (Legacy?)
     if (Globals.roomData.endGame) {
         Globals.gameState = STATES.WIN;
         updateUI();
         if (Globals.gameOver) Globals.gameOver();
-        else console.error("Globals.gameOver is missing!");
         return;
     }
-
-    // Default fallback: Just win/end if we hit the portal but no instructions (Legacy behavior)
-    Globals.gameState = STATES.WIN;
-    updateUI();
-    if (Globals.gameOver) Globals.gameOver();
-    else console.error("Globals.gameOver is missing!");
 }
 
 export function updateGhost() {
@@ -2028,10 +2087,43 @@ export function updateGhost() {
         // Ghost specific: pass through walls? (Needs logic update in updateEnemies if so)
         // For now, standard movement
 
+        inst.spawnTime = now; // Track when ghost appeared
         Globals.enemies.push(inst);
         SFX.ghost(); // Spooky sound!
+    } // End Spawn Check
+
+    // --- ROOM SHRINKING LOGIC & LOCKING ---
+    const ghost = Globals.enemies.find(e => e.type === 'ghost' && !e.isDead);
+    if (ghost) {
+        // Use logic from Game Data (roomGhostTimer)
+        const ghostConfig = Globals.gameData.ghost || { roomGhostTimer: 10000 };
+        const delay = ghostConfig.roomGhostTimer;
+        const elapsed = Date.now() - (ghost.spawnTime || 0);
+
+        // 1. LOCK DOORS (after 1 timer cycle)
+        if (elapsed > delay) {
+            ghost.locksRoom = true;
+        } else {
+            ghost.locksRoom = false;
+        }
+
+        // 2. SHRINK ROOM (after 2 timer cycles)
+        if (elapsed > delay * 2) {
+            // Shrink the room!
+            const maxShrink = (Globals.canvas.width / 2) - 60; // Leave a 120px box
+            if (Globals.roomShrinkSize < maxShrink) {
+                Globals.roomShrinkSize += 0.1; // Slow creep
+            }
+        }
+    } else {
+        // Reset if ghost is gone
+        if (Globals.roomShrinkSize > 0) {
+            Globals.roomShrinkSize -= 2.0; // Fast expand
+            if (Globals.roomShrinkSize < 0) Globals.roomShrinkSize = 0;
+        }
     }
 }
+
 
 // --- DAMAGE & SHIELD LOGIC ---
 export function takeDamage(amount) {
@@ -2626,13 +2718,28 @@ export function drawBombs(doors) {
 
 
 export function updateBombDropping() {
-    if (Globals.keys['KeyB'] && Globals.player.inventory?.bombs > 0 && Globals.player.bombType) {
-        // dropBomb handles delay checks, overlap checks, and valid position checks
-        dropBomb().then(dropped => {
-            if (dropped) {
-                Globals.player.inventory.bombs--;
+    if (Globals.keys['KeyB']) {
+        // 1. Check Inventory
+        const bombCount = Globals.player.inventory?.bombs || 0;
+
+        if (bombCount <= 0) {
+            // Error Sound (Debounced)
+            const now = Date.now();
+            if (now - (Globals.player.lastBombError || 0) > 500) {
+                SFX.cantDoIt();
+                Globals.player.lastBombError = now;
             }
-        });
+            return;
+        }
+
+        // 2. Check Type (Should always exist)
+        if (Globals.player.bombType) {
+            dropBomb().then(dropped => {
+                if (dropped) {
+                    Globals.player.inventory.bombs--;
+                }
+            });
+        }
     }
 }
 export function updateMovementAndDoors(doors, roomLocked) {
@@ -2677,12 +2784,21 @@ export function updateMovementAndDoors(doors, roomLocked) {
             const canPass = door.active && !door.locked && !door.hidden && (!roomLocked || door.forcedOpen);
 
             if (dx !== 0) {
-                const limit = dx < 0 ? BOUNDARY : Globals.canvas.width - BOUNDARY;
                 const nextX = Globals.player.x + dx * Globals.player.speed;
+                // Movement Constraints with Shrink
+                const shrink = Globals.roomShrinkSize || 0;
+                let limit = 0;
+
+                if (dx < 0) { // Moving Left
+                    limit = BOUNDARY + shrink;
+                } else { // Moving Right
+                    limit = Globals.canvas.width - BOUNDARY - shrink;
+                }
+
+                // Restore Bomb Collision (Horizontal)
                 let collided = false;
                 let hitMoveable = false;
 
-                // Bomb Collision (Horizontal)
                 Globals.bombs.forEach(b => {
                     if (b.solid && !b.exploding) {
                         const dist = Math.hypot(nextX - b.x, Globals.player.y - b.y);
@@ -2699,7 +2815,14 @@ export function updateMovementAndDoors(doors, roomLocked) {
                     }
                 });
 
-                if (!collided && ((dx < 0 ? Globals.player.x > limit : Globals.player.x < limit) || (inDoorRange && canPass))) {
+                // Correct logic:
+                // Normal wall: Cannot pass limit.
+                // Door: Can pass limit IF in range.
+
+                // Check if we are trying to cross the limit
+                const crossingLimit = (dx < 0 && nextX < limit) || (dx > 0 && nextX > limit);
+
+                if (!collided && (!crossingLimit || (inDoorRange && canPass))) {
                     Globals.player.x = nextX;
                 } else if (collided && !hitMoveable) {
                     Globals.player.x -= dx * 5; // Knockback only if not pushing
@@ -2728,16 +2851,38 @@ export function updateMovementAndDoors(doors, roomLocked) {
                     }
                 });
 
-                if (!collided && ((dy < 0 ? Globals.player.y > limit : Globals.player.y < limit) || (inDoorRange && canPass))) {
+                // Y-Axis Constraints with Shrink
+                const shrink = Globals.roomShrinkSize || 0;
+                let limitY = 0;
+                if (dy < 0) { // Up
+                    limitY = BOUNDARY + shrink;
+                } else { // Down
+                    limitY = Globals.canvas.height - BOUNDARY - shrink;
+                }
+
+                const crossingLimit = (dy < 0 && nextY < limitY) || (dy > 0 && nextY > limitY);
+
+                if (!collided && (!crossingLimit || (inDoorRange && canPass))) {
                     Globals.player.y = nextY;
                 } else if (collided && !hitMoveable) {
                     Globals.player.y -= dy * 5; // Knockback only if not pushing
-                    Globals.player.y = Math.max(BOUNDARY + Globals.player.size, Math.min(Globals.canvas.height - BOUNDARY - Globals.player.size, Globals.player.y));
+                    Globals.player.y = Math.max(BOUNDARY + Globals.player.size + shrink, Math.min(Globals.canvas.height - BOUNDARY - Globals.player.size - shrink, Globals.player.y));
                 }
             }
         }
     }
 
+    // --- APPLY ROOM SHRINK CONSTRAINT ---
+    if (Globals.roomShrinkSize > 0) {
+        const s = Globals.roomShrinkSize;
+        const p = Globals.player;
+
+        // Push player inward
+        if (p.x < s + p.size) p.x = s + p.size;
+        if (p.x > Globals.canvas.width - s - p.size) p.x = Globals.canvas.width - s - p.size;
+        if (p.y < s + p.size) p.y = s + p.size;
+        if (p.y > Globals.canvas.height - s - p.size) p.y = Globals.canvas.height - s - p.size;
+    }
 }
 export async function pickupItem(item, index) {
 
@@ -2812,12 +2957,24 @@ export async function pickupItem(item, index) {
         return;
     }
 
+    if (type === 'unlock') {
+        // Queue it for Portal Exit
+        if (!Globals.foundUnlocks) Globals.foundUnlocks = [];
+        Globals.foundUnlocks.push(data.unlockId);
+        spawnFloatingText(Globals.player.x, Globals.player.y - 40, "UNLOCK FOUND!", "gold");
+
+        if (Globals.audioCtx.state !== 'suspended' && SFX.coin) SFX.coin();
+        removeItem();
+        return;
+    }
+
     // --- COMPLEX ITEMS (Async) ---
     const location = data.location;
     log(`Picking up ${data.name}...`);
 
     try {
         if (!location) throw new Error("No location definition for complex item");
+        log("Pickup Location Debug:", location, "Root:", JSON_PATHS.ROOT);
 
         const res = await fetch(`${JSON_PATHS.ROOT}${location}?t=${Date.now()}`);
         const config = await res.json();
@@ -2850,7 +3007,7 @@ export async function pickupItem(item, index) {
                     data: {
                         name: "gun_" + oldName,
                         type: "gun",
-                        location: `rewards/items/guns/player/${oldName}.json`,
+                        location: `${JSON_PATHS.ITEMS_DIR}guns/player/${oldName}.json`,
                         rarity: "common",
                         starter: false, // Old gun is no longer starter?
                         colour: (Globals.gun.Bullet && (Globals.gun.Bullet.colour || Globals.gun.Bullet.color)) || Globals.gun.colour || Globals.gun.color || "gold"
@@ -2932,7 +3089,7 @@ export async function pickupItem(item, index) {
                     data: {
                         name: "bomb_" + oldName,
                         type: "bomb",
-                        location: `items/bombs/${oldName}.json`,
+                        location: `${JSON_PATHS.ITEMS_DIR}bombs/${oldName}.json`,
                         rarity: "common",
                         starter: false,
                         colour: Globals.bomb.colour || Globals.bomb.color || "white"
@@ -3188,6 +3345,54 @@ export function applyModifierToGun(gunObj, modConfig) {
 }
 // --- UNLOCK SYSTEM ---
 let unlockQueue = [];
+// Helper to spawn unlock item
+export async function spawnUnlockItem(x, y) {
+    try {
+        // 1. Fetch Manifest
+        const res = await fetch(`${JSON_PATHS.ROOT}rewards/unlocks/manifest.json?t=${Date.now()}`);
+        if (!res.ok) return;
+        const manifest = await res.json();
+        const allUnlocks = manifest.unlocks || [];
+
+        // 2. Filter Unlocked
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        const available = allUnlocks.filter(id => !unlockedIds.includes(id));
+
+        log(`SpawnUnlockItem: Found ${allUnlocks.length} total, ${unlockedIds.length} unlocked. Available: ${available.length}`);
+
+        if (available.length === 0) {
+            log("All items unlocked! Spawning EXTRA Shards!");
+            spawnShard(x, y, 'red', 25);
+            return;
+        }
+
+        // 3. Pick Random
+        const nextUnlockId = available[Math.floor(Math.random() * available.length)];
+        log("Spawning Unlock Item:", nextUnlockId);
+
+        // 4. Spawn Physical Item
+        Globals.groundItems.push({
+            x: x, y: y,
+            roomX: Globals.player.roomX, roomY: Globals.player.roomY,
+            vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
+            friction: 0.9, solid: true, moveable: true, size: 20,
+            floatOffset: 0,
+            data: {
+                name: "Unlock Reward",
+                type: "unlock", // New Type
+                unlockId: nextUnlockId,
+                colour: "gold",
+                size: 20,
+                rarity: "legendary"
+            }
+        });
+        spawnFloatingText(x, y - 40, "UNLOCK REWARD!", "gold");
+
+    } catch (e) {
+        console.error("Failed to spawn unlock item:", e);
+    }
+}
+
 export function spawnRoomRewards(dropConfig, label = null) {
     if (!window.allItemTemplates) return false;
     // Debug MaxDrop
@@ -3229,7 +3434,7 @@ export function spawnRoomRewards(dropConfig, label = null) {
                 (i.rarity || 'common').toLowerCase() === rarity.toLowerCase() &&
                 i.starter === false &&
                 i.special !== true &&
-                isUnlocked(i)
+                (i._isUnlock === true || isUnlocked(i))
             );
 
             if (candidates.length > 0) {

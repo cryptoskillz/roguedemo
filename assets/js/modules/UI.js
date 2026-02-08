@@ -214,6 +214,28 @@ export async function updateUI() {
 
     if (redEl) redEl.innerHTML = `<span style="color: #e74c3c">♦</span> ${redShards} / ${maxRed}`;
     if (greenEl) greenEl.innerHTML = `<span style="color: #2ecc71">◊</span> ${greenShards} / ${maxGreen}`;
+
+    // Timer
+    if (Globals.elements.timer) {
+        // Check Unlock Status or Config
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        const showTimer = Globals.gameData.showTimer || unlockedIds.includes('timer');
+
+        if (showTimer) {
+            Globals.elements.timer.style.display = 'block';
+            const elapsed = Globals.runElapsedTime || 0;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            const ms = Math.floor((elapsed % 1000) / 10);
+
+            // Direct Span Update (No layout thrashing of container)
+            if (Globals.elements.tMin) Globals.elements.tMin.textContent = minutes.toString().padStart(2, '0');
+            if (Globals.elements.tSec) Globals.elements.tSec.textContent = seconds.toString().padStart(2, '0');
+            if (Globals.elements.tMs) Globals.elements.tMs.textContent = ms.toString().padStart(2, '0');
+        } else {
+            Globals.elements.timer.style.display = 'none';
+        }
+    }
 }
 
 // ... DEBUG EDITOR ...
@@ -472,20 +494,44 @@ export function showCredits() {
         creditsEl.style.display = 'flex';
     }
 
+    const formatTime = (ms) => {
+        if (!ms) return "00:00.00";
+        const minutes = Math.floor(ms / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000);
+        const milliseconds = Math.floor((ms % 1000) / 10);
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+    };
+
     creditsEl.innerHTML = `
         <h1 style="font-size: 4em; color: #f1c40f; margin-bottom: 20px;">THE END</h1>
         <div id="credits-scroll" style="height: 60%; width: 100%; overflow: hidden; position: relative; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);">
             <div id="credits-content" style="position: absolute; width: 100%; text-align: center; top: 100%;">
-                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
+             
+                <p style="font-size: 1.5em; margin: 20px 0; color: #2ecc71;">You slaughtered the following innocent creatures</p>
+                <div style="color: #ccc; font-family: monospace; text-align: left; display: inline-block; margin: 0 auto;">
+                     <p>Needless Deaths (Session): <span style="color: #e74c3c">${Globals.killEnemySessionCount}</span></p>
+                     <p>"Bosses" Killed (Session): <span style="color: #e74c3c">${Globals.killBossSessionCount}</span></p>
+                     <hr style="border-color: #555; margin: 10px 0;">
+                     <p>Total Needless Deaths: <span style="color: #f1c40f">${Globals.killEnemyCount}</span></p>
+                     <p>Total "Bosses" Killed: <span style="color: #f1c40f">${Globals.killBossCount}</span></p>
+                     <p>Player Deaths: <span style="color: #95a5a6">${Globals.playerDeathCount}</span></p>
+                </div>
+
+                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Run Statistics</p>
+                <div style="color: #ccc; font-family: monospace; text-align: left; display: inline-block; margin: 0 auto;">
+                     <p>Run Time: <span style="color: #f1c40f">${formatTime(Globals.SessionRunTime)}</span></p>
+                     <p>Best Time: <span style="color: #f1c40f">${formatTime(Globals.BestRunTime)}</span></p>
+                     <p>Total Runs: <span style="color: #95a5a6">${Globals.NumberOfRuns}</span></p>
+                </div>
+
+                   <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
                 <p style="color: #ccc;">Cryptoskillz</p>
                 <br>
                 <p style="font-size: 1.5em; margin: 20px 0; color: #e74c3c;">Art & Assets</p>
                 <p style="color: #ccc;">Generated with AI (thanks Antigravity!)</p>
                 <br>
-                <p style="font-size: 1.5em; margin: 20px 0; color: #2ecc71;">Special Thanks</p>
-                <p style="color: #ccc;">To you for playing!</p>
                 <br><br><br>
-                <p style="font-size: 1.2em; color: #f1c40f;">Goodbye, friend :]</p>
+                <p style="font-size: 1.2em; color: #f1c40f;">Goodbye, you psychopath</p>
                 <br><br><br><br>
                 <p style="font-size: 0.8em; color: #555;">Press any key to return to menu</p>
             </div>
@@ -519,8 +565,8 @@ export function showCredits() {
         creditsEl.style.display = 'none';
 
         // Return to Welcome
-        // Clear Persistence to ensure fresh start
-        STORAGE_KEYS.RESET_ON_NEW_GAME.forEach(key => localStorage.removeItem(key));
+        // Clear SESSION DATA (Level, Inventory) but KEEP UNLOCKS
+        STORAGE_KEYS.SESSION_WIPE.forEach(key => localStorage.removeItem(key));
 
         // Use Global Helper to Reset State & Go to Welcome
         if (Globals.goToWelcome) {

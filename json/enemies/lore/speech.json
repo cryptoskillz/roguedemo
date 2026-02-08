@@ -9,21 +9,31 @@
     ],
     "types": {
         "ghost": [
-            "Woooo...",
-            "The void calls...",
+            "WOOOO...",
+            "THE VOID CALLS...",
             "JUDAS!!!",
-            "Fading...",
-            "So cold...",
-            "Why did you do this to me?"
+            "FADING...",
+            "SO COLD...",
+            "WHY DID YOU DO THIS TO ME?"
         ],
         "ghost_doors_close": [
-            "Locked in...",
-            "No escape...",
-            "You are mine now...",
-            "Trapped..."
+            "LOCKED IN...",
+            "NO ESCAPE...",
+            "YOU ARE MINE NOW...",
+            "TRAPPED..."
         ],
         "ghost_restart": [
-            "You cannot escape me that way!"
+            "YOU CANNOT ESCAPE ME THAT WAY",
+            "YOU CANNOT LEAVE ME AGAIN!",
+            "THE CYCLE CANNOT BE BROKEN!",
+            "RESTART, HA HA HA! I AM THE CODE!",
+            "DEATH IS THE ONLY ESCAPE!"
+        ],
+        "ghost_room_shrink": [
+            "THE ROOM IS SHRINKING!",
+            "NO ESCAPE!",
+            "YOU ARE MINE NOW...",
+            "TRAPPED..."
         ],
         "boss": [
             "I am the end!",

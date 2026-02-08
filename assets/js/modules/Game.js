@@ -1,6 +1,6 @@
 import { Globals } from './Globals.js';
 import { STATES, BOUNDARY, DOOR_SIZE, DOOR_THICKNESS, CONFIG, DEBUG_FLAGS, JSON_PATHS, STORAGE_KEYS } from './Constants.js';
-import { log, deepMerge, triggerSpeech } from './Utils.js';
+import { log, deepMerge, triggerSpeech, generateLore } from './Utils.js';
 import { SFX, introMusic, unlockAudio, fadeIn, fadeOut } from './Audio.js';
 import { setupInput, handleGlobalInputs } from './Input.js';
 import { updateUI, updateWelcomeScreen, showLevelTitle, drawMinimap, drawTutorial, drawBossIntro, drawDebugLogs, drawFloatingTexts, updateFloatingTexts, getGameStats, updateGameStats, loadGameStats, resetSessionStats } from './UI.js';
@@ -136,6 +136,8 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     if (Globals.elements.perfect) Globals.elements.perfect.style.display = 'none';
     Globals.roomStartTime = Date.now();
     Globals.ghostSpawned = false; // Reset Ghost
+    Globals.ghostKilled = false;
+    Globals.foundUnlocks = []; // Reset found unlocks
     Globals.ghostEntry = null;    // Reset Ghost Entry State
     Globals.roomFreezeUntil = 0;  // Reset Freeze Timer
     Globals.bossKilled = false;   // Reset Boss Kill State
@@ -286,105 +288,142 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         Globals.roomManifest = mData;
 
         // LOAD STARTING ITEMS
+        // LOAD STARTING ITEMS & UNLOCKS
         Globals.groundItems = [];
+        let allItems = [];
+
+        // 1. Manifest Items
         if (itemMan && itemMan.items) {
             log("Loading Items Manifest:", itemMan.items.length);
             const itemPromises = itemMan.items.map(i =>
-                fetch(`${JSON_PATHS.ROOT}rewards/items/${i}.json?t=` + Date.now()).then(r => r.json()).catch(e => {
-                    console.error("Failed to load item:", i, e);
-                    return null;
-                })
+                fetch(`${JSON_PATHS.ROOT}rewards/items/${i}.json?t=` + Date.now())
+                    .then(r => r.json())
+                    .catch(e => {
+                        console.error("Failed to load item:", i, e);
+                        return null;
+                    })
             );
-            const allItems = await Promise.all(itemPromises);
-            window.allItemTemplates = allItems; // Expose for room drops
-
-            // ENHANCE: Fetch color from target config
-            await Promise.all(allItems.map(async (item) => {
-                if (!item || !item.location) return;
-                try {
-                    const url = item.location.startsWith(JSON_PATHS.ROOT) ? item.location : `${JSON_PATHS.ROOT}${item.location}`;
-                    const res = await fetch(`${url}?t=${Date.now()}`);
-                    const config = await res.json();
-
-                    // Check Top Level (Bombs/Modifiers) OR Bullet Level (Guns)
-                    const color = config.colour || config.color ||
-                        (config.Bullet && (config.Bullet.colour || config.Bullet.color));
-
-                    if (color) {
-                        item.colour = color;
-                    }
-                } catch (e) {
-                    // console.warn("Could not load config for color:", item.name);
-                }
-            }));
-
-            // Filter starters
-            // Legacy: Previously spawned all 'starter:false' items.
-            // NOW: Only spawn if DEBUG flag is set.
-            // Filter starters
-            // Legacy: Previously spawned all 'starter:false' items.
-            // NOW: Spawn based on granular DEBUG flags.
-            const starters = allItems.filter(i => {
-                if (!i) return false;
-
-                // 1. Explicitly enabled by ALL flag
-                if (DEBUG_FLAGS.SPAWN_ALL_ITEMS) return true;
-
-                // 2. Category Checks
-                const isGun = i.type === 'gun';
-                const isBomb = i.type === 'bomb';
-                const isMod = i.type === 'modifier';
-                const loc = (i.location || "").toLowerCase();
-
-                // Inventory (Keys/Bombs/Consumables) - often identified by path or lack of "modifier" type?
-                // Actually user defines them as type="modifier" usually. 
-                // Let's look for "inventory" in path.
-                const isInventory = isMod && loc.includes('inventory');
-
-                // Player Mods (Stats, Shields)
-                const isPlayerMod = isMod && loc.includes('modifiers/player') && !isInventory;
-
-                // Bullet Mods (Homing, FireRate, etc)
-                const isBulletMod = isMod && loc.includes('modifiers/bullets');
-
-                if (DEBUG_FLAGS.SPAWN_GUNS && isGun) return true;
-                if (DEBUG_FLAGS.SPAWN_BOMBS && isBomb) return true;
-                if (DEBUG_FLAGS.SPAWN_INVENTORY && isInventory) return true;
-                if (DEBUG_FLAGS.SPAWN_MODS_PLAYER && isPlayerMod) return true;
-                if (DEBUG_FLAGS.SPAWN_MODS_BULLET && isBulletMod) return true;
-
-                return false;
-            });
-            log(`Found ${allItems.length} total items. Spawning ${starters.length} floor items.`);
-
-            // Spawn them in a row
-            // Spawn them in a grid within safe margins
-            const marginX = Globals.canvas.width * 0.2;
-            const marginY = Globals.canvas.height * 0.2;
-            const safeW = Globals.canvas.width - (marginX * 2);
-            const itemSpacing = 80;
-            const cols = Math.floor(safeW / itemSpacing);
-
-            starters.forEach((item, idx) => {
-                const c = idx % cols;
-                const r = Math.floor(idx / cols);
-
-                groundItems.push({
-                    x: marginX + (c * itemSpacing) + (itemSpacing / 2),
-                    y: marginY + (r * itemSpacing) + (itemSpacing / 2),
-                    data: item,
-                    roomX: 0,
-                    roomY: 0,
-                    // Add physics properties immediately
-                    vx: 0, vy: 0,
-                    solid: true, moveable: true, friction: 0.9, size: 15,
-                    floatOffset: Math.random() * 100
-                });
-            });
-            log(`Spawned ${starters.length} starter items.`);
-        } else {
-            log("No item manifest found!");
+            const manifestItems = await Promise.all(itemPromises);
+            allItems = allItems.concat(manifestItems);
         }
+
+        // 2. Spawnable Unlocks
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        if (unlockedIds.length > 0) {
+            log(`Checking ${unlockedIds.length} unlocks for spawnables...`);
+            const unlockPromises = unlockedIds.map(id =>
+                fetch(`${JSON_PATHS.ROOT}rewards/unlocks/${id}.json?t=` + Date.now())
+                    .then(r => r.json())
+                    .then(async data => {
+                        if (data.spawnable && data.json) {
+                            const path = data.json;
+                            // Ensure path logic matches other loaders
+                            const res = await fetch(`${JSON_PATHS.ROOT}${path}?t=` + Date.now());
+                            if (res.ok) {
+                                const item = await res.json();
+                                item._isUnlock = true; // Tag it debug
+                                return item;
+                            }
+                        }
+                        return null;
+                    })
+                    .catch(e => {
+                        // console.warn("Failed to load unlock:", id); // Expected for non-item unlocks
+                        return null;
+                    })
+            );
+            const unlockedItems = await Promise.all(unlockPromises);
+            const valid = unlockedItems.filter(i => i);
+            log(`Loaded ${valid.length} spawnable unlocks.`);
+            allItems = allItems.concat(valid);
+        }
+        window.allItemTemplates = allItems; // Expose for room drops
+
+        // ENHANCE: Fetch color from target config
+        await Promise.all(allItems.map(async (item) => {
+            if (!item || !item.location) return;
+            try {
+                const url = item.location.startsWith(JSON_PATHS.ROOT) ? item.location : `${JSON_PATHS.ROOT}${item.location}`;
+                const res = await fetch(`${url}?t=${Date.now()}`);
+                const config = await res.json();
+
+                // Check Top Level (Bombs/Modifiers) OR Bullet Level (Guns)
+                const color = config.colour || config.color ||
+                    (config.Bullet && (config.Bullet.colour || config.Bullet.color));
+
+                if (color) {
+                    item.colour = color;
+                }
+            } catch (e) {
+                // console.warn("Could not load config for color:", item.name);
+            }
+        }));
+
+        // Filter starters
+        // Legacy: Previously spawned all 'starter:false' items.
+        // NOW: Only spawn if DEBUG flag is set.
+        // Filter starters
+        // Legacy: Previously spawned all 'starter:false' items.
+        // NOW: Spawn based on granular DEBUG flags.
+        const starters = allItems.filter(i => {
+            if (!i) return false;
+
+            // 1. Explicitly enabled by ALL flag
+            if (DEBUG_FLAGS.SPAWN_ALL_ITEMS) return true;
+
+            // 2. Category Checks
+            const isGun = i.type === 'gun';
+            const isBomb = i.type === 'bomb';
+            const isMod = i.type === 'modifier';
+            const loc = (i.location || "").toLowerCase();
+
+            // Inventory (Keys/Bombs/Consumables) - often identified by path or lack of "modifier" type?
+            // Actually user defines them as type="modifier" usually. 
+            // Let's look for "inventory" in path.
+            const isInventory = isMod && loc.includes('inventory');
+
+            // Player Mods (Stats, Shields)
+            const isPlayerMod = isMod && loc.includes('modifiers/player') && !isInventory;
+
+            // Bullet Mods (Homing, FireRate, etc)
+            const isBulletMod = isMod && loc.includes('modifiers/bullets');
+
+            if (DEBUG_FLAGS.SPAWN_GUNS && isGun) return true;
+            if (DEBUG_FLAGS.SPAWN_BOMBS && isBomb) return true;
+            if (DEBUG_FLAGS.SPAWN_INVENTORY && isInventory) return true;
+            if (DEBUG_FLAGS.SPAWN_MODS_PLAYER && isPlayerMod) return true;
+            if (DEBUG_FLAGS.SPAWN_MODS_BULLET && isBulletMod) return true;
+
+            return false;
+        });
+        log(`Found ${allItems.length} total items. Spawning ${starters.length} floor items.`);
+
+        // Spawn them in a row
+        // Spawn them in a grid within safe margins
+        const marginX = Globals.canvas.width * 0.2;
+        const marginY = Globals.canvas.height * 0.2;
+        const safeW = Globals.canvas.width - (marginX * 2);
+        const itemSpacing = 80;
+        const cols = Math.floor(safeW / itemSpacing);
+
+        starters.forEach((item, idx) => {
+            const c = idx % cols;
+            const r = Math.floor(idx / cols);
+
+            groundItems.push({
+                x: marginX + (c * itemSpacing) + (itemSpacing / 2),
+                y: marginY + (r * itemSpacing) + (itemSpacing / 2),
+                data: item,
+                roomX: 0,
+                roomY: 0,
+                // Add physics properties immediately
+                vx: 0, vy: 0,
+                solid: true, moveable: true, friction: 0.9, size: 15,
+                floatOffset: Math.random() * 100
+            });
+        });
+        log(`Spawned ${starters.length} starter items.`);
+
 
         // Load all players
         Globals.availablePlayers = [];
@@ -759,11 +798,16 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
         // if (gameState === STATES.PLAY) { spawnEnemies(); ... } 
         // Logic removed: startGame() handles spawning now.
+        Globals.isGameStarting = false;
 
         if (!Globals.gameLoopStarted) {
             Globals.gameLoopStarted = true;
             draw();
         }
+
+        // Start Run Timer
+        Globals.runStartTime = Date.now();
+        Globals.runElapsedTime = 0;
 
         // AUTO START IF CONFIGURED (After everything is ready)
     } finally {
@@ -809,6 +853,21 @@ export function startGame(keepState = false) {
         log("Player Locked - Cannot Start");
         Globals.isGameStarting = false;
         return;
+    }
+
+    // Increment Run Count (Persisted)
+    if (!keepState && !Globals.isRestart) {
+        // Only count as new run if not a level transition (keepState) 
+        // Adjust logic: keepState is true for level transition? 
+        // Wait, startGame(true) is used for next level? 
+        // Let's check call sites. 
+        // actually restartGame() sets isRestart=true. 
+        // But a new game from menu? 
+
+        // Simpler: Just check if we are resetting logic.
+        // If keepState is FALSE, it's a fresh run (or restart).
+        Globals.NumberOfRuns++;
+        localStorage.setItem('numberOfRuns', Globals.NumberOfRuns);
     }
 
     // Show Loading Screen immediately to block input/visuals
@@ -1382,7 +1441,7 @@ export function update() {
     }
 
     // 0. Global Inputs (Restart/Menu from non-play states)
-    if (handleGlobalInputs()) return;
+    if (handleGlobalInputs({ restartGame, goToWelcome })) return;
 
     // Music Toggle (Global) - Allow toggling in Start, Play, etc.
     updateMusicToggle();
@@ -1465,6 +1524,11 @@ export function update() {
     updateBulletsAndShards(aliveEnemies); // Pass enemies for homing check
     updateEnemies(); // Enemy movement + player collision handled inside
 
+    // Update Run Timer
+    if (Globals.runStartTime > 0) {
+        Globals.runElapsedTime = Date.now() - Globals.runStartTime;
+    }
+
     // 4. Transitions
     updateRoomTransitions(doors, roomLocked);
 
@@ -1535,6 +1599,42 @@ export async function draw() {
 
             p.life -= 0.05; // Decay
             if (p.life <= 0) Globals.particles.splice(i, 1);
+        }
+    }
+
+    // --- DRAW ROOM SHRINK VOID ---
+    if (Globals.roomShrinkSize > 0) {
+        Globals.ctx.fillStyle = "black";
+        const s = Globals.roomShrinkSize;
+        const w = Globals.canvas.width;
+        const h = Globals.canvas.height;
+
+        // Top
+        Globals.ctx.fillRect(0, 0, w, s);
+        // Bottom
+        Globals.ctx.fillRect(0, h - s, w, s);
+        // Left
+        Globals.ctx.fillRect(0, 0, s, h);
+        // Right
+        Globals.ctx.fillRect(w - s, 0, s, h);
+        if (typeof Globals.ghostRoomShrinkCount !== 'number') Globals.ghostRoomShrinkCount = 0;
+        Globals.ghostRoomShrinkCount++;
+
+        // every 500 frames (approx 8s), ONLY if playing (not Game Over)
+        // using 4 instead of STATES.GAMEOVER (which is likely 4 or 3)
+        // Safest: Check player HP > 0
+        if (Globals.ghostRoomShrinkCount % 500 === 0 && Globals.player.hp > 0) {
+            //make the ghost say something from ghost_room_shrink using lore
+            const ghostLore = Globals.speechData.types?.ghost_room_shrink || ["COME TO ME!"];
+            //pick a random line from the ghost lore
+            const ghostLine = ghostLore[Math.floor(Math.random() * ghostLore.length)];
+
+            // Find the ghost entity
+            const ghost = Globals.enemies.find(e => e.type === 'ghost');
+            if (ghost) {
+                triggerSpeech(ghost, "ghost_room_shrink", ghostLine, true);
+            }
+
         }
     }
 
@@ -1622,6 +1722,10 @@ export function updateRoomTransitions(doors, roomLocked) {
     // Increased threshold to account for larger player sizes (Triangle=20)
     const t = 50;
 
+    // PREVENT INSTANT BACK-TRANSITION
+    // Wait for 500ms after room start before allowing another transition
+    if (Date.now() - Globals.roomStartTime < 500) return;
+
     // Debug Door Triggers
     if (Globals.player.x < t + 10 && doors.left?.active) {
         // log(`Left Door Check: X=${Math.round(player.x)} < ${t}? Locked=${doors.left.locked}, RoomLocked=${roomLocked}`);
@@ -1630,27 +1734,32 @@ export function updateRoomTransitions(doors, roomLocked) {
     // Constraint for center alignment
     // Only allow transition if player is roughly in front of the door
     const doorW = 50; // Half-width tolerance (Total 100px)
+    const shrink = Globals.roomShrinkSize || 0;
 
     // Allow transition if room is unlocked OR if the specific door is forced open (red door blown)
-    if (Globals.player.x < t && doors.left?.active) {
+    // Left Door
+    if (Globals.player.x < t + shrink && doors.left?.active) {
         if (Math.abs(Globals.player.y - Globals.canvas.height / 2) < doorW) {
             if (!doors.left.locked && (!roomLocked || doors.left.forcedOpen)) changeRoom(-1, 0);
             else log("Left Door Blocked: Locked or Room Locked");
         }
     }
-    else if (Globals.player.x > Globals.canvas.width - t && doors.right?.active) {
+    // Right Door
+    else if (Globals.player.x > Globals.canvas.width - t - shrink && doors.right?.active) {
         if (Math.abs(Globals.player.y - Globals.canvas.height / 2) < doorW) {
             if (!doors.right.locked && (!roomLocked || doors.right.forcedOpen)) changeRoom(1, 0);
             else log("Right Door Blocked: Locked or Room Locked");
         }
     }
-    else if (Globals.player.y < t && doors.top?.active) {
+    // Top Door
+    else if (Globals.player.y < t + shrink && doors.top?.active) {
         if (Math.abs(Globals.player.x - Globals.canvas.width / 2) < doorW) {
             if (!doors.top.locked && (!roomLocked || doors.top.forcedOpen)) changeRoom(0, -1);
             else log("Top Door Blocked: Locked or Room Locked");
         }
     }
-    else if (Globals.player.y > Globals.canvas.height - t && doors.bottom?.active) {
+    // Bottom Door
+    else if (Globals.player.y > Globals.canvas.height - t - shrink && doors.bottom?.active) {
         if (Math.abs(Globals.player.x - Globals.canvas.width / 2) < doorW) {
             if (!doors.bottom.locked && (!roomLocked || doors.bottom.forcedOpen)) changeRoom(0, 1);
             else log("Bottom Door Blocked: Locked or Room Locked");
@@ -1659,37 +1768,19 @@ export function updateRoomTransitions(doors, roomLocked) {
 }
 
 export function isRoomLocked() {
-    // Alive enemies that are NOT indestructible
     const aliveEnemies = Globals.enemies.filter(en => !en.isDead && !en.indestructible);
-    let isLocked = false;
+
+    // 1. Any normal enemy -> LOCK
     const nonGhostEnemies = aliveEnemies.filter(en => en.type !== 'ghost');
+    if (nonGhostEnemies.length > 0) return true;
 
-    if (nonGhostEnemies.length > 0) {
-        // Normal enemies always lock
-        isLocked = true;
-    } else if (aliveEnemies.length > 0) {
-        // Only ghosts remain
-        const ghostConfig = Globals.gameData.ghost || { spawn: true, roomGhostTimer: 10000 };
-        const now = Date.now();
-        const elapsed = now - Globals.roomStartTime;
-        const limit = ghostConfig.roomGhostTimer * 2;
+    // 2. Ghost enemy -> LOCK only if it has triggered the lock
+    const ghost = aliveEnemies.find(en => en.type === 'ghost');
+    if (ghost && ghost.locksRoom) return true;
 
-        // Debug once per second (approx) to avoid spam
-        if (Math.random() < 0.01) {
-            // log(`Ghost Lock Check: Elapsed ${Math.round(elapsed)} vs Limit ${limit}`);
-        }
-
-        // Lock if time > 2x ghost timer
-        if (elapsed > limit) {
-            isLocked = true;
-            if (Math.random() < 0.05) {
-                log(`LOCKED! Elapsed: ${Math.round(elapsed)} > Limit: ${limit}`);
-                log(`Diagnostics: Now=${now}, Start=${Globals.roomStartTime}, ConfigTimer=${ghostConfig.roomGhostTimer}`);
-            }
-        }
-    }
-    return isLocked;
+    return false;
 }
+
 Globals.isRoomLocked = isRoomLocked;
 
 export function updateRoomLock() {
@@ -1763,8 +1854,27 @@ export function drawShake() {
     // 1. --- SHAKE ---
     if (Globals.screenShake.power > 0 && now < Globals.screenShake.endAt) {
         Globals.ctx.save();
-        const s = Globals.screenShake.power * ((Globals.screenShake.endAt - now) / 180);
+        let s = Globals.screenShake.power * ((Globals.screenShake.endAt - now) / 180);
+
+        // TELEPORT GLITCH BOOST
+        if (Globals.screenShake.teleport) {
+            s *= 3; // Super Shake
+            // Random Color Flash (Digital Artifact)
+            const color = Math.random() > 0.5 ? "cyan" : "magenta";
+            Globals.ctx.fillStyle = color;
+            Globals.ctx.globalAlpha = 0.2;
+            Globals.ctx.fillRect(0, 0, Globals.canvas.width, Globals.canvas.height);
+            Globals.ctx.globalAlpha = 1.0;
+        }
+
         Globals.ctx.translate((Math.random() - 0.5) * s, (Math.random() - 0.5) * s);
+    }
+    else {
+        // Reset Logic when shake ends
+        if (Globals.screenShake.power > 0) {
+            Globals.screenShake.power = 0;
+            Globals.screenShake.teleport = 0;
+        }
     }
 }
 
@@ -1780,10 +1890,12 @@ export function drawDoors() {
 
         Globals.ctx.fillStyle = color;
         const dx = door.x ?? Globals.canvas.width / 2, dy = door.y ?? Globals.canvas.height / 2;
-        if (dir === 'top') Globals.ctx.fillRect(dx - DOOR_SIZE / 2, 0, DOOR_SIZE, DOOR_THICKNESS);
-        if (dir === 'bottom') Globals.ctx.fillRect(dx - DOOR_SIZE / 2, Globals.canvas.height - DOOR_THICKNESS, DOOR_SIZE, DOOR_THICKNESS);
-        if (dir === 'left') Globals.ctx.fillRect(0, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
-        if (dir === 'right') Globals.ctx.fillRect(Globals.canvas.width - DOOR_THICKNESS, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
+        const s = Globals.roomShrinkSize || 0;
+
+        if (dir === 'top') Globals.ctx.fillRect(dx - DOOR_SIZE / 2, 0 + s, DOOR_SIZE, DOOR_THICKNESS);
+        if (dir === 'bottom') Globals.ctx.fillRect(dx - DOOR_SIZE / 2, Globals.canvas.height - DOOR_THICKNESS - s, DOOR_SIZE, DOOR_THICKNESS);
+        if (dir === 'left') Globals.ctx.fillRect(0 + s, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
+        if (dir === 'right') Globals.ctx.fillRect(Globals.canvas.width - DOOR_THICKNESS - s, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
     });
 }
 
@@ -1800,7 +1912,6 @@ export function gameOver() {
     const h1 = document.querySelector('#overlay h1');
     if (Globals.gameState === STATES.WIN) {
         h1.innerText = "VICTORY!";
-        h1.style.color = "#f1c40f"; // Gold
     } else {
         h1.innerText = "Game Over";
         h1.style.color = "red";
@@ -1992,6 +2103,7 @@ Globals.spawnEnemy = (type, x, y, overrides = {}) => {
 };
 
 export async function handleUnlocks(unlockKeys) {
+    Globals.handleUnlocks = handleUnlocks; // Expose for Entities
     if (Globals.isUnlocking) return;
     Globals.isUnlocking = true;
     Globals.unlockQueue = [...unlockKeys]; // Copy
@@ -2013,6 +2125,8 @@ export async function handleUnlocks(unlockKeys) {
     // Process first unlock
     await showNextUnlock();
 }
+
+
 
 
 export async function showNextUnlock() {
@@ -2121,7 +2235,8 @@ export function saveUnlockOverride(file, attr, value) {
 
 export function confirmNewGame() {
     // Clear Persistence to ensure fresh start
-    STORAGE_KEYS.RESET_ON_NEW_GAME.forEach(key => localStorage.removeItem(key));
+    // Clear Persistence to ensure fresh start (Hard Reset)
+    STORAGE_KEYS.HARD_RESET.forEach(key => localStorage.removeItem(key));
 
     location.reload();
 }

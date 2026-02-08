@@ -4,5 +4,6 @@
     "unlock": "itempickup",
     "json": "game.json",
     "attr": "itemPickup",
-    "value": true
+    "value": true,
+    "spawnable": false
 }
