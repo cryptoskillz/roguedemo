@@ -3039,6 +3039,18 @@ export async function pickupItem(item, index) {
                                     }
                                 }
 
+                                // SPECIAL CHECK: Max Keys
+                                if (targetKey === 'inventory.keys') {
+                                    const maxKeys = Globals.player.inventory.maxKeys || 5;
+                                    const currentKeys = typeof current[leaf] === 'number' ? current[leaf] : 0;
+
+                                    if (currentKeys >= maxKeys && (isRelative ? val > 0 : val > currentKeys)) {
+                                        if (SFX && SFX.cantPickup) SFX.cantPickup();
+                                        item.pickingUp = false;
+                                        return; // Full
+                                    }
+                                }
+
                                 if (isRelative && typeof current[leaf] === 'number') {
                                     current[leaf] += val;
                                 } else {
@@ -3049,6 +3061,11 @@ export async function pickupItem(item, index) {
                                 if (targetKey === 'inventory.bombs') {
                                     const maxBombs = Globals.player.inventory.maxBombs || 10;
                                     if (current[leaf] > maxBombs) current[leaf] = maxBombs;
+                                }
+                                // Clamp Keys after add
+                                if (targetKey === 'inventory.keys') {
+                                    const maxKeys = Globals.player.inventory.maxKeys || 5;
+                                    if (current[leaf] > maxKeys) current[leaf] = maxKeys;
                                 }
 
                                 applied = true;
