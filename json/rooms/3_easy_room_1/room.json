@@ -3,7 +3,7 @@
     "description": "Just a few small enemies to get you warmed up.",
     "hardness": 3,
     "keyBonus": 1.0,
-    "speedGoal": 100,
+    "speedGoal": 3000,
     "item": {
         "common": {
             "count": 1,

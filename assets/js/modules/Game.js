@@ -1395,6 +1395,7 @@ export function changeRoom(dx, dy) {
         Globals.roomFreezeUntil = now + actualDuration;
         Globals.player.invulnUntil = Globals.roomFreezeUntil;
         Globals.roomStartTime = Globals.roomFreezeUntil; // Ghost timer starts AFTER freeze ends
+        log("Globals.roomStartTime set to FreezeUntil: " + Globals.roomStartTime);
 
         log(`Room Freeze Active: ${actualDuration}ms (Enemies Frozen, Player Invulnerable)`);
 
@@ -1416,6 +1417,7 @@ export function changeRoom(dx, dy) {
             // If travelTime > ghostTimer, timeAlreadyElapsed is negative, so we wait longer than usual. Correct.
 
             Globals.roomStartTime = Date.now() - timeAlreadyElapsed;
+            log("Globals.roomStartTime overridden by Ghost Logic: " + Globals.roomStartTime);
 
             // Set Ghost Entry Point (The door we just came through)
             // Player is currently AT the door (spawnPlayer just ran)
@@ -1875,6 +1877,10 @@ export function updateRoomLock() {
     const doors = Globals.roomData.doors || {};
 
     if (!roomLocked && !Globals.roomData.cleared) {
+        // Prevent clearing room instantly during freeze/spawn time
+        // This stops "Speedy Bonus" from triggering before enemies even spawn
+        if (Globals.roomFreezeUntil && Date.now() < Globals.roomFreezeUntil) return;
+
         Globals.roomData.cleared = true;
         const currentCoord = `${Globals.player.roomX},${Globals.player.roomY}`; // Fixed space typo
         if (Globals.visitedRooms[currentCoord]) Globals.visitedRooms[currentCoord].cleared = true;
@@ -1890,9 +1896,13 @@ export function updateRoomLock() {
         const timeTakenMs = Date.now() - Globals.roomStartTime;
         // Default to 5000 if undefined, but explicit 0 means 0 (no bonus)
         const speedyLimitMs = (Globals.roomData.speedGoal !== undefined) ? Globals.roomData.speedGoal : 5000;
+        console.log(`Room Cleared! TimeTaken: ${timeTakenMs}ms, Limit: ${speedyLimitMs}ms (Start: ${Globals.roomStartTime}, Now: ${Date.now()})`);
+
+        log(`Room Cleared! TimeTaken: ${timeTakenMs}ms, Limit: ${speedyLimitMs}ms (Start: ${Globals.roomStartTime}, Now: ${Date.now()})`);
 
         // Fix: check timeTakenMs > 0 to avoid triggering during negative freeze time
         if (speedyLimitMs > 0 && timeTakenMs > 0 && timeTakenMs <= speedyLimitMs) {
+            log("SPEEDY BONUS AWARDED!");
             if (Globals.gameData.rewards && Globals.gameData.rewards.speedy) {
                 const dropped = spawnRoomRewards(Globals.gameData.rewards.speedy);
                 if (dropped) {
@@ -1900,6 +1910,8 @@ export function updateRoomLock() {
                     triggerPerfectText();
                 }
             }
+        } else {
+            log("Speedy Bonus Missed (or disabled).");
         }
 
         // --- PERFECT BONUS (STREAK) ---
@@ -2137,6 +2149,7 @@ export function goContinue() {
     if (Globals.pauseStartTime > 0) {
         const pausedDuration = Date.now() - Globals.pauseStartTime;
         Globals.roomStartTime += pausedDuration; // Shift room start time forward
+        log("Globals.roomStartTime shifted by " + pausedDuration + " to " + Globals.roomStartTime);
         Globals.pauseStartTime = 0;
         log("Resumed. Paused for: " + (pausedDuration / 1000).toFixed(1) + "s. Ghost Timer Adjusted.");
     }
