@@ -53,6 +53,7 @@ Bug fix 6
     check bomb json 
     tweak guns
     twweak bombs
+    add a powered down portal to the start room
     fix debug logs 
     add more unlocks
     no route to boss room
@@ -185,18 +186,15 @@ enemies
 ghost
     when you drop a bomb inside the ghost when it eats you as its not solid it never explodes (maybe kick mechanic is firing)
     ghost non solid enmeies should be able to pass through bombs (they dont explode)
+    ghost should be able to pass through solid enemies 
+    ghost should be able to pass through solid objects
     if you go through multiple room and back track you will see multiple ghosts
     if you leave a room and come back the ghost should be the same place + closer to you basedo on the speed the ghost moves. 
     if you kill some of the enemeis and leave a room and back there should only be the remaining enemies left (with ghost or blowing doors)
     door is gone
-    ghost wont enter a room with an indestrcutible eemies
-    if an enemy is nor sold (ie ghost) he should nor try to around enemies just go through them
-    solid enemies cant go through each other, player or objects
-    non solid enemies can be shot by bullets
-    solid enemies can be shot by bullets
-    player can alos be solid or non solid    
-    if you are trapped with the ghost make the room smaller and smaller until you die or the ghost dies
+    ghost wont enter a room with an indestrcutible enemy
     add a timer to show you how long you survice
+    ghost wont enter a start or boss room what is he scared of?
 
 
 NPCsds
