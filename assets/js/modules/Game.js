@@ -939,6 +939,11 @@ export function startGame(keepState = false) {
         // If keepState is FALSE, it's a fresh run (or restart).
         Globals.NumberOfRuns++;
         localStorage.setItem('numberOfRuns', Globals.NumberOfRuns);
+
+        // RESET TIMER
+        Globals.runStartTime = Date.now();
+        Globals.runElapsedTime = 0;
+        Globals.SessionRunTime = 0; // Fix persisted welcome screen timer
     }
 
     // Show Loading Screen immediately to block input/visuals
@@ -1942,12 +1947,10 @@ export function updateRoomLock() {
         // Require minimum time to disqualify glitches (e.g. 100ms)
         const isGlitch = timeTakenMs < 100;
         const speedyLimitMs = (Globals.roomData.speedGoal !== undefined) ? Globals.roomData.speedGoal : 5000;
-        console.log(`Room Cleared! TimeTaken: ${timeTakenMs}ms, Limit: ${speedyLimitMs}ms (Start: ${Globals.roomStartTime}, Now: ${Date.now()})`);
+        console.log(`Room Cleared! TimeTaken: ${timeTakenMs}ms, Limit: ${speedyLimitMs}ms (Start: ${freezeEnd}, Now: ${Date.now()})`);
 
-        log(`Room Cleared! TimeTaken: ${timeTakenMs}ms, Limit: ${speedyLimitMs}ms (Start: ${Globals.roomStartTime}, Now: ${Date.now()})`);
-
-        // Fix: check timeTakenMs > 0 to avoid triggering during negative freeze time
-        if (speedyLimitMs > 0 && timeTakenMs > 0 && timeTakenMs <= speedyLimitMs) {
+        // Fix: check timeTakenMs > 100 to avoid glitch "instant clears"
+        if (speedyLimitMs > 0 && timeTakenMs > 100 && timeTakenMs <= speedyLimitMs) {
             console.log("SPEEDY BONUS AWARDED!");
             if (Globals.gameData.rewards && Globals.gameData.rewards.speedy) {
                 const dropped = spawnRoomRewards(Globals.gameData.rewards.speedy);

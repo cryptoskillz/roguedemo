@@ -44,6 +44,8 @@ next up
     server    
 
 Bug fix 6
+    particle effect around ghost room
+    matrix room unlocks look different
     check bomb json 
     tweak guns
     twweak bombs
