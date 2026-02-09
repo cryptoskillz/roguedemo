@@ -1766,7 +1766,7 @@ export function updateEnemies() {
                         const count = Globals.roomData.unlockItem.count || 1;
                         log(`Roll Success! Spawning ${count} unlock items.`);
                         for (let i = 0; i < count; i++) {
-                            spawnUnlockItem(en.x + (i * 20), en.y);
+                            spawnUnlockItem(en.x + (i * 20), en.y, true);
                         }
                     } else {
                         log("Unlock Roll Failed.");
@@ -2958,10 +2958,46 @@ export async function pickupItem(item, index) {
     }
 
     if (type === 'unlock') {
-        // Queue it for Portal Exit
-        if (!Globals.foundUnlocks) Globals.foundUnlocks = [];
-        Globals.foundUnlocks.push(data.unlockId);
-        spawnFloatingText(Globals.player.x, Globals.player.y - 40, "UNLOCK FOUND!", "gold");
+        const isBossDrop = data.isBossDrop === true;
+
+        if (isBossDrop) {
+            // Queue it for Portal Exit (Legacy Behavior)
+            if (!Globals.foundUnlocks) Globals.foundUnlocks = [];
+            Globals.foundUnlocks.push(data.unlockId);
+            spawnFloatingText(Globals.player.x, Globals.player.y - 40, "UNLOCK FOUND!", "gold");
+        } else {
+            // IMMEDIATE UNLOCK (Spawnable/Debug)
+            // 1. Persist
+            const history = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+            if (!history.includes(data.unlockId)) {
+                history.push(data.unlockId);
+                localStorage.setItem('game_unlocked_ids', JSON.stringify(history));
+            }
+
+            // 2. Fetch Name for nice UI? 
+            // We might not have the name loaded if we didn't fetch the manifest, but we can try fetching specific file?
+            // Or just use a generic text + ID if specific name is missing in data.
+            // Actually, spawnUnlockItem puts 'name' in data but it's "Unlock Reward". 
+            // Let's try to fetch the item details to get the Real Name if we really want it, 
+            // OR just rely on "UNLOCKED: <ID>" calls if we want speed.
+            // The implementation plan suggested fetching.
+
+            // Let's float the ID formatted nicely if we can't get the real name easily synchronous.
+            // But wait, we can make this async or just fire and forget.
+            // The name is now fetched in spawnUnlockItem strings are formatted there
+            const displayName = (data.name || data.unlockId).toUpperCase().replace(/_/g, ' ');
+            spawnFloatingText(Globals.player.x, Globals.player.y - 40, `UNLOCKED: ${displayName}`, "#2ecc71");
+
+            // 3. Instant Trigger (e.g. valid for Timer)
+            if (data.details && data.details.instantTrigger && Globals.saveUnlockOverride) {
+                // Apply the override immediately
+                // data.details has json, attr, value
+                if (data.details.json && data.details.attr && data.details.value !== undefined) {
+                    Globals.saveUnlockOverride(data.details.json, data.details.attr, data.details.value);
+                    log(`Instant Unlock Triggered: ${data.details.attr} = ${data.details.value}`);
+                }
+            }
+        }
 
         if (Globals.audioCtx.state !== 'suspended' && SFX.coin) SFX.coin();
         removeItem();
@@ -3346,7 +3382,7 @@ export function applyModifierToGun(gunObj, modConfig) {
 // --- UNLOCK SYSTEM ---
 let unlockQueue = [];
 // Helper to spawn unlock item
-export async function spawnUnlockItem(x, y) {
+export async function spawnUnlockItem(x, y, isBossDrop = false) {
     try {
         // 1. Fetch Manifest
         const res = await fetch(`${JSON_PATHS.ROOT}rewards/unlocks/manifest.json?t=${Date.now()}`);
@@ -3370,6 +3406,20 @@ export async function spawnUnlockItem(x, y) {
         const nextUnlockId = available[Math.floor(Math.random() * available.length)];
         log("Spawning Unlock Item:", nextUnlockId);
 
+        // Fetch Unlock Details to get Real Name
+        let unlockName = "Unlock Reward";
+        let unlockDetails = null;
+        try {
+            const detailRes = await fetch(`${JSON_PATHS.ROOT}rewards/unlocks/${nextUnlockId}.json?t=${Date.now()}`);
+            if (detailRes.ok) {
+                const detail = await detailRes.json();
+                unlockDetails = detail;
+                if (detail.name) unlockName = detail.name;
+            }
+        } catch (e) {
+            console.warn("Failed to fetch unlock details for name:", nextUnlockId);
+        }
+
         // 4. Spawn Physical Item
         Globals.groundItems.push({
             x: x, y: y,
@@ -3378,12 +3428,14 @@ export async function spawnUnlockItem(x, y) {
             friction: 0.9, solid: true, moveable: true, size: 20,
             floatOffset: 0,
             data: {
-                name: "Unlock Reward",
+                name: unlockName,
+                details: unlockDetails, // Store full details
                 type: "unlock", // New Type
                 unlockId: nextUnlockId,
                 colour: "gold",
                 size: 20,
-                rarity: "legendary"
+                rarity: "legendary",
+                isBossDrop: isBossDrop
             }
         });
         spawnFloatingText(x, y - 40, "UNLOCK REWARD!", "gold");

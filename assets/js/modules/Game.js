@@ -647,6 +647,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         // If empty, fallback to manifest?
         // ONE CHECK: Only fallback if we DON'T have a startRoom/bossRoom config
         // meaning we are truly in a "default game" state, not a specific level file state.
+        //is this required?
         if (available.length === 0 && !Globals.gameData.startRoom && !Globals.gameData.bossRoom) {
             // FALLBACK: Load from old manifest
             try {
@@ -664,6 +665,9 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
         // C. Explicit Start Room
         if (Globals.gameData.startRoom) {
+            console.log(Globals.gameData.startRoom);
+            console.log(Globals.gameData.bossRoom);
+
             roomProtos.push(loadRoomFile(Globals.gameData.startRoom, 'start'));
         }
 
@@ -2253,3 +2257,5 @@ export function cancelNewGame() {
 
 
 Globals.loadRoom = initGame; // Alias for clarity
+Globals.saveUnlockOverride = saveUnlockOverride;
+Globals.confirmNewGame = confirmNewGame;

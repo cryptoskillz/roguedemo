@@ -1,4 +1,5 @@
 bugs
+    if you pick it up the portal unlock screen is not required (should it active immediately?)
     if yo press 0 or 9 it should update the debug buttons to on / off
     drawtutoiral in load roomd
     chained explosion should bliw in sequence not all at the same time
@@ -41,7 +42,7 @@ next up
     server    
 
 Bug fix 6
-    spwanable unlocks should show the  unlock name and unlaock like normal items, no logner the unlocked screen, boss kill unlocks should stay on the unlocked screen
+ 
     
     no route to boss room
     check bomb json 
