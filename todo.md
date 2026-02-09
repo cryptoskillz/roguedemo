@@ -50,7 +50,7 @@ next up
     server    
 
 Bug fix 6
-    make spawnable itesm solid and boucne off one another just like the player w
+    pause should not work when you are in the ghost room
     ghost music when he locks the doors
     particle effect around ghost room
     check bomb json 

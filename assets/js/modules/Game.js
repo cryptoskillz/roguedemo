@@ -29,6 +29,15 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     loadGameStats();
     if (!keepStats) resetSessionStats();
 
+    // Reset Ghost Trap State
+    Globals.ghostTrapActive = false;
+    // Music Reset handled in startGame or updateRoomLock if state persists?
+    // Force music reset if coming from Ghost Trap
+    if (introMusic && introMusic.src.includes('ghost')) {
+        introMusic.src = 'assets/music/tron.mp3';
+        if (!introMusic.paused) introMusic.play().catch(() => { });
+    }
+
     console.log("TRACER: initGame Start. isRestart=", isRestart);
 
     // FIX: Enforce Base State on Fresh Run (Reload/Restart)
@@ -1582,10 +1591,26 @@ export function update() {
     updateRemoteDetonation(); // Remote Bombs - Check BEFORE Use consumes space
     updateBombInteraction(); // Kick/Interact with Bombs
     if (Globals.keys["Space"]) updateUse();
+    //if (Globals.ghostSpawned && !window.DEBUG_WINDOW_ENABLED) {
     if (Globals.keys["KeyP"] && Globals.gameData.pause !== false) {
-        Globals.keys["KeyP"] = false; // Prevent repeated triggers
-        gameMenu();
-        return;
+
+        if (Globals.ghostSpawned) {
+            // Find the ghost entity
+            const ghost = Globals.enemies.find(e => e.type === 'ghost');
+            console.log("Ghost found:", ghost);
+            if (ghost) {
+                const ghostLore = Globals.speechData.types?.ghost_pause || ["You cannot escape me!!"];
+                //pick a random line from the ghost lore
+                const ghostLine = ghostLore[Math.floor(Math.random() * ghostLore.length)];
+                triggerSpeech(ghost, "ghost_restart", ghostLine, true);
+                Globals.keys['KeyP'] = false; // consume key
+            }
+        }
+        else {
+            Globals.keys["KeyP"] = false; // Prevent repeated triggers
+            gameMenu();
+            return;
+        }
     }
 
     // 2. World Logic
@@ -1704,6 +1729,11 @@ export async function draw() {
     if (Globals.roomData && Globals.roomData.name === "Guns Lots of Guns") {
         drawMatrixRain();
     }
+    // Ghost Trap Effect
+    if (Globals.ghostTrapActive) {
+        drawGhostBorder();
+    }
+
     drawShake()
     drawDoors()
     drawBossSwitch() // Draw switch underneath entities
@@ -1928,6 +1958,38 @@ Globals.isRoomLocked = isRoomLocked;
 export function updateRoomLock() {
     // --- 2. ROOM & LOCK STATUS ---
     const roomLocked = isRoomLocked();
+
+    // --- GHOST MUSIC LOGIC ---
+    // If not already detected, check if ghost is trapping player
+    const activeGhost = Globals.enemies.find(en => en.type === 'ghost');
+    const isGhostTrap = activeGhost && activeGhost.locksRoom;
+
+    if (isGhostTrap && !Globals.ghostTrapActive) {
+        // Trap Started - FORCE PLAY GHOST MUSIC (Override mute/lock)
+        if (introMusic) {
+            // Store previous state (was it playing Tron?)
+            if (Globals.wasMusicPlayingBeforeGhost === undefined) Globals.wasMusicPlayingBeforeGhost = !introMusic.paused;
+
+            console.log("GHOST TRAP: Switching to Ghost Music and FORCING Play. Previous:", Globals.wasMusicPlayingBeforeGhost);
+            introMusic.src = 'assets/music/ghost.mp3';
+            introMusic.volume = 0.4; // Force Volume Up (Override mute)
+            // Force Play
+            introMusic.play().then(() => console.log("Ghost Music Started")).catch((e) => { console.error("Ghost Music Force Play Failed:", e); });
+            Globals.ghostTrapActive = true;
+        }
+    } else if (!isGhostTrap && Globals.ghostTrapActive) {
+        // Trap Ended - Revert to Tron and Previous State
+        if (introMusic) {
+            introMusic.src = 'assets/music/tron.mp3';
+            if (Globals.wasMusicPlayingBeforeGhost) {
+                introMusic.play().catch(() => { });
+            } else {
+                introMusic.pause(); // Return to silence if it was silenced
+            }
+            Globals.ghostTrapActive = false;
+            Globals.wasMusicPlayingBeforeGhost = undefined;
+        }
+    }
     const doors = Globals.roomData.doors || {};
 
     // Check if we expect enemies but none are present (meaning spawn failed or hasn't happened yet)
@@ -2478,3 +2540,26 @@ export function cancelNewGame() {
 Globals.loadRoom = initGame; // Alias for clarity
 Globals.saveUnlockOverride = saveUnlockOverride;
 Globals.confirmNewGame = confirmNewGame;
+
+// --- GHOST EFFECT ---
+export function drawGhostBorder() {
+    const w = Globals.canvas.width;
+    const h = Globals.canvas.height;
+
+    // Flickering Red Overlay
+    Globals.ctx.fillStyle = `rgba(255, 0, 0, ${Math.random() * 0.1})`;
+    Globals.ctx.fillRect(0, 0, w, h);
+
+    // Draw "Creepy Particles" rising from borders
+    Globals.ctx.fillStyle = `rgba(180, 0, 0, ${Math.random() * 0.5 + 0.5})`;
+    for (let i = 0; i < 40; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h;
+        const size = Math.random() * 6 + 2;
+
+        // Only on edges (frame)
+        if (x < 60 || x > w - 60 || y < 60 || y > h - 60) {
+            Globals.ctx.fillRect(x, y, size, size);
+        }
+    }
+}

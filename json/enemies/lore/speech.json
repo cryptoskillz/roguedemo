@@ -29,6 +29,11 @@
             "RESTART, HA HA HA! I AM THE CODE!",
             "DEATH IS THE ONLY ESCAPE!"
         ],
+        "ghost_pause": [
+            "PAUSED I DON'T THINK SO!",
+            "TAKING A BREAK, HA HA HA!",
+            "TRYING TO GET BACK TO THE MENU, NO WAY!"
+        ],
         "ghost_room_shrink": [
             "THE ROOM IS SHRINKING!",
             "NO ESCAPE!",
