@@ -215,7 +215,18 @@ export function spawnEnemies() {
             // Restore invulnerability based on type/indestructible logic
             inst.invulnerable = inst.indestructible || false;
 
-            enemies.push(inst);
+            // Force Min HP if restored dead or corrupted
+            if (!inst.hp || inst.hp <= 0) {
+                log("Restored enemy HP was 0/Null. Forcing to 1.");
+                inst.hp = 1;
+                inst.maxHp = Math.max(inst.maxHp || 0, 1);
+                // Check and fix baseStats if they carried the corruption
+                if (inst.baseStats && (inst.baseStats.hp <= 0)) inst.baseStats.hp = 1;
+                else if (!inst.baseStats) inst.baseStats = { hp: 1, speed: inst.speed, damage: inst.damage };
+            }
+
+            Globals.enemies.push(inst);
+            log(`Restored Enemy: ${inst.type}, HP: ${inst.hp}`);
         });
 
         // Handle Ghost if Haunted (still spawn it separately if consistent with design?)
@@ -355,8 +366,17 @@ export function spawnEnemies() {
                         inst.damage = (inst.damage || 1) * 2;
                     }
 
+                    // Force Min HP
+                    if (!inst.hp || inst.hp <= 0) {
+                        console.warn("Enemy HP was 0/Null on Spawn. Forcing to 1. Original:", inst.hp, "Variant:", group.variant);
+                        inst.hp = 1;
+                        inst.maxHp = Math.max(inst.maxHp || 0, 1);
+                        // Ensure baseStats logic doesn't revert it
+                        if (inst.baseStats && inst.baseStats.hp <= 0) inst.baseStats.hp = 1;
+                    }
+
                     Globals.enemies.push(inst);
-                    log(`Spawned ${inst.type} (ID: ${group.type}). Stealth: ${inst.stealth}, Indestructible: ${inst.indestructible}`);
+                    log(`Spawned ${inst.type} (ID: ${group.type}). HP: ${inst.hp}, Index: ${i}`);
                 }
             } else {
                 console.warn(`Enemy template not found for: ${group.type}`);
@@ -1281,11 +1301,11 @@ export function updateBombsPhysics() {
                     if (dist < r + en.size) {
                         if (b.canInteract?.explodeOnImpact) {
                             // Boom
-                            bullets = [];
-                            bombs = [];
-                            particles = [];
-                            roomStartTime = Date.now();
-                            ghostSpawned = false; // Reset Ghost Timer
+                            // bullets = [];
+                            // bombs = [];
+                            // particles = [];
+                            // roomStartTime = Date.now();
+                            // ghostSpawned = false; // Reset Ghost Timer
 
                             // Check if visited before
                             const coord = `${player.roomX},${player.roomY}`;

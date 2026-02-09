@@ -1395,6 +1395,7 @@ export function changeRoom(dx, dy) {
         Globals.roomFreezeUntil = now + actualDuration;
         Globals.player.invulnUntil = Globals.roomFreezeUntil;
         Globals.roomStartTime = Globals.roomFreezeUntil; // Ghost timer starts AFTER freeze ends
+        Globals.roomNativeStart = now; // ABSOLUTE START TIME (For Speedy Bonus Calculation)
         log("Globals.roomStartTime set to FreezeUntil: " + Globals.roomStartTime);
 
         log(`Room Freeze Active: ${actualDuration}ms (Enemies Frozen, Player Invulnerable)`);
@@ -1876,6 +1877,48 @@ export function updateRoomLock() {
     const roomLocked = isRoomLocked();
     const doors = Globals.roomData.doors || {};
 
+    // Check if we expect enemies but none are present (meaning spawn failed or hasn't happened yet)
+    // This handles the instant-clear racing condition on room entry
+    const expectsEnemies = Globals.roomData.enemies && Globals.roomData.enemies.length > 0;
+    const hasEnemiesList = Globals.enemies && Globals.enemies.length > 0;
+
+    // Auto-fix Dead-on-Arrival Bug (Speedy Bonus Exploit Fix)
+    // If room just started (< 1000ms after freeze ends) and all enemies are dead but shouldn't be
+    const timeSinceFreeze = Date.now() - (Globals.roomFreezeUntil || 0);
+    // Use a negative buffer because freezeUntil might be in future slightly or just passed
+    // We care if we are within the first second of gameplay.
+    const isEarlyGame = timeSinceFreeze > -1500 && timeSinceFreeze < 1000;
+
+    if (!roomLocked && expectsEnemies && hasEnemiesList && !Globals.roomData.cleared && isEarlyGame) {
+        // Check if all spawned enemies are dead (which is impossible for player to do instantly)
+        const allDead = Globals.enemies.every(en => en.isDead || en.hp <= 0);
+
+        if (allDead) {
+            console.warn("Detected Dead-on-Arrival Glitch! Reviving enemies to enforce gameplay.");
+            Globals.enemies.forEach(en => {
+                if (en.isDead || en.hp <= 0) {
+                    en.isDead = false;
+                    en.hp = Math.max(en.maxHp || 1, 1);
+                    if (en.baseStats) {
+                        if (!en.baseStats.hp || en.baseStats.hp <= 0) en.baseStats.hp = en.hp;
+                    } else {
+                        en.baseStats = { hp: en.hp, speed: en.speed || 1, damage: en.damage || 1 };
+                    }
+                    en.deathTimer = undefined; // Reset despawn timer
+                }
+            });
+            // Force roomLocked to true for this frame so we don't clear
+            // But relies on isRoomLocked() next frame which will be true (since we revived them)
+            return;
+        }
+    }
+
+    if (expectsEnemies && !hasEnemiesList && !Globals.roomData.cleared) {
+        // Room expects enemies, but none found in list. 
+        // Do not clear. Wait for spawnEnemies() to populate list.
+        return;
+    }
+
     if (!roomLocked && !Globals.roomData.cleared) {
         // Prevent clearing room instantly during freeze/spawn time
         // This stops "Speedy Bonus" from triggering before enemies even spawn
@@ -1891,10 +1934,13 @@ export function updateRoomLock() {
         }
 
         // --- SPEEDY BONUS ---
-        // Check if room cleared quickly (e.g. within 5 seconds)
-        // Hardcoded to 5s if speedyGoal not in logic (using local var here)
-        const timeTakenMs = Date.now() - Globals.roomStartTime;
-        // Default to 5000 if undefined, but explicit 0 means 0 (no bonus)
+        // Calculate Time Taken using STABLE timer (Globals.roomNativeStart)
+        // Subtract freeze duration to be fair (only gameplay time counts)
+        const freezeEnd = Globals.roomFreezeUntil || Globals.roomNativeStart || 0;
+        const timeTakenMs = Date.now() - freezeEnd; // Time since freeze ended
+
+        // Require minimum time to disqualify glitches (e.g. 100ms)
+        const isGlitch = timeTakenMs < 100;
         const speedyLimitMs = (Globals.roomData.speedGoal !== undefined) ? Globals.roomData.speedGoal : 5000;
         console.log(`Room Cleared! TimeTaken: ${timeTakenMs}ms, Limit: ${speedyLimitMs}ms (Start: ${Globals.roomStartTime}, Now: ${Date.now()})`);
 
@@ -1902,7 +1948,7 @@ export function updateRoomLock() {
 
         // Fix: check timeTakenMs > 0 to avoid triggering during negative freeze time
         if (speedyLimitMs > 0 && timeTakenMs > 0 && timeTakenMs <= speedyLimitMs) {
-            log("SPEEDY BONUS AWARDED!");
+            console.log("SPEEDY BONUS AWARDED!");
             if (Globals.gameData.rewards && Globals.gameData.rewards.speedy) {
                 const dropped = spawnRoomRewards(Globals.gameData.rewards.speedy);
                 if (dropped) {
@@ -1911,7 +1957,7 @@ export function updateRoomLock() {
                 }
             }
         } else {
-            log("Speedy Bonus Missed (or disabled).");
+            console.log("Speedy Bonus Missed (or disabled).");
         }
 
         // --- PERFECT BONUS (STREAK) ---
