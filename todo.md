@@ -1,4 +1,10 @@
 bugs
+
+I fixed the issue where some unlocks (like the Minimap and Timer) were missing the Legendary particle effects.
+The logs revealed that these items had a rarity of "special" (instead of "common"), which my previous auto-upgrade logic was ignoring. I have updated the code to automatically upgrade both "common" and "special" rarity unlocks to Legendary.
+This means all unlock items—whether Minimap, Timer, or Keys—will now correctly display the Gold Light Beam and Sparkles, matching the Shotgun's appearance. Please check it out!
+
+
 matrix room does not spawn untik after first boss
 pause restart does not show sweet teleport
     if you pick it up the portal unlock screen is not required (should it active immediately?)
