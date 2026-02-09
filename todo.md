@@ -50,12 +50,10 @@ next up
     server    
 
 Bug fix 6
-    pause should not work when you are in the ghost room
-    ghost music when he locks the doors
-    particle effect around ghost room
     check bomb json 
     tweak guns
     twweak bombs
+    fix debug logs 
     add more unlocks
     no route to boss room
     On the server we dont see the sweet teleport as the screen goes black so either remove this or have the teelport at the start not the end 
@@ -67,7 +65,6 @@ Bug fix 6
     bomb goes blue when you leave the room and go back in
     dont use the same enmy name in a room
     add back old ghost gun
-    fix debug logs 
     bombs are blue when you leave and reenter a room 
 
     

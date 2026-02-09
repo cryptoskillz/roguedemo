@@ -2237,13 +2237,14 @@ export function drawEnemies() {
             bounceY = Math.sin(time) * 5; // Float up and down
             sizeMod = Math.cos(time) * 2; // Pulse size slightly
 
-            // Translucency (Base 0.6, fade if dying)
-            const baseAlpha = 0.6;
+            // Translucency (Base 0.4 for spookier effect)
+            const baseAlpha = 0.4;
             Globals.ctx.globalAlpha = en.isDead ? (en.deathTimer / 30) * baseAlpha : baseAlpha;
+            Globals.ctx.globalCompositeOperation = "screen"; // Additive glow
 
             // Ghostly Glow/Shadow
-            Globals.ctx.shadowBlur = 20;
-            Globals.ctx.shadowColor = en.color || "red";
+            Globals.ctx.shadowBlur = 35;
+            Globals.ctx.shadowColor = en.color || "white";
         } else {
             // Standard Death Fade
             if (en.isDead) Globals.ctx.globalAlpha = en.deathTimer / 30;
