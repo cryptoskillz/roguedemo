@@ -332,9 +332,39 @@ export function drawTutorial() {
     }
 }
 
+export function drawStatsPanel() {
+    //get the ids
+    const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+    //check for minimap
+    const statsPanel = Globals.gameData.showStatsPanel || unlockedIds.includes('statsPanel');
+    if (Globals.gameData && statsPanel === false) {
+        if (Globals.statsPanel) Globals.statsPanel.style.display = 'none';
+        return;
+    }
+    else {
+
+        //only add the block style if its not already applied
+        if (Globals.statsPanel && Globals.statsPanel.style.display === 'none') Globals.statsPanel.style.display = 'block';
+    }
+}
+
 export function drawMinimap() {
     if (!Globals.mctx) return; // Safety check
-    if (Globals.gameData && Globals.gameData.showMinimap === false) return;
+    //get the ids
+    const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+    //check for minimap
+    const showMinimap = Globals.gameData.showMinimap || unlockedIds.includes('minimap');
+
+
+    if (Globals.gameData && showMinimap === false) {
+        if (Globals.mapCanvas) Globals.mapCanvas.style.display = 'none';
+        return;
+    }
+
+    // Ensure it's visible if we are drawing
+    if (Globals.mapCanvas && Globals.mapCanvas.style.display === 'none') {
+        Globals.mapCanvas.style.display = 'block';
+    }
 
     const mapSize = 100;
     const roomSize = 12;

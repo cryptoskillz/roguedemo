@@ -73,7 +73,7 @@ Global game settings.
 - `music`: Default music state (`true`/`false`).
 - `soundEffects`: Default SFX state.
 - `itemPickup`: Toggle item pickup mechanic.
-- `showUI`: Toggle UI visibility.
+- `showStatsPanel`: Toggle UI visibility.
 - `showWelcome`: Toggle welcome screen.
 - `debug`: Debug flags (God Mode, etc.).
 

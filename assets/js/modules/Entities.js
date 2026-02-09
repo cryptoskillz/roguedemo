@@ -3413,6 +3413,8 @@ export async function spawnUnlockItem(x, y, isBossDrop = false) {
         }
 
         // 4. Spawn Physical Item
+
+        //chris<---
         Globals.groundItems.push({
             x: x, y: y,
             roomX: Globals.player.roomX, roomY: Globals.player.roomY,

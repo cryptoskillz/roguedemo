@@ -4,6 +4,7 @@ export const Globals = {
     ctx: null,
     mapCanvas: null,
     mctx: null,
+    statsPanel: null,
 
     // UI Elements
     elements: {
@@ -155,6 +156,7 @@ export const Globals = {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.mapCanvas = document.getElementById('minimapCanvas');
+        this.statsPanel = document.getElementById('stats-panel');
         this.mctx = this.mapCanvas ? this.mapCanvas.getContext('2d') : null;
 
         // Initialize AudioContext

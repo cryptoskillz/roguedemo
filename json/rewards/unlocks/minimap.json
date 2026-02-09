@@ -5,5 +5,6 @@
     "json": "game.json",
     "attr": "showMinimap",
     "value": true,
-    "spawnable": false
+    "spawnable": true,
+    "instantTrigger": true
 }

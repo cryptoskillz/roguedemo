@@ -37,8 +37,6 @@
     "width": 800,
     "height": 600,
     "unlocks": [
-        "itempickup",
-        "minimap",
         "startlevel3"
     ],
     "unlockItem": {

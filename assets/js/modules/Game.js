@@ -3,7 +3,7 @@ import { STATES, BOUNDARY, DOOR_SIZE, DOOR_THICKNESS, CONFIG, DEBUG_FLAGS, JSON_
 import { log, deepMerge, triggerSpeech, generateLore } from './Utils.js';
 import { SFX, introMusic, unlockAudio, fadeIn, fadeOut } from './Audio.js';
 import { setupInput, handleGlobalInputs } from './Input.js';
-import { updateUI, updateWelcomeScreen, showLevelTitle, drawMinimap, drawTutorial, drawBossIntro, drawDebugLogs, drawFloatingTexts, updateFloatingTexts, getGameStats, updateGameStats, loadGameStats, resetSessionStats } from './UI.js';
+import { drawStatsPanel, updateUI, updateWelcomeScreen, showLevelTitle, drawMinimap, drawTutorial, drawBossIntro, drawDebugLogs, drawFloatingTexts, updateFloatingTexts, getGameStats, updateGameStats, loadGameStats, resetSessionStats } from './UI.js';
 import { renderDebugForm, updateDebugEditor } from './Debug.js';
 import { generateLevel } from './Level.js';
 import {
@@ -18,6 +18,7 @@ import {
 
 // Placeholders for functions to be appended
 export async function initGame(isRestart = false, nextLevel = null, keepStats = false) {
+
     // 0. Force Audio Resume (Must be first, to catch user interaction)
     if (Globals.audioCtx.state === 'suspended') Globals.audioCtx.resume();
 
@@ -42,11 +43,6 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         window.introMusic.pause();
         window.introMusic = null;
     }
-    // Also pause the global one just in case we are restarting
-    if (introMusic && !introMusic.paused) {
-        // Don't pause here if we want seamless loop, but given the bugs, let's ensure clean state
-        // introMusic.pause(); 
-    }
 
     // Debug panel setup moved after config load
 
@@ -60,7 +56,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     if (Globals.elements.ui) {
         Globals.elements.ui.style.display = 'flex'; // Always keep flex container for layout
         const statsPanel = document.getElementById('stats-panel');
-        if (statsPanel) statsPanel.style.display = (Globals.gameData && Globals.gameData.showUI !== false) ? 'block' : 'none';
+        if (statsPanel) statsPanel.style.display = (Globals.gameData && Globals.gameData.showStatsPanel !== false) ? 'block' : 'none';
 
         const mapCanvas = document.getElementById('minimapCanvas');
         if (mapCanvas) mapCanvas.style.display = (Globals.gameData && Globals.gameData.showMinimap !== false) ? 'block' : 'none';
@@ -549,7 +545,15 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             }
         }
 
-        if (Globals.gameData.music) {
+        //check for SFX mute and it isnt in unlock ids
+
+        if (!Globals.gameData.soundEffects) {
+            Globals.sfxMuted = true;
+        }
+        if (Globals.gameData.music || JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]').includes('music')) {
+            // Force enable if unlocked (override default config)
+            Globals.gameData.music = true;
+            Globals.musicMuted = false;
             // --- 1. INSTANT AUDIO SETUP ---
             // Ensure global audio is ready
             introMusic.loop = true;
@@ -987,7 +991,7 @@ export function startGame(keepState = false) {
                 Globals.elements.ui.style.display = 'block';
 
                 const statsPanel = document.getElementById('stats-panel');
-                if (statsPanel) statsPanel.style.display = (Globals.gameData.showUI !== false) ? 'block' : 'none';
+                if (statsPanel) statsPanel.style.display = (Globals.gameData.showStatsPanel !== false) ? 'block' : 'none';
 
                 // FORCE UI UPDATE for Room Name
                 if (Globals.elements.roomName) {
@@ -1654,7 +1658,7 @@ export async function draw() {
 
         }
     }
-
+    drawStatsPanel();
     drawMinimap();
     if (!DEBUG_FLAGS.TEST_ROOM) drawTutorial();
     drawBossIntro();
@@ -1712,8 +1716,15 @@ export function drawBossSwitch() {
 }
 
 export function updateMusicToggle() {
-    // If music is disabled in config, do not allow toggling
-    if (!Globals.gameData.music) return;
+    // If music is NOT enabled (either via config or unlock), do not allow toggling
+    // Check both GameData (instant ref) and Storage (persistence ref)
+    const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+    const isUnlocked = Globals.gameData.music || unlockedIds.includes('music');
+    if (!isUnlocked) {
+        // Ensure it stays muted if locked
+        if (!Globals.musicMuted) Globals.musicMuted = true;
+        return;
+    }
 
     if (Globals.keys['Digit0']) {
         Globals.keys['Digit0'] = false; // consume key
@@ -1725,11 +1736,13 @@ export function updateMusicToggle() {
         } else {
             log("Music Unmuted");
             // Only play if we are in state where music should play
-            if (Globals.gameState === 1 || Globals.gameState === 2 || Globals.gameState === 4) {
+            // Allow START(0), PLAY(1), GAMEOVER(2), GAMEMENU(3), WIN(4)
+            if ([0, 1, 2, 3, 4].includes(Globals.gameState)) {
                 fadeIn(introMusic, 5000); // Smooth fade in
             }
         }
     }
+
 }
 
 export function updateRoomTransitions(doors, roomLocked) {

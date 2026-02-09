@@ -1,9 +1,0 @@
-{
-    "name": "UI",
-    "description": "Unlocks UI",
-    "unlock": "ui",
-    "json": "game.json",
-    "attr": "showUI",
-    "value": true,
-    "spawnable": false
-}
