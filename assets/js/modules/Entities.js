@@ -2397,6 +2397,35 @@ export function drawEnemies() {
         }
 
         // DRAW EYES
+        if (en.type === 'ghost') {
+            // Large Black Ghost Eyes (Geometric)
+            const eyeSize = en.size * 0.3; // BIG
+            const eyeXOffset = en.size * 0.4;
+            const lookDist = en.size * 0.15; // How far eyes track player
+
+            // Calculate Look Vector
+            const dx = Globals.player.x - en.x;
+            const dy = Globals.player.y - en.y;
+            const d = Math.hypot(dx, dy);
+            let lx = 0, ly = 0;
+            if (d > 0) { lx = (dx / d) * lookDist; ly = (dy / d) * lookDist; }
+
+            Globals.ctx.fillStyle = "black";
+
+            // Left Eye
+            Globals.ctx.beginPath();
+            Globals.ctx.ellipse(en.x - eyeXOffset + lx, en.y + bounceY + ly, eyeSize, eyeSize * 1.2, 0, 0, Math.PI * 2);
+            Globals.ctx.fill();
+
+            // Right Eye
+            Globals.ctx.beginPath();
+            Globals.ctx.ellipse(en.x + eyeXOffset + lx, en.y + bounceY + ly, eyeSize, eyeSize * 1.2, 0, 0, Math.PI * 2);
+            Globals.ctx.fill();
+
+            Globals.ctx.restore();
+            return; // Skip default text eyes
+        }
+
         Globals.ctx.fillStyle = "white";
         Globals.ctx.textAlign = "center";
         Globals.ctx.textBaseline = "middle";
