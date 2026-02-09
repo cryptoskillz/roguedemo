@@ -2990,6 +2990,15 @@ export async function pickupItem(item, index) {
                 log(`Instant Unlock Detail ID Saved: ${detailID}`);
             }
 
+            // SPECIAL: Instant sound effect
+            if (detailID === 'soundEffects') {
+                console.log("Sound Effect Unlocked via Pickup! key=" + detailID);
+                Globals.gameData.soundEffects = true;
+                Globals.sfxMuted = false;
+                if (SFX && SFX.upgrade) SFX.upgrade();
+                else if (SFX && SFX.coin) SFX.coin();
+            }
+
             // SPECIAL: Instant Music Play
             if (detailID === 'music') {
                 console.log("Music Unlocked via Pickup! key=" + detailID);

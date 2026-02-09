@@ -589,11 +589,18 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             }
         }
 
-        //check for SFX mute and it isnt in unlock ids
-
-        if (!Globals.gameData.soundEffects) {
+        // Check for SFX mute and ensure unlock status is respected
+        const soundUnlocked = Globals.gameData.soundEffects || JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]').includes('soundEffects');
+        if (soundUnlocked) {
+            Globals.gameData.soundEffects = true;
+            // Only force mute if explicitly requested? Or default to on.
+            // Globals.sfxMuted = false; // Let's not force false if user muted it?
+            // But if it was locked, it was forced true.
+            // We need a persistence for user preference too ideally, but for now just unlock it.
+        } else {
             Globals.sfxMuted = true;
         }
+
         if (Globals.gameData.music || JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]').includes('music')) {
             // Force enable if unlocked (override default config)
             Globals.gameData.music = true;
