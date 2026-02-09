@@ -2329,6 +2329,32 @@ export function drawEnemies() {
             Globals.ctx.lineTo(en.x, (en.y + bounceY) + r); // Bottom
             Globals.ctx.lineTo(en.x - r, (en.y + bounceY)); // Left
             Globals.ctx.closePath();
+        } else if (en.type === 'ghost') {
+            // Classic Sheet Ghost Shape
+            const r = en.size + sizeMod;
+            const h = r * 0.8; // Height below center
+
+            // Top Semicircle
+            Globals.ctx.arc(en.x, (en.y + bounceY) - (r * 0.2), r, Math.PI, 0);
+
+            // Right Side Down
+            Globals.ctx.lineTo(en.x + r, (en.y + bounceY) + h);
+
+            // Wavy Bottom (3 waves)
+            const waves = 3;
+            const waveWidth = (r * 2) / waves;
+            for (let i = 1; i <= waves; i++) {
+                const waveX = (en.x + r) - (waveWidth * i);
+                const waveY = (en.y + bounceY) + h;
+                // Control point (mid-wave, slightly up)
+                const cX = (en.x + r) - (waveWidth * (i - 0.5));
+                const cY = waveY - (r * 0.3); // Curve UP
+
+                Globals.ctx.quadraticCurveTo(cX, cY, waveX, waveY);
+            }
+
+            // Left Side Up (Closed by fill)
+            Globals.ctx.closePath();
         } else {
             // Default: "circle"
             Globals.ctx.arc(en.x, en.y + bounceY, en.size + sizeMod, 0, Math.PI * 2);
