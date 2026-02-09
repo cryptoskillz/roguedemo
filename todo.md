@@ -41,9 +41,8 @@ next up
     server    
 
 Bug fix 6
-    draw tutorail check room name and if  is not start room dont draw it
     spwanable unlocks should show the  unlock name and unlaock like normal items, no logner the unlocked screen, boss kill unlocks should stay on the unlocked screen
-    timer should not reset on each level on from welcome screen
+    
     no route to boss room
     check bomb json 
     tweak guns
