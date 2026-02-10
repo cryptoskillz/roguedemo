@@ -26,8 +26,8 @@
     },
     "unlockItem": {
         "active": true,
-        "count": 10,
-        "unlockChance": 1,
+        "count": 1,
+        "unlockChance": 0.01,
         "rarity": {
             "common": true,
             "uncommon": true,

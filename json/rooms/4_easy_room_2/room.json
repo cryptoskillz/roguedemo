@@ -7,11 +7,11 @@
     "item": {
         "common": {
             "count": 1,
-            "dropChance": 0.01
+            "dropChance": 0.1
         },
         "uncommon": {
             "count": 1,
-            "dropChance": 0
+            "dropChance": 0.01
         },
         "rare": {
             "count": 1,

@@ -3,23 +3,23 @@
     "description": "Just a few small enemies to get you warmed up.",
     "hardness": 3,
     "keyBonus": 1.0,
-    "speedGoal": 3000,
+    "speedGoal": 1000,
     "item": {
         "common": {
-            "count": 10,
-            "dropChance": 1
+            "count": 1,
+            "dropChance": 0.1
         },
         "uncommon": {
-            "count": 10,
-            "dropChance": 1
+            "count": 1,
+            "dropChance": 0.01
         },
         "rare": {
-            "count": 10,
-            "dropChance": 1
+            "count": 1,
+            "dropChance": 0
         },
         "legendary": {
-            "count": 10,
-            "dropChance": 1
+            "count": 1,
+            "dropChance": 0
         }
     },
     "doors": {

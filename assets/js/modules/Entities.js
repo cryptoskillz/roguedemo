@@ -3591,7 +3591,13 @@ export async function spawnUnlockItem(x, y, isBossDrop = false, rarityFilter = n
 
         // 2. Filter Unlocked
         const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
-        const available = allUnlocks.filter(id => !unlockedIds.includes(id));
+        const available = allUnlocks.filter(path => {
+            // Normalize manifest path to simple ID (filename)
+            // This ensures "inventory/add3bombs" checks against "add3bombs" in storage
+            const simpleId = path.split('/').pop().replace(/\.json$/i, '');
+            // Check both simple ID and full path (legacy support)
+            return !unlockedIds.includes(simpleId) && !unlockedIds.includes(path);
+        });
 
         log(`SpawnUnlockItem: Found ${allUnlocks.length} total, ${unlockedIds.length} unlocked. Available: ${available.length}`);
 
@@ -3713,6 +3719,8 @@ export function spawnRoomRewards(dropConfig, label = null) {
 
     // 0. Fetch Unlock State
     const unlocks = JSON.parse(localStorage.getItem('game_unlocks') || '{}');
+    const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+
     const isUnlocked = (item) => {
         if (!item.unlocked) return true; // Default: Unlocked
         let isActive = item.unlocked.active; // Default state from JSON
@@ -3722,6 +3730,31 @@ export function spawnRoomRewards(dropConfig, label = null) {
         if (stored && stored.unlocked && stored.unlocked.active !== undefined) {
             isActive = stored.unlocked.active;
         }
+
+        // Check ID-based Unlocks (game_unlocked_ids)
+        // 1. Explicit unlockId in item JSON
+        if (item.unlockId && unlockedIds.some(id => id === item.unlockId)) return true;
+
+        // 2. Implicit ID Logic (Filename vs Path)
+        if (item.location) {
+            const cleanPath = item.location.replace(/\.json$/i, '').toLowerCase(); // Full path w/o ext
+            const filenameId = cleanPath.split('/').pop(); // Just filename (e.g. "add3bombs")
+
+            // Check against unlocked IDs
+            const match = unlockedIds.some(rawId => {
+                const id = rawId.toLowerCase();
+                // A. Exact Filename Match (e.g. ID "add3bombs" matches "add3bombs.json")
+                if (id === filenameId) return true;
+
+                // B. Path Suffix Match (e.g. ID "inventory/add3bombs" matches ".../inventory/add3bombs.json")
+                // Only if ID contains a slash to avoid generic suffix false positives
+                if (id.includes('/') && cleanPath.endsWith(id)) return true;
+
+                return false;
+            });
+            if (match) return true;
+        }
+
         return isActive;
     };
 

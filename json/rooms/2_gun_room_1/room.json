@@ -3,7 +3,7 @@
     "description": "They have guns now!",
     "hardness": 5,
     "keyBonus": 0.1,
-    "speedGoal": 10000,
+    "speedGoal": 1000,
     "item": {
         "common": {
             "count": 1,

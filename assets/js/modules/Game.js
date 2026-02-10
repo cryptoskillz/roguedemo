@@ -316,6 +316,10 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
                 const itemPromises = itemMan.items.map(i =>
                     fetch(`${JSON_PATHS.ROOT}rewards/items/${i}.json?t=` + Date.now())
                         .then(r => r.json())
+                        .then(obj => {
+                            if (!obj.location) obj.location = `rewards/items/${i}.json`;
+                            return obj;
+                        })
                         .catch(e => {
                             console.error("Failed to load item:", i, e);
                             return null;
