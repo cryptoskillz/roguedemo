@@ -5,6 +5,7 @@ import { log } from './Utils.js';
 export let introMusic = new Audio('assets/music/tron.mp3');
 introMusic.loop = true;
 introMusic.volume = 0; // Start silent for fade-in
+Globals.introMusic = introMusic;
 
 // FADE HELPERS
 export function fadeIn(audio, duration = 2000, targetVol = 0.4) {

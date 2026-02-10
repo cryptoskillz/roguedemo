@@ -45,7 +45,13 @@
         "active": true,
         "count": 1,
         "unlockChance": 1,
-        "rarity": "common"
+        "rarity": {
+            "common": true,
+            "uncommon": true,
+            "rare": true,
+            "epic": false,
+            "legendary": true
+        }
     },
     "nextLevel": "",
     "welcomeScreen": false,

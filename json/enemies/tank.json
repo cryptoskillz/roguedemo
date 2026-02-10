@@ -5,6 +5,7 @@
     "hp": 25,
     "alwaysAngry": false,
     "angryAfterHit": 0.05,
+    "staysAngryWhenHit": false,
     "angryTime": 5000,
     "knockback": 100,
     "shake": 2,
@@ -22,6 +23,18 @@
         "type": "track",
         "x": 0,
         "y": 0
+    },
+    "unlockItem": {
+        "active": true,
+        "count": 10,
+        "unlockChance": 1,
+        "rarity": {
+            "common": true,
+            "uncommon": true,
+            "rare": true,
+            "epic": false,
+            "legendary": true
+        }
     },
     "special": false
 }

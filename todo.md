@@ -1,4 +1,6 @@
 bugs
+whenyou restart after dying you keep your gun
+when you are facing north but shooting south the gun turret should be pointing south not north
 add bukket time
 the bomb raudis should not hit you at once as the wave is coming to you should be able to run but make add wave speed as its a little slow
 make bomb explosion look moer lke. wave
@@ -53,21 +55,17 @@ next up
     server    
 
 Bug fix  7
-    is the location required in the json field now, is it not recursive?
-  rename the item rewards to have the structure 
-        gun_[name]
-        bomb_[name]
-        modifier_[name]
-        gun_unlock_[name]
-        bomb_unlock_[name]
-        modifier_unlock_[name]
-    tweak guns
-    twweak bombs
+
+    ----
+    "staysAngryWhenHit": false  ,
+    dont spawnsame unock twice
+    give red shards if their are no unlocks left
+    it does not appear to be spawing unlocked items 
+    add epic rarity 
     add a powered down portal to the start room
     fix debug logs 
     add more unlocks
     no route to boss room
-    On the server we dont see the sweet teleport as the screen goes black so either remove this or have the teelport at the start not the end 
     On the server we are not seeing the last level unlock 
     wasd during pick up items locks up occasionlllay and pulls in you a random direction for a while, firing seems to fix it. 
     somme gold doors wont unlock you have to clear the room go out and go back in and its fine

@@ -1,0 +1,60 @@
+{
+    "name": "ghost bomb",
+    "description": "the ghost bomb Wooooo",
+    "drawType": "arc",
+    "playerDraw": "arc",
+    "size": 50,
+    "colour": "#F8F8FF",
+    "range": 100,
+    "damage": 9,
+    "fireRate": 0.1,
+    "canShoot": false,
+    "timer": {
+        "active": true,
+        "show": true,
+        "time": 3000
+    },
+    "maxDrop": 3,
+    "solid": false,
+    "moveable": true,
+    "physics": {
+        "friction": 1.5,
+        "mass": 5.5,
+        "restitution": 0.5
+    },
+    "remoteDenoate": {
+        "active": false,
+        "detonateAll": false,
+        "key": "space"
+    },
+    "explosion": {
+        "radius": 300,
+        "explosionDuration": 3000,
+        "explosionColour": "#FF0000",
+        "canDamagePlayer": true
+    },
+    "doors": {
+        "openLockedDoors": false,
+        "openRedDoors": false,
+        "openSecretRooms": true
+    },
+    "canInteract": {
+        "active": true,
+        "type": "kick",
+        "distance": 100,
+        "explodeOnImpact": false
+    },
+    "location": "rewards/items/bombs/ghost.json",
+    "type": "bomb",
+    "starter": true,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "perm"
+    },
+    "modifier": {
+        "active": false,
+        "modify": ""
+    },
+    "rarity": "legendary"
+}

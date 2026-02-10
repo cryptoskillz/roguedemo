@@ -1780,6 +1780,21 @@ export function updateEnemies() {
                 if (amount > 0) {
                     spawnShard(en.x, en.y, 'green', amount);
                 }
+
+                // UNLOCK ITEM DROP (New Logic for Normal Enemies)
+                const unlockCfg = en.gunConfig?.unlockItem || en.unlockItem;
+                if (unlockCfg && unlockCfg.active) {
+                    const chance = unlockCfg.unlockChance || 0; // Default 0 for normal enemies unless configured
+                    if (Math.random() <= chance) {
+                        const count = unlockCfg.count || 1;
+                        let finalFilter = (typeof unlockCfg.rarity === 'object') ? unlockCfg.rarity : null;
+                        if (typeof unlockCfg.rarity === 'string') finalFilter = { [unlockCfg.rarity]: true };
+
+                        for (let i = 0; i < count; i++) {
+                            spawnUnlockItem(en.x + (i * 20), en.y, false, finalFilter);
+                        }
+                    }
+                }
             }
 
             if (en.type === 'boss') {
@@ -1794,21 +1809,31 @@ export function updateEnemies() {
 
                 Globals.bossKilled = true;
 
-                // UNLOCK ITEM DROP
-                if (Globals.roomData.unlockItem && Globals.roomData.unlockItem.active) {
-                    const chance = Globals.roomData.unlockItem.unlockChance || 1;
-                    log(`Boss Defeated! Checking unlock drop. Chance: ${chance}`);
+                // UNLOCK ITEM DROP (New Logic for Enemies & Bosses)
+                const unlockCfg = en.gunConfig?.unlockItem || en.unlockItem || Globals.roomData.unlockItem;
+                // Note: en.unlockItem comes from enemy JSON (e.g. Grunt/Tank)
+
+                if (unlockCfg && unlockCfg.active) {
+                    const chance = unlockCfg.unlockChance || 1;
+                    log(`Enemy/Boss Defeated! Checking unlock drop. Chance: ${chance}`);
+
                     if (Math.random() <= chance) {
-                        const count = Globals.roomData.unlockItem.count || 1;
-                        log(`Roll Success! Spawning ${count} unlock items.`);
+                        const count = unlockCfg.count || 1;
+                        const rarityFilter = (typeof unlockCfg.rarity === 'object') ? unlockCfg.rarity : null;
+                        // If rarity is a string "common", convert to filter? 
+                        // Legacy support: if rarity is string, make object { [str]: true }
+                        let finalFilter = rarityFilter;
+                        if (typeof unlockCfg.rarity === 'string') {
+                            finalFilter = { [unlockCfg.rarity]: true };
+                        }
+
+                        log(`Roll Success! Spawning ${count} unlock items. Filter:`, finalFilter);
                         for (let i = 0; i < count; i++) {
-                            spawnUnlockItem(en.x + (i * 20), en.y, true);
+                            spawnUnlockItem(en.x + (i * 20), en.y, en.type === 'boss', finalFilter);
                         }
                     } else {
                         log("Unlock Roll Failed.");
                     }
-                } else {
-                    log("Unlock Config Missing or Inactive:", Globals.roomData.unlockItem);
                 }
 
                 // Clear Rooms
@@ -3566,7 +3591,7 @@ export function applyModifierToGun(gunObj, modConfig) {
 // --- UNLOCK SYSTEM ---
 let unlockQueue = [];
 // Helper to spawn unlock item
-export async function spawnUnlockItem(x, y, isBossDrop = false) {
+export async function spawnUnlockItem(x, y, isBossDrop = false, rarityFilter = null) {
     try {
         // 1. Fetch Manifest
         const res = await fetch(`${JSON_PATHS.ROOT}rewards/unlocks/manifest.json?t=${Date.now()}`);
@@ -3586,7 +3611,7 @@ export async function spawnUnlockItem(x, y, isBossDrop = false) {
             return;
         }
 
-        // 3. Pick Random (Filter Spawnable logic)
+        // 3. Pick Random (Filter Spawnable logic + Rarity)
         // We need to fetch details to check spawnable property BEFORE picking
         const candidates = [];
         for (const id of available) {
@@ -3594,9 +3619,17 @@ export async function spawnUnlockItem(x, y, isBossDrop = false) {
                 const dRes = await fetch(`${JSON_PATHS.ROOT}rewards/unlocks/${id}.json?t=${Date.now()}`);
                 if (dRes.ok) {
                     const d = await dRes.json();
-                    if (d.spawnable !== false) {
-                        candidates.push(id);
+
+                    // Filter: Spawnable Check
+                    if (d.spawnable === false) continue;
+
+                    // Filter: Rarity Check (if filter provided)
+                    if (rarityFilter) {
+                        const r = d.rarity || 'common'; // Default to common if missing?
+                        if (!rarityFilter[r]) continue; // Skip if rarity not enabled
                     }
+
+                    candidates.push(id);
                 }
             } catch (e) { }
         }

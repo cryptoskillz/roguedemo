@@ -14,7 +14,7 @@
         "active": false,
         "modify": ""
     },
-    "rarity": "common",
+    "rarity": "rare",
     "Bullet": {
         "particles": {
             "active": false,
@@ -31,7 +31,7 @@
             "maxAmount": 25
         },
         "geometry": {
-            "shape": "circle",
+            "shape": "square",
             "shapes": [],
             "animated": false,
             "filled": true
@@ -44,8 +44,8 @@
         "curve": 0,
         "spread": 0,
         "spreadRate": 0.5,
-        "number": 5,
-        "recoil": 2,
+        "number": 1,
+        "recoil": 0,
         "homing": false,
         "fireRate": 0.8,
         "wallBounce": false,
@@ -58,12 +58,12 @@
         "freezeChance": 0.0,
         "freezeDuration": 0,
         "multiDirectional": {
-            "active": false,
+            "active": true,
             "fireNorth": false,
             "fireEast": false,
             "fireSouth": false,
             "fireWest": false,
-            "fire360": false
+            "fire360": true
         },
         "Explode": {
             "active": false,

@@ -31,12 +31,12 @@
             "maxAmount": 999
         },
         "geometry": {
-            "shape": "star",
+            "shape": "circle",
             "shapes": [],
             "animated": true,
-            "filled": 2
+            "filled": "random"
         },
-        "canDamagePlayer": false,
+        "canDamagePlayer": true,
         "speed": 12,
         "size": 15,
         "damage": 50,
@@ -48,7 +48,7 @@
         "recoil": 5,
         "homing": true,
         "fireRate": 0.2,
-        "wallBounce": false,
+        "wallBounce": true,
         "pierce": true,
         "reverseFire": false,
         "frontLocked": false,

@@ -7,6 +7,7 @@
         "guns/player/4way",
         "guns/player/360",
         "guns/player/ghost",
+        "guns/player/pacifier",
         "bombs/normal",
         "bombs/golden",
         "bombs/red",

@@ -6,20 +6,20 @@
     "speedGoal": 3000,
     "item": {
         "common": {
-            "count": 1,
-            "dropChance": 0.01
+            "count": 10,
+            "dropChance": 1
         },
         "uncommon": {
-            "count": 1,
-            "dropChance": 0
+            "count": 10,
+            "dropChance": 1
         },
         "rare": {
-            "count": 1,
-            "dropChance": 0
+            "count": 10,
+            "dropChance": 1
         },
         "legendary": {
-            "count": 1,
-            "dropChance": 0
+            "count": 10,
+            "dropChance": 1
         }
     },
     "doors": {
