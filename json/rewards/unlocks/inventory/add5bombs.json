@@ -2,7 +2,7 @@
     "name": "5 Bombs",
     "description": "Unlocks 5 bombs",
     "unlock": "add5bombs",
-    "json": "player.json",
+    "json": "game.json",
     "attr": "inventory.bombs",
     "value": 5,
     "spawnable": true,

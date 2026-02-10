@@ -1,0 +1,9 @@
+{
+    "name": "Start Level",
+    "description": "Game starts at level 2",
+    "unlock": "startlevel2",
+    "json": "game.json",
+    "attr": "startLevel",
+    "value": "json/levels/2.json",
+    "spawnable": false
+}

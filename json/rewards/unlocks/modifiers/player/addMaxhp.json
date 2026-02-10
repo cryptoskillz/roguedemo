@@ -2,7 +2,7 @@
     "name": "Max Hp+1",
     "description": "add max hp by 1",
     "unlock": "addMaxhp",
-    "json": "player.json",
+    "json": "game.json",
     "attr": "maxHp",
     "value": 1,
     "spawnable": true,

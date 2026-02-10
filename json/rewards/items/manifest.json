@@ -36,10 +36,6 @@
         "modifiers/bullets/4way",
         "modifiers/bullets/360",
         "inventory/addbomb",
-        "inventory/add3bombs",
-        "inventory/add5bombs",
-        "inventory/addkey",
-        "inventory/add3keys",
-        "inventory/add5keys"
+        "inventory/addkey"
     ]
 }

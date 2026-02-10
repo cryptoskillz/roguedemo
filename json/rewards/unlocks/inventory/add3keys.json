@@ -2,7 +2,7 @@
     "name": "3 Keys",
     "description": "Unlocks 3 keys for start",
     "unlock": "add3keys",
-    "json": "player.json",
+    "json": "game.json",
     "attr": "inventory.keys",
     "value": 3,
     "spawnable": true,

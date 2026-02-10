@@ -1,0 +1,9 @@
+{
+    "name": "Rooms",
+    "description": "Unlocks rooms",
+    "unlock": "rooms",
+    "json": "",
+    "attr": "",
+    "value": "",
+    "spawnable": false
+}

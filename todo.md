@@ -53,7 +53,8 @@ next up
     server    
 
 Bug fix  7
-]   rename the item rewards to have the structure 
+    is the location required in the json field now, is it not recursive?
+  rename the item rewards to have the structure 
         gun_[name]
         bomb_[name]
         modifier_[name]

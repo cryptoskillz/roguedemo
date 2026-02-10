@@ -3171,12 +3171,14 @@ export async function pickupItem(item, index) {
     const location = data.location;
     log(`Picking up ${data.name}...`);
 
+    // Simplified: Use existing data as config, fetch only if minimal ref
+    let config = data;
     try {
-        if (!location) throw new Error("No location definition for complex item");
-        log("Pickup Location Debug:", location, "Root:", JSON_PATHS.ROOT);
-
-        const res = await fetch(`${JSON_PATHS.ROOT}${location}?t=${Date.now()}`);
-        const config = await res.json();
+        if (location && (!config.damage && !config.modifiers && !config.timer && !config.value)) {
+            log("Fetching full config from location:", location);
+            const res = await fetch(`${JSON_PATHS.ROOT}${location}?t=${Date.now()}`);
+            config = await res.json();
+        }
 
         if (type === 'gun') {
             // Drop Helper
