@@ -50,6 +50,7 @@ next up
     server    
 
 Bug fix  7
+    the json relod black scren.
     check bomb json 
     tweak guns
     twweak bombs
