@@ -1,4 +1,5 @@
 bugs
+add bukket time
 the bomb raudis should not hit you at once as the wave is coming to you should be able to run but make add wave speed as its a little slow
 make bomb explosion look moer lke. wave
 you ca move bobs into other bombs that are solid
@@ -52,7 +53,13 @@ next up
     server    
 
 Bug fix  7
-    check bomb json 
+]   rename the item rewards to have the structure 
+        gun_[name]
+        bomb_[name]
+        modifier_[name]
+        gun_unlock_[name]
+        bomb_unlock_[name]
+        modifier_unlock_[name]
     tweak guns
     twweak bombs
     add a powered down portal to the start room
