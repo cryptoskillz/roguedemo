@@ -2760,26 +2760,57 @@ export function drawBombs(doors) {
             const pulse = 1 + Math.sin(now / 100) * 0.1;
             ctx.scale(pulse, pulse);
 
-            // Draw Body
-            ctx.fillStyle = b.colour || b.color || "yellow"; // Support both spellings
+            // Draw Body (Geometric Sphere)
+            const mainColor = b.colour || b.color || "#333";
+            ctx.fillStyle = mainColor;
             ctx.beginPath();
             ctx.arc(0, 0, b.baseR, 0, Math.PI * 2);
             ctx.fill();
 
-            // Draw Fuse / Detail?
-            ctx.fillStyle = b.colour || b.color || "yellow"; // Match bomb color (no black hole)
+            // Shine (Top Left)
+            ctx.fillStyle = "rgba(255,255,255,0.4)";
             ctx.beginPath();
-            ctx.arc(0, 0, b.baseR * 0.4, 0, Math.PI * 2);
+            ctx.arc(-b.baseR * 0.3, -b.baseR * 0.3, b.baseR * 0.25, 0, Math.PI * 2);
             ctx.fill();
+
+            // Cap (Top Rect)
+            const capW = b.baseR * 0.6;
+            const capH = b.baseR * 0.3;
+            const capY = -b.baseR * 0.9;
+            ctx.fillStyle = "#555";
+            ctx.fillRect(-capW / 2, capY - capH, capW, capH);
+
+            // Fuse (Bezier Curve)
+            ctx.strokeStyle = "#8e44ad"; // Darker Fuse
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, capY - capH);
+            const fuseTipX = capW * 0.8;
+            const fuseTipY = capY - capH - (b.baseR * 0.6);
+            ctx.quadraticCurveTo(0, capY - capH - 10, fuseTipX, fuseTipY);
+            ctx.stroke();
+
+            // Spark (Flickering Star) at Fuse Tip
+            if (now % 200 < 100) { // Flicker based on time
+                ctx.fillStyle = "#f1c40f"; // Yellow Spark
+                ctx.beginPath();
+                ctx.arc(fuseTipX, fuseTipY, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = "#e67e22"; // Orange Core
+                ctx.beginPath();
+                ctx.arc(fuseTipX, fuseTipY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
             // Draw Timer Text?
             if (b.timerShow && isFinite(b.explodeAt)) {
-                ctx.fillStyle = "black"; // High contrast text
-                ctx.font = "bold 12px Arial";
+                ctx.fillStyle = "black"; // Contrast Text
+                ctx.font = "bold 14px Arial"; // Larger
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 const remaining = Math.max(0, ((b.explodeAt - now) / 1000).toFixed(1));
-                ctx.fillText(remaining, 0, 0);
+                ctx.fillText(remaining, 0, 5); // Slightly lower
             }
 
             ctx.restore();
