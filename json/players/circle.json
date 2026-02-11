@@ -1,5 +1,6 @@
 {
     "name": "Runt",
+    "3dGlasses": false,
     "Description": "The runt of the litter",
     "colour": "#5dade2",
     "locked": false,

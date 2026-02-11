@@ -83,7 +83,6 @@
             "gun": "json/rewards/items/guns/enemy/peashooter.json"
         }
     },
-    "3dGlasses": false,
     "showTimer": false,
     "music": false,
     "pause": false,

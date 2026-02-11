@@ -2334,7 +2334,7 @@ export function drawEnemies() {
     };
 
     const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
-    const isGlobal3D = Globals.gameData["3dGlasses"] || unlockedIds.includes('3dGlasses') || Globals.player["3dGlasses"];
+    const isGlobal3D = Globals.gameData["3dGlasses"] || Globals.gameData["3dglasses"] || unlockedIds.includes('3dGlasses') || unlockedIds.includes('3dglasses') || Globals.player["3dGlasses"] || Globals.player["3dglasses"];
 
     Globals.enemies.forEach(en => {
         Globals.ctx.save();
@@ -3463,15 +3463,16 @@ export async function pickupItem(item, index) {
                                 log(`Player Mod: Set ${targetKey} to ${current[leaf]}`);
                             }
                         } else {
-                            if (Globals.player[targetKey] !== undefined) {
-                                if (isRelative && typeof Globals.player[targetKey] === 'number') {
-                                    Globals.player[targetKey] += val;
-                                } else {
-                                    Globals.player[targetKey] = val;
-                                }
-                                applied = true;
-                                log(`Player Mod: Set ${targetKey} to ${Globals.player[targetKey]}`);
+                            // Allow adding new properties (e.g. 3dglasses)
+                            // if (Globals.player[targetKey] !== undefined) {
+                            if (isRelative && typeof Globals.player[targetKey] === 'number') {
+                                Globals.player[targetKey] += val;
+                            } else {
+                                Globals.player[targetKey] = val;
                             }
+                            applied = true;
+                            log(`Player Mod: Set ${targetKey} to ${Globals.player[targetKey]}`);
+                            // }
                         }
                     }
                     if (applied) spawnFloatingText(Globals.player.x, Globals.player.y - 40, "+PLAYER MOD", "#3498db");
