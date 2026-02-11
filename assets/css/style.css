@@ -183,6 +183,7 @@ canvas {
 }
 
 #restartBtn,
+#newRunBtn,
 #continueBtn,
 #menuBtn {
     padding: 12px 30px;
@@ -204,6 +205,15 @@ canvas {
 
 #restartBtn:hover {
     background: #3498db;
+    transform: scale(1.05);
+}
+
+#newRunBtn {
+    background: #e67e22;
+}
+
+#newRunBtn:hover {
+    background: #d35400;
     transform: scale(1.05);
 }
 

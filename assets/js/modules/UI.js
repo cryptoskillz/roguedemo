@@ -576,6 +576,13 @@ export function showCredits() {
                      <p>Total Runs: <span style="color: #95a5a6">${Globals.NumberOfRuns}</span></p>
                 </div>
 
+                </div>
+                
+                 <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Game Info</p>
+                <div style="color: #ccc; font-family: monospace; text-align: left; display: inline-block; margin: 0 auto;">
+                     <p>Seed: <span style="color: #95a5a6">${Globals.seed || 'Unknown'}</span></p>
+                </div>
+
                    <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
                 <p style="color: #ccc;">Cryptoskillz</p>
                 <br>

@@ -50,9 +50,8 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     // SEED INITIALIZATION
     if (!nextLevel) { // Only change seed state on new run or restart
         if (isRestart) {
-            // Restart: Generate NEW random seed for fresh experience
-            const newSeed = Math.floor(Math.random() * 999999);
-            Globals.setSeed(newSeed);
+            // Restart: Use the SAME seed again (Deterministic Replay)
+            if (Globals.seed !== null) Globals.setSeed(Globals.seed);
         } else {
             // New Game: Generate Random Seed (unless provided in URL/Input later)
             // Check URL for seed
@@ -1657,7 +1656,7 @@ export function update() {
     }
 
     // 0. Global Inputs (Restart/Menu from non-play states)
-    if (handleGlobalInputs({ restartGame, goToWelcome })) return;
+    if (handleGlobalInputs({ restartGame, goToWelcome, newRun })) return;
 
     // Music Toggle (Global) - Allow toggling in Start, Play, etc.
     updateMusicToggle();
@@ -2299,6 +2298,21 @@ export function gameOver() {
     const continueBtn = Globals.elements.overlay.querySelector('#continueBtn');
     const menuBtn = Globals.elements.overlay.querySelector('#menuBtn');
     const restartBtn = Globals.elements.overlay.querySelector('#restartBtn');
+    const newRunBtn = Globals.elements.overlay.querySelector('#newRunBtn');
+
+    // Add Seed Display
+    let seedEl = document.getElementById('game-over-seed');
+    if (!seedEl) {
+        seedEl = document.createElement('div');
+        seedEl.id = 'game-over-seed';
+        seedEl.style.color = '#888';
+        seedEl.style.marginTop = '10px';
+        seedEl.style.fontFamily = 'monospace';
+        // Insert before buttons container (which is usually flex column at bottom?)
+        // Let's insert after stats
+        Globals.elements.stats.parentNode.insertBefore(seedEl, Globals.elements.stats.nextSibling);
+    }
+    seedEl.innerText = `Seed: ${Globals.seed || 'Unknown'}`;
 
     if (Globals.gameState === STATES.WIN) {
         // Victory: Show Continue (Enter)
@@ -2310,6 +2324,7 @@ export function gameOver() {
         // For Victory, they asked for "Enter to Continue".
 
         restartBtn.style.display = 'none';
+        if (newRunBtn) newRunBtn.style.display = 'none';
     } else {
         // Death (Game Over)
         // Request: "Main Menu (Enter)"
@@ -2320,6 +2335,7 @@ export function gameOver() {
         menuBtn.innerText = "Main Menu (Enter)";
 
         restartBtn.style.display = 'block';
+        if (newRunBtn) newRunBtn.style.display = 'block';
     }
 }
 
@@ -2345,6 +2361,13 @@ export function gameMenu() {
     overlayEl.querySelector('#continueBtn').innerText = "(Enter) Continue";
 
     overlayEl.querySelector('#restartBtn').style.display = '';
+
+    // Show New Run Button
+    const newRunBtn = overlayEl.querySelector('#newRunBtn');
+    if (newRunBtn) {
+        newRunBtn.style.display = '';
+        newRunBtn.innerText = "(N)ew Run";
+    }
 
     // Show Main Menu Button
     const menuBtn = overlayEl.querySelector('#menuBtn');
@@ -2405,6 +2428,30 @@ export async function restartGame(keepItems = false) {
     // startGame is called by initGame internal logic (via shouldAutoStart)
 }
 Globals.restartGame = restartGame;
+
+export async function newRun() {
+    log("Starting New Run (Fresh Seed)");
+    resetWeaponState();
+    // Generate new seed manually here before calling init (as init handles restart specially)
+    // Actually, calling initGame(false) treats it as a "New Game" which generates a random seed!
+    // BUT initGame(false) shows the Welcome Screen by default (shouldAutoStart check).
+    // If we want to skip welcome and start immediately:
+
+    // 1. Set seed
+    const newSeed = Math.floor(Math.random() * 999999);
+    Globals.setSeed(newSeed);
+
+    // CRITICAL: We must clear the input box so startGame() doesn't overwrite our new random seed with the old input value.
+    const seedInput = document.getElementById('seedInput');
+    if (seedInput) seedInput.value = "";
+
+    // 2. Call initGame as if it's a restart (to skip welcome) but with the NEW seed already set?
+    // Wait, initGame(true) RE-SETS seed to Globals.seed. 
+    // So if we set Globals.seed then call initGame(true), it should work!
+
+    await initGame(true);
+}
+Globals.newRun = newRun;
 
 export function goToWelcome() {
     resetWeaponState();
@@ -2563,7 +2610,15 @@ export async function showNextUnlock() {
             unlockEl.innerHTML = `
                 <h1 style="color: gold; text-shadow: 0 0 10px gold;">UNLOCKED!</h1>
                 <h2 style="font-size: 2em; margin: 20px;">${data.name || key}</h2>
+                
+                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Game Info</p>
+                <div style="color: #ccc; font-family: monospace; text-align: left; display: inline-block; margin: 0 auto;">
+                     <p>Seed: <span style="color: #95a5a6">${Globals.seed || 'Unknown'}</span></p>
+                </div>
+
                 <p style="font-size: 1.2em; color: #aaa;">${data.description || "You have unlocked a new feature!"}</p>
+                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
+                <p style="color: #ccc;">Cryptoskillz</p>
                 <div style="margin-top: 40px; padding: 10px 20px; border: 2px solid white; cursor: pointer; display: inline-block;" id="unlock-ok-btn">
                     CONTINUE (Enter)
                 </div>
