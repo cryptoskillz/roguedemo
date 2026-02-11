@@ -2383,9 +2383,10 @@ export function drawEnemies() {
         if (en["3d"] || isGlobal3D) {
             Globals.ctx.save();
             Globals.ctx.filter = 'brightness(0.7)'; // Darker shade for sides
-            const depth = 10;
+            const depth = 20; // Internal steps
             for (let d = depth; d > 0; d -= 2) {
-                drawEnemyShape(Globals.ctx, en, en.x, currentY + d, size);
+                // More X offset, Less Y offset (Squashed height)
+                drawEnemyShape(Globals.ctx, en, en.x + (d * 0.5), currentY + (d * 0.5), size);
                 Globals.ctx.fill();
             }
             Globals.ctx.restore();

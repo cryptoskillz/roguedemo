@@ -8,6 +8,9 @@ export function setupInput(callbacks) {
     // Callbacks: { restartGame, goToWelcome, goContinue }
 
     window.addEventListener('keydown', e => {
+        // IGNORE INPUT FIELDS (Prevent typing from moving player)
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
         // Update Key State
         Globals.keys[e.code] = true;
 
@@ -83,7 +86,7 @@ export function setupInput(callbacks) {
     });
 
     window.addEventListener('keyup', e => {
-        if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+        // ALWAYS CLEAR (Prevent sticking even if focus changed)
         Globals.keys[e.code] = false;
     });
 
