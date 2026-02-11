@@ -2317,7 +2317,7 @@ export function gameOver() {
     if (Globals.gameState === STATES.WIN) {
         // Victory: Show Continue (Enter)
         continueBtn.style.display = 'block';
-        continueBtn.innerText = "(Enter) Continue";
+        continueBtn.innerText = "Continue (Enter) ";
         menuBtn.style.display = 'none'; // Hide Menu button on Victory? Or Keep it mapped to M?
         // Let's keep Menu visible but maybe mapped to M?
         // User asked for "Main Menu (Enter)" for DEATH popup. 
@@ -2358,7 +2358,7 @@ export function gameMenu() {
 
     // Configure Buttons for Pause
     overlayEl.querySelector('#continueBtn').style.display = '';
-    overlayEl.querySelector('#continueBtn').innerText = "(Enter) Continue";
+    overlayEl.querySelector('#continueBtn').innerText = "Continue (Enter)";
 
     overlayEl.querySelector('#restartBtn').style.display = '';
 
@@ -2366,13 +2366,13 @@ export function gameMenu() {
     const newRunBtn = overlayEl.querySelector('#newRunBtn');
     if (newRunBtn) {
         newRunBtn.style.display = '';
-        newRunBtn.innerText = "(N)ew Run";
+        newRunBtn.innerText = "New Run (T)";
     }
 
     // Show Main Menu Button
     const menuBtn = overlayEl.querySelector('#menuBtn');
     menuBtn.style.display = '';
-    menuBtn.innerText = "(M)ain Menu";
+    menuBtn.innerText = "Main Menu (M)";
 }
 
 // Helper to reset runtime state to base state (Death/Restart)

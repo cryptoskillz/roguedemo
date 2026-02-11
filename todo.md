@@ -63,9 +63,11 @@ next up
     server    
 
 Bug fix  8
+    dont allow P from welcome screen as it brings up pause menu
     no route to boss room
-    somme gold doors wont unlock you have to clear the room go out and go back in and its fine <- recreacte
-
+    somme gold doors wont unlock you have to clear the room go out and go back in and its fine it appers to be when you pick a key up in the room as if you leave and come back it is fine
+    wasd gets locked there is always an item spwamed in the room when this happens, could be unrealted
+    if you are at the edge of the door or walk past it you go through it you should only go throug a door if. you are facing it
     dont spawn same unock twice
     give red shards if their are no unlocks left
     fix debug logs 

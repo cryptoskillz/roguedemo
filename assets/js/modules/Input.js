@@ -59,7 +59,17 @@ export function setupInput(callbacks) {
 
             // Any other key starts game
             // Any other key starts game
-            // Trigger New Run directly on N (instead of hard delete modal)
+            // Trigger Delete Save Modal on N (as requested)
+            if (e.code === 'KeyN') {
+                const modal = document.getElementById('newGameModal');
+                if (modal) {
+                    modal.style.display = 'flex';
+                    Globals.isNewGameModalOpen = true;
+                }
+                return;
+            }
+
+            // Trigger New Run directly on T
             if (e.code === 'KeyT') {
                 // Let handleGlobalInputs handle it, or call here
                 return; // Allow propagation to handleGlobalInputs?
@@ -104,9 +114,12 @@ export function handleGlobalInputs(callbacks) {
     }
     // New Run (T)
     if (Globals.keys['KeyT']) {
+        console.log("T key pressed. Current State:", Globals.gameState);
         // Allow New Run in PLAY, GAMEOVER, WIN, MENU, START, GHOSTKILLED (Truly Global)
         if (Globals.gameState === STATES.PLAY || Globals.gameState === STATES.GAMEOVER || Globals.gameState === STATES.WIN || Globals.gameState === STATES.GAMEMENU || Globals.gameState === STATES.START || Globals.ghostKilled) {
+            console.log("Checking callbacks:", Object.keys(callbacks));
             if (callbacks.newRun) {
+                console.log("Calling newRun...");
                 callbacks.newRun().catch(err => console.error("newRun failed:", err)); // Async call safety catch
                 return true;
             } else {
