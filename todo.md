@@ -54,9 +54,9 @@ next up
     unlocks / permance
     server    
 
-Bug fix  7
-
-    ----
+Bug fix  8
+    boss spwans with portal sometimes
+    minimap moves down on restaer then goes back up
     "staysAngryWhenHit": false  ,
     dont spawnsame unock twice
     give red shards if their are no unlocks left
