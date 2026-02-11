@@ -6,4 +6,5 @@
     "attr": "items",
     "value": true,
     "spawnable": false
+        "hasItem": false
 }

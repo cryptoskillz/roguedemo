@@ -6,5 +6,6 @@
     "attr": "music",
     "value": true,
     "spawnable": true,
+    "hasItem": false,
     "instantTrigger": true
 }

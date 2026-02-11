@@ -6,5 +6,6 @@
     "attr": "showStatsPanel",
     "value": true,
     "spawnable": true,
+    "hasItem": false,
     "instantTrigger": true
 }

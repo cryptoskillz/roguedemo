@@ -134,7 +134,7 @@ export function updateWelcomeScreen() {
     const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
     const hasSave = localStorage.getItem('game_unlocks') || unlockedIds.length > 0;
     const startText = hasSave
-        ? 'Press any key to continue<br><div style="margin-top:8px; font-size:0.8em; color:#e74c3c;">Press <span class="key-badge">N</span> for new game</div>'
+        ? 'Press any key to continue<br><div style="margin-top:8px; font-size:0.8em; color:#e74c3c;">Press <span class="key-badge">N</span> for new game (delete save)</div>'
         : 'Press any key to start';
 
     // Normalize string array check (case-insensitive)

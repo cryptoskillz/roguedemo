@@ -102,7 +102,7 @@ export function handleGlobalInputs(callbacks) {
             return true;
         }
     }
-    // New Run (N)
+    // New Run (T)
     if (Globals.keys['KeyT']) {
         // Allow New Run in PLAY, GAMEOVER, WIN, MENU, START, GHOSTKILLED (Truly Global)
         if (Globals.gameState === STATES.PLAY || Globals.gameState === STATES.GAMEOVER || Globals.gameState === STATES.WIN || Globals.gameState === STATES.GAMEMENU || Globals.gameState === STATES.START || Globals.ghostKilled) {

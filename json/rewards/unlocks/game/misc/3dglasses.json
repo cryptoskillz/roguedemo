@@ -6,5 +6,6 @@
     "attr": "3dGlasses",
     "value": true,
     "spawnable": true,
+    "hasItem": true,
     "instantTrigger": true
 }

@@ -3612,13 +3612,15 @@ export async function spawnUnlockItem(x, y, isBossDrop = false, rarityFilter = n
         // 3. Pick Random (Filter Spawnable logic + Rarity)
         // We need to fetch details to check spawnable property BEFORE picking
         const candidates = [];
+        const priorityCandidates = []; // for hasItem: false items
+
         for (const id of available) {
             try {
                 const dRes = await fetch(`${JSON_PATHS.ROOT}rewards/unlocks/${id}.json?t=${Date.now()}`);
                 if (dRes.ok) {
                     const d = await dRes.json();
 
-                    // Filter: Spawnable Check
+                    // Filter: Spawnable Check (Reverted: Skip if false)
                     if (d.spawnable === false) continue;
 
                     // Filter: Rarity Check (if filter provided)
@@ -3627,17 +3629,29 @@ export async function spawnUnlockItem(x, y, isBossDrop = false, rarityFilter = n
                         if (!rarityFilter[r]) continue; // Skip if rarity not enabled
                     }
 
-                    candidates.push(id);
+                    // User Request: Prioritize hasItem: false (Meta Unlocks)
+                    if (d.hasItem === false) {
+                        priorityCandidates.push(id);
+                    } else {
+                        // Regular unlock
+                        candidates.push(id);
+                    }
                 }
             } catch (e) { }
         }
 
-        if (candidates.length === 0) {
+        // PRIORITIZE "hasItem: false" items first
+        let nextUnlockId = null;
+
+        if (priorityCandidates.length > 0) {
+            log("Spawning PRIORITY Unlock (hasItem: false): Found " + priorityCandidates.length);
+            nextUnlockId = priorityCandidates[Math.floor(Math.random() * priorityCandidates.length)];
+        } else if (candidates.length > 0) {
+            nextUnlockId = candidates[Math.floor(Math.random() * candidates.length)];
+        } else {
             spawnShard(x, y, 'red', 25);
             return;
         }
-
-        const nextUnlockId = candidates[Math.floor(Math.random() * candidates.length)];
         log("Spawning Unlock Item:", nextUnlockId);
 
         // Fetch Unlock Details to get Real Name
