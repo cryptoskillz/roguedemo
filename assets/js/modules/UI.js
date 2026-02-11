@@ -335,6 +335,7 @@ export function drawTutorial() {
             actions.push({ label: "BOMB", key: "B" });
         }
 
+        actions.push({ label: "NEW RUN", key: "T" });
 
         actions.push({ label: "RESTART", key: "R" });
 
