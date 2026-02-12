@@ -1,0 +1,11 @@
+{
+    "name": "Ghost Health",
+    "description": "Unlocks Ghost Health",
+    "unlock": "tighosthealthmer",
+    "json": "game.json",
+    "attr": "showGhostHealth",
+    "value": true,
+    "spawnable": true,
+    "hasItem": false,
+    "instantTrigger": true
+}

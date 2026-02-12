@@ -1,0 +1,11 @@
+{
+    "name": "Enemy Name",
+    "description": "Unlocks Enemy Name",
+    "unlock": "enemyname",
+    "json": "game.json",
+    "attr": "showEnemyName",
+    "value": true,
+    "spawnable": true,
+    "hasItem": false,
+    "instantTrigger": true
+}
