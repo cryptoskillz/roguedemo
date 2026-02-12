@@ -63,9 +63,12 @@ next up
     server    
 
 Bug fix  9
-    search on other sections on debug
+    when you run into a biulletit gets stuck in you we should go back to the methid where the you ate the bullets and place the first shot so many 
+    frames in from the player so its a prolonged push that eats the bullet not a simple move forward
+    implement can go through bullets modifier
+    add a perfect count item
+    add a speedy timer item 
     bomb drop don has a big B
-    ghot dropped as a spwan item
     dont allow P from welcome screen as it brings up pause menu
     no route to boss room
     somme gold doors wont unlock you have to clear the room go out and go back in and its fine it appers to be when you pick a key up in the room as if you leave and come back it is fine
@@ -202,6 +205,7 @@ enemies
 
 
 ghost
+    add ghost to the welcome screen
     when you drop a bomb inside the ghost when it eats you as its not solid it never explodes (maybe kick mechanic is firing)
     ghost non solid enmeies should be able to pass through bombs (they dont explode)
     ghost should be able to pass through solid enemies 

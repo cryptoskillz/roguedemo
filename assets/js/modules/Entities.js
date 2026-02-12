@@ -1258,7 +1258,7 @@ export function updateRestart() {
             // Find the ghost entity
             const ghost = Globals.enemies.find(e => e.type === 'ghost');
             if (ghost) {
-                //pick the ghost lore from ghost_restart
+                //pick the ghost lore from ghost restart
                 if (Globals.keys['KeyT']) {
                     const ghostLore = Globals.speechData.types?.ghost_restart || ["You cannot escape me!!"];
                     const ghostLine = ghostLore[Math.floor(Math.random() * ghostLore.length)];

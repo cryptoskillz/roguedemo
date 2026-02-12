@@ -70,7 +70,7 @@ export function setupInput(callbacks) {
             }
 
             // Trigger New Run directly on T
-            if (e.code === 'KeyT') {
+            if (e.code === 'KeyT' || e.code === 'KeyP') {
                 // Let handleGlobalInputs handle it, or call here
                 return; // Allow propagation to handleGlobalInputs?
             }
