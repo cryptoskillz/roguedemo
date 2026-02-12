@@ -268,6 +268,12 @@ export function spawnEnemies() {
             };
         }
 
+        if (Globals.ghostHP !== undefined && Globals.ghostHP > 0) {
+            inst.hp = Globals.ghostHP;
+        } else {
+            Globals.ghostHP = inst.hp;
+        }
+
 
         // Standard random placement or center
         inst.x = Globals.random() * (Globals.canvas.width - 60) + 30;
@@ -2192,6 +2198,12 @@ export function updateGhost() {
 
         // 1. LOCK DOORS (after 1 timer cycle)
         if (elapsed > delay) {
+            if (ghost.hasSpokenGhostHealth === false) {
+                triggerSpeech(ghost, "ghost_nohealth", "HEALTH BAR BE GONE!!!!", false);
+
+            }
+            ghost.hasSpokenGhostHealth = true;
+            Globals.gameData.showGhostHealth = false
             ghost.locksRoom = true;
         } else {
             ghost.locksRoom = false;
@@ -2428,7 +2440,7 @@ export function drawEnemies() {
         Globals.ctx.fill();
 
         // Draw Name (After Fill to avoid color bleed)
-        if (Globals.gameData.ShowEnemyNames !== false && en.lore && en.lore.displayName && !en.isDead) {
+        if (Globals.gameData.showEnemyNames !== false && en.lore && en.lore.displayName && !en.isDead) {
             Globals.ctx.save(); // Isolate text styles
             Globals.ctx.textAlign = "center";
             Globals.ctx.textBaseline = "bottom";
@@ -2439,20 +2451,35 @@ export function drawEnemies() {
             Globals.ctx.restore();
         }
 
+        // DRAW HEALTH BAR, use ShowGhost health to draw the ghost
         // DRAW HEALTH BAR
-        if (Globals.gameData.ShowEnemyHealth !== false && !en.isDead && en.maxHp > 0 && en.hp < en.maxHp) {
-            const barWidth = 30;
-            const barHeight = 4;
-            const yOffset = en.size + 10; // Below enemy
-            const pct = Math.max(0, en.hp / en.maxHp);
+        if (Globals.gameData.showEnemyHealth !== false && !en.isDead && en.maxHp > 0 && en.hp <= en.maxHp) {
+            let skipDraw = false;
 
-            Globals.ctx.save();
-            Globals.ctx.fillStyle = "rgba(0,0,0,0.5)";
-            Globals.ctx.fillRect(en.x - barWidth / 2, en.y + yOffset, barWidth, barHeight);
+            // Ghost specific logic
+            if (en.type === 'ghost') {
+                // If globally disabled OR locally hidden (by lock)
+                if (Globals.gameData.showGhostHealth === false || en.hideHealth) {
+                    skipDraw = true;
+                    // Trigger Speech if it happens during lock event? 
+                    // No, logic handles speech. Drawing just stops here.
+                }
+            }
 
-            Globals.ctx.fillStyle = pct > 0.5 ? "#2ecc71" : (pct > 0.25 ? "#f1c40f" : "#e74c3c");
-            Globals.ctx.fillRect(en.x - barWidth / 2, en.y + yOffset, barWidth * pct, barHeight);
-            Globals.ctx.restore();
+            if (!skipDraw) {
+                const barWidth = 30;
+                const barHeight = 4;
+                const yOffset = en.size + 10; // Below enemy
+                const pct = Math.max(0, en.hp / en.maxHp);
+
+                Globals.ctx.save();
+                Globals.ctx.fillStyle = "rgba(0,0,0,0.5)";
+                Globals.ctx.fillRect(en.x - barWidth / 2, en.y + yOffset, barWidth, barHeight);
+
+                Globals.ctx.fillStyle = pct > 0.5 ? "#2ecc71" : (pct > 0.25 ? "#f1c40f" : "#e74c3c");
+                Globals.ctx.fillRect(en.x - barWidth / 2, en.y + yOffset, barWidth * pct, barHeight);
+                Globals.ctx.restore();
+            }
         }
 
         // DRAW SPEECH BUBBLE

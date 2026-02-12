@@ -42,7 +42,7 @@ next up
             unlocked guns
             unlocked bombs
     
-    ghost
+    ghostr
     rooms
     items
     balance
@@ -50,12 +50,12 @@ next up
     server    
 
 Bug fix  9 
-Check for Start Room Bonus (First Start) make the bousn look better
+
+U should restart from level 4 
+speedytimer shoukd be set for standard peashooter time but adjust down for the more powerful gun you have we dont have to be super precise with this and min max it mayber have perOverPeashooter and it uses this to adjsut the speedy bonus accordingly, that can read speedy pea shooter bonuses
+maybe add room unlocks
     enemy health item
-    404571 spawns    no route to boss room
-    10539 so=pawns one room
-4   14200 spawns 4 roooms no biss
-   add critical gun
+    add critical gun
     add freeze gun
     angry gun
     add fps item

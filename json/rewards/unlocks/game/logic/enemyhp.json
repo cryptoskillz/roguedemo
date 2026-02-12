@@ -1,9 +1,9 @@
 {
     "name": "Enemy Health",
     "description": "Unlocks Enemy Health",
-    "unlock": "timer",
+    "unlock": "enemyhp",
     "json": "game.json",
-    "attr": "ShowEnemyHealth",
+    "attr": "showEnemyHealth",
     "value": true,
     "spawnable": true,
     "hasItem": false,

@@ -110,8 +110,9 @@
     "showKeys": false,
     "showRoom": false,
     "showOverlay": false,
-    "ShowEnemyNames": true,
-    "ShowEnemyHealth": false,
+    "showEnemyName": false,
+    "showEnemyHealth": false,
+    "showGhostHealth": false,
     "redShards": true,
     "greenShards": true,
     "ghost": {
