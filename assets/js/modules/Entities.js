@@ -874,8 +874,8 @@ export function updateBulletsAndShards(aliveEnemies) {
                         return;
                     }
                 } else {
-                    // Harmless collision - destroy bullet
-                    Globals.bullets.splice(i, 1);
+                    // Harmless collision - Do NOT destroy bullet (Allow player to run through own slow bullets)
+                    // Globals.bullets.splice(i, 1);
                     return;
                 }
             }
@@ -1259,10 +1259,16 @@ export function updateRestart() {
             const ghost = Globals.enemies.find(e => e.type === 'ghost');
             if (ghost) {
                 //pick the ghost lore from ghost_restart
-                const ghostLore = Globals.speechData.types?.ghost_restart || ["You cannot escape me!!"];
-                //pick a random line from the ghost lore
-                const ghostLine = ghostLore[Math.floor(Math.random() * ghostLore.length)];
-                triggerSpeech(ghost, "ghost_restart", ghostLine, true);
+                if (Globals.keys['KeyT']) {
+                    const ghostLore = Globals.speechData.types?.ghost_restart || ["You cannot escape me!!"];
+                    const ghostLine = ghostLore[Math.floor(Math.random() * ghostLore.length)];
+                    triggerSpeech(ghost, "ghost_restart", ghostLine, true);
+                }
+                if (Globals.keys['KeyR']) {
+                    const ghostLore = Globals.speechData.types?.ghost_newgame || ["Now New world for you!"];
+                    const ghostLine = ghostLore[Math.floor(Math.random() * ghostLore.length)];
+                    triggerSpeech(ghost, "ghost_newgame", ghostLine, true);
+                }
             }
         }
         else {

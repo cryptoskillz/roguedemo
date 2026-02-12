@@ -106,6 +106,9 @@ export function setupInput(callbacks) {
 export function handleGlobalInputs(callbacks) {
     // Restart
     if (Globals.keys['KeyR']) {
+        // BUT if Ghost is SPAWNED (Hunting) in PLAY state, do NOT handle here (let Game.js handle trap)
+        if (Globals.ghostSpawned) return;
+
         // Allow Restart in PLAY, GAMEOVER, WIN, MENU, GHOSTKILLED
         if (Globals.gameState === STATES.PLAY || Globals.gameState === STATES.GAMEOVER || Globals.gameState === STATES.WIN || Globals.gameState === STATES.GAMEMENU || Globals.ghostKilled) {
             callbacks.restartGame();
@@ -115,7 +118,10 @@ export function handleGlobalInputs(callbacks) {
     // New Run (T)
     if (Globals.keys['KeyT']) {
         console.log("T key pressed. Current State:", Globals.gameState);
-        // Allow New Run in PLAY, GAMEOVER, WIN, MENU, START, GHOSTKILLED (Truly Global)
+        // Allow New Run in GAMEOVER, WIN, MENU, START, GHOSTKILLED
+        // BUT if Ghost is SPAWNED (Hunting) in PLAY state, do NOT handle here (let Game.js handle trap)
+        if (Globals.ghostSpawned) return;
+
         if (Globals.gameState === STATES.PLAY || Globals.gameState === STATES.GAMEOVER || Globals.gameState === STATES.WIN || Globals.gameState === STATES.GAMEMENU || Globals.gameState === STATES.START || Globals.ghostKilled) {
             console.log("Checking callbacks:", Object.keys(callbacks));
             if (callbacks.newRun) {
