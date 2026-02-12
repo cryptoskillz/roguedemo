@@ -153,8 +153,8 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
     // Only reset Ghost Timer on Fresh Start
     if (!keepStats) {
-        Globals.ghostTime = 0; // Accumulated time with ghost
-        Globals.ghostTimeSurvived = 0;
+        Globals.ghostTime = 0; // Accumulated time with ghost (Run)
+        // Globals.ghostTimeSurvived must NOT be reset here! It is Lifetime.
         Globals.ghostTimeSessionSurvived = 0;
     }
 
