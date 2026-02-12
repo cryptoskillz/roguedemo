@@ -1704,7 +1704,7 @@ export function update() {
     const doors = Globals.roomData.doors || {};
 
     // 1. Inputs & Music
-    updateRestart();
+    // updateRestart(); // HANDLED BY INPUT.JS & GHOST TRAP BELOW
     // updateMusicToggle(); // Moved up (called below now)
     updateMusicToggle();
     updateSFXToggle();
@@ -1713,32 +1713,38 @@ export function update() {
     if (Globals.keys["Space"]) updateUse();
     //if (Globals.ghostSpawned && !window.DEBUG_WINDOW_ENABLED) {
     //trapped by ghsot no escape, pause or new run
+    //trapped by ghsot no escape, pause or new run
     if ((Globals.keys["KeyP"] || Globals.keys["KeyT"] || Globals.keys["KeyR"]) && Globals.gameData.pause !== false) {
 
         if (Globals.ghostSpawned) {
             // Find the ghost entity
             const ghost = Globals.enemies.find(e => e.type === 'ghost');
             if (ghost) {
-                const ghostLore = Globals.speechData.types?.ghost_pause || ["You cannot escape me!!"];
+                // Determine Speech Key based on Input
+                let speechKey = "ghost_pause";
+                if (Globals.keys["KeyR"]) speechKey = "ghost_restart";
+                if (Globals.keys["KeyT"]) speechKey = "ghost_newgame";
+
+                const ghostLore = Globals.speechData.types?.[speechKey] || ["You cannot escape me!!"];
                 //pick a random line from the ghost lore
                 const ghostLine = ghostLore[Math.floor(Math.random() * ghostLore.length)];
-                triggerSpeech(ghost, "ghost_restart", ghostLine, true);
+
+                triggerSpeech(ghost, speechKey, ghostLine, true);
+
                 Globals.keys['KeyP'] = false; // consume key
                 Globals.keys['KeyT'] = false; // consume key
                 Globals.keys['KeyR'] = false; // consume key
             }
         }
         else {
-            // Normal Pause (P only reaches here, T is handled by Input.js if !ghostSpawned)
-            // But if T somehow reached here, ignore it? No, just pause if P pressed.
+            // Normal Pause (Only P reaches here for Pause Menu)
             if (Globals.keys["KeyP"]) {
                 Globals.keys["KeyP"] = false; // Prevent repeated triggers
                 gameMenu();
                 return;
             }
-            // If T reached here (unlikely), consume it
+            // If T/R reached here (unlikely if !ghostSpawned, as Input.js handles them), consume
             if (Globals.keys["KeyT"]) Globals.keys["KeyT"] = false;
-            // If R reached here (unlikely), consume it
             if (Globals.keys["KeyR"]) Globals.keys["KeyR"] = false;
         }
     }
