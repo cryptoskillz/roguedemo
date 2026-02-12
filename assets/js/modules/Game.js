@@ -1013,10 +1013,8 @@ export function startGame(keepState = false) {
     const seedInput = document.getElementById('seedInput');
     if (seedInput && seedInput.value && seedInput.value.trim() !== "") {
         const val = seedInput.value.trim();
-        // Loose comparison to allow string/number match
-        if (val != Globals.seed) {
-            Globals.setSeed(val);
-        }
+        // FORCE Reset RNG State even if value is same (fixes restart bug)
+        Globals.setSeed(val);
     }
 
     // Check if we need to regenerate level due to seed change

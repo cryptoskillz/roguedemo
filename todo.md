@@ -63,6 +63,12 @@ next up
     server    
 
 Bug fix  9
+    double click on debug should spwan the item 
+    search on other sections on debug
+    unlocks as a dro down list
+    you can escape the ghost with a t wds
+    bomb drop don has a big B
+    ghot dropped as a spwan item
     dont allow P from welcome screen as it brings up pause menu
     no route to boss room
     somme gold doors wont unlock you have to clear the room go out and go back in and its fine it appers to be when you pick a key up in the room as if you leave and come back it is fine
