@@ -2587,6 +2587,7 @@ export async function showNextUnlock() {
         // All Done -> Proceed to Victory
         unlockEl.style.display = 'none';
         Globals.isUnlocking = false;
+        Globals.keys = {}; // Clear inputs to prevent stuck movement after modal closes
 
         // Final Win State
         handleLevelComplete();

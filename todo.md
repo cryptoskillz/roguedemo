@@ -63,25 +63,25 @@ next up
     server    
 
 Bug fix  9
+    angry gun
     when you run into a biulletit gets stuck in you we should go back to the methid where the you ate the bullets and place the first shot so many 
     frames in from the player so its a prolonged push that eats the bullet not a simple move forward
     implement can go through bullets modifier
     add a perfect count item
     add a speedy timer item 
     bomb drop don has a big B
-    dont allow P from welcome screen as it brings up pause menu
     no route to boss room
     somme gold doors wont unlock you have to clear the room go out and go back in and its fine it appers to be when you pick a key up in the room as if you leave and come back it is fine
     wasd gets locked there is always an item spwamed in the room when this happens, could be unrealted
     if you are at the edge of the door or walk past it you go through it you should only go throug a door if. you are facing it
-    dont spawn same unock twice
-    give red shards if their are no unlocks left
+
     fix debug logs 
     add more unlocks
     
     ^^^^
     "staysAngryWhenHit": false  ,
-
+    dont spawn same unock twice
+    give red shards if their are no unlocks left
     enemes spawm outside the room if they are very big
     shield shows when you go into the portal
     bomb goes blue when you leave the room and go back in
