@@ -84,6 +84,7 @@
     },
     "showTimer": false,
     "showSpeedyTimer": false,
+    "showGhostimer": true,
     "showPerfectCount": false,
     "showNoDamageCount": false,
     "showShooterCount": false,

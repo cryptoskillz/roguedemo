@@ -4,7 +4,7 @@
     "damage": 1000,
     "knockback": 0,
     "shake": 2,
-    "hp": 10,
+    "hp": 2000000,
     "alwaysAngry": false,
     "angryAfterHit": 0.001,
     "angryTime": 1000,

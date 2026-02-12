@@ -289,6 +289,37 @@ export async function updateUI() {
         }
     }
 
+    // --- GHOST TIMER ---
+    const ghostEl = document.getElementById('ghost-timer');
+    if (ghostEl) {
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        // Note: User property is "showGhostimer" (one T)
+        if (Globals.gameData.showGhostimer || unlockedIds.includes('ghosttimer')) {
+            ghostEl.style.display = 'block';
+
+            // Time is accumulated in Globals.ghostTime (ms)
+            const remaining = Globals.ghostTime || 0;
+
+            const sec = Math.floor(remaining / 1000);
+            const ms = Math.floor((remaining % 1000) / 10);
+
+            const valEl = document.getElementById('gt-val');
+            if (valEl) valEl.innerText = `${sec.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+
+            // Style: Grey if Inactive, Red if Active
+            if (Globals.ghostTimerActive) {
+                ghostEl.style.color = '#e74c3c'; // Active Red (matches CSS)
+                ghostEl.style.opacity = '1.0';
+            } else {
+                ghostEl.style.color = '#555'; // Inactive Grey
+                ghostEl.style.opacity = '0.5'; // Ghosted out
+            }
+
+        } else {
+            ghostEl.style.display = 'none';
+        }
+    }
+
     // --- PERFECT COUNT ---
     const perfectCountEl = document.getElementById('perfect-count');
     if (perfectCountEl) {

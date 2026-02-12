@@ -11,6 +11,7 @@
         "game/logic/shards",
         "game/logic/timer",
         "game/logic/speedytimer",
+        "game/logic/ghosttimer",
         "game/logic/perfectcount",
         "game/logic/nodamagecount",
         "game/logic/shootercount",

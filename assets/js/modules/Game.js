@@ -148,6 +148,8 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     Globals.bulletsInRoom = 0;
     Globals.player.roomY = 0;
     Globals.bulletsInRoom = 0;
+    Globals.ghostTime = 0; // Accumulated time with ghost
+    Globals.lastUpdate = Date.now(); // For delta time
     Globals.hitsInRoom = 0;
 
     // SHARD CURRENCY INIT
@@ -1789,6 +1791,16 @@ export function update() {
     // Update Run Timer
     if (Globals.runStartTime > 0) {
         Globals.runElapsedTime = Date.now() - Globals.runStartTime;
+    }
+
+    // Update Ghost Time (Delta Time Calculation)
+    const now = Date.now();
+    const dt = now - (Globals.lastUpdate || now);
+    Globals.lastUpdate = now;
+
+    Globals.ghostTimerActive = Globals.enemies.some(e => e.type === 'ghost' && !e.isDead);
+    if (Globals.ghostTimerActive) {
+        Globals.ghostTime += dt;
     }
 
     // 4. Transitions
