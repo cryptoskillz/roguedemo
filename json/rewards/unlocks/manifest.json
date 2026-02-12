@@ -15,6 +15,7 @@
         "game/logic/nodamagecount",
         "game/logic/shootercount",
         "game/logic/seed",
+        "game/logic/enemyhp",
         "game/logic/_restart",
         "game/logic/_speedrun",
         "game/misc/enemies",

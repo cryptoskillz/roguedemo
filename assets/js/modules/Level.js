@@ -133,6 +133,11 @@ export function generateLevel(length) {
 
         // Deep copy template
         const roomInstance = JSON.parse(JSON.stringify(template));
+        // Force Boss Flag on designate Boss Coord
+        if (coord === Globals.bossCoord) {
+            roomInstance.isBoss = true;
+            roomInstance._type = 'boss';
+        }
         Globals.levelMap[coord] = {
             roomData: roomInstance,
             // Start room is pre-cleared ONLY if it's NOT a boss room
@@ -153,16 +158,17 @@ export function generateLevel(length) {
                 if (!data.doors[d.name]) {
                     data.doors[d.name] = { active: 1, locked: 0 };
                 } else {
-                    // Respect template: Only force active if undefined
-                    if (data.doors[d.name].active === undefined) data.doors[d.name].active = 1;
+                    // Always force active if neighbor exists
+                    data.doors[d.name].active = 1;
                 }
 
                 // Keep locked status if template specifically had it, otherwise 0
                 if (data.doors[d.name].locked === undefined) data.doors[d.name].locked = 0;
 
-                // FORCE UNLOCK if on Golden Path to ensuring Boss is reachable
+                // FORCE UNLOCK AND ACTIVE on Golden Path
                 if (Globals.goldenPath.includes(coord) && Globals.goldenPath.includes(neighborCoord)) {
                     data.doors[d.name].locked = 0;
+                    data.doors[d.name].active = 1;
                 }
 
                 // Sync door coordinates if missing
