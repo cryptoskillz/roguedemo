@@ -3,7 +3,7 @@ import { STATES, BOUNDARY, DOOR_SIZE, DOOR_THICKNESS, CONFIG, DEBUG_FLAGS, JSON_
 import { log, deepMerge, triggerSpeech, generateLore, spawnFloatingText } from './Utils.js';
 import { SFX, introMusic, unlockAudio, fadeIn, fadeOut } from './Audio.js';
 import { setupInput, handleGlobalInputs } from './Input.js';
-import { drawStatsPanel, updateUI, updateWelcomeScreen, showLevelTitle, drawMinimap, drawTutorial, drawBossIntro, drawDebugLogs, drawFloatingTexts, updateFloatingTexts, getGameStats, updateGameStats, loadGameStats, resetSessionStats } from './UI.js';
+import { drawStatsPanel, updateUI, updateWelcomeScreen, showLevelTitle, drawMinimap, drawTutorial, drawBossIntro, drawDebugLogs, drawFloatingTexts, updateFloatingTexts, getGameStats, updateGameStats, loadGameStats, resetSessionStats, saveGameStats } from './UI.js';
 import { renderDebugForm, updateDebugEditor } from './Debug.js';
 import { generateLevel } from './Level.js';
 import {
@@ -148,7 +148,14 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     Globals.bulletsInRoom = 0;
     Globals.player.roomY = 0;
     Globals.bulletsInRoom = 0;
-    Globals.ghostTime = 0; // Accumulated time with ghost
+
+    // Only reset Ghost Timer on Fresh Start
+    if (!keepStats) {
+        Globals.ghostTime = 0; // Accumulated time with ghost
+        Globals.ghostTimeSurvived = 0;
+        Globals.ghostTimeSessionSurvived = 0;
+    }
+
     Globals.lastUpdate = Date.now(); // For delta time
     Globals.hitsInRoom = 0;
 
@@ -1091,6 +1098,8 @@ export function startGame(keepState = false) {
         Globals.runStartTime = Date.now();
         Globals.runElapsedTime = 0;
         Globals.SessionRunTime = 0; // Fix persisted welcome screen timer
+
+        resetSessionStats();
     }
 
     // Show Loading Screen immediately to block input/visuals
@@ -1801,6 +1810,8 @@ export function update() {
     Globals.ghostTimerActive = Globals.enemies.some(e => e.type === 'ghost' && !e.isDead);
     if (Globals.ghostTimerActive) {
         Globals.ghostTime += dt;
+        Globals.ghostTimeSurvived += dt;
+        Globals.ghostTimeSessionSurvived += dt;
     }
 
     // 4. Transitions
@@ -2225,6 +2236,8 @@ export function updateRoomLock() {
         // Fix: check timeTakenMs > 100 to avoid glitch "instant clears"
         if (speedyLimitMs > 0 && timeTakenMs > 100 && timeTakenMs <= speedyLimitMs) {
             console.log("SPEEDY BONUS AWARDED!");
+            Globals.speedyBonusCount++;
+            Globals.speedyBonusSessionCount++;
             if (Globals.gameData.rewards && Globals.gameData.rewards.speedy) {
                 const dropped = spawnRoomRewards(Globals.gameData.rewards.speedy);
                 if (dropped) {
@@ -2246,6 +2259,8 @@ export function updateRoomLock() {
 
         // --- PERFECT STREAK ---
         if (!Globals.player.tookDamageInRoom && hasCombat && perfectAccuracy) {
+            Globals.perfectRoomCount++;
+            Globals.perfectRoomSessionCount++;
             Globals.perfectStreak++;
             const goal = Globals.gameData.perfectGoal || 3;
 
@@ -2421,6 +2436,18 @@ export function gameOver() {
 
 export function gameWon() {
     Globals.gameState = STATES.WIN;
+
+    // Stats Update
+    Globals.gameBeatCount++;
+    Globals.gameBeatSessionCount++;
+    if (Globals.BestRunTime === 0 || Globals.SessionRunTime < Globals.BestRunTime) {
+        Globals.BestRunTime = Globals.SessionRunTime;
+        localStorage.setItem('bestRunTime', Globals.BestRunTime);
+    }
+
+    // Persist all stats
+    saveGameStats();
+
     overlayEl.style.display = 'flex';
     statsEl.innerText = getGameStats(1);
 
@@ -2546,6 +2573,7 @@ export async function newRun(targetLevel = null) {
 Globals.newRun = newRun;
 
 export function goToWelcome() {
+    saveGameStats();
     resetWeaponState();
     initGame(false);
 }

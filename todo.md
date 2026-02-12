@@ -1,4 +1,6 @@
 bugs
+ tried to run out of a room with a ghost and enemies it would not let me even though i blew it with a red bomb
+    speedytimer shoukd be set for standard peashooter time but adjust down for the more powerful gun you have we dont have to be super precise with this and min max it mayber have perOverPeashooter and it uses this to adjsut the speedy bonus accordingly, that can read speedy pea shooter bonuses
     bomb drop don has a big B
 level 0 = shows last screen a little before going to welcome screen (unlocks)
 level 1 = shows last screen a little before going to welcome screen (unlocks)
@@ -49,22 +51,21 @@ next up
     unlocks / permance
     server    
 
-Bug fix  9 
-teleport sound missing
-tried to run out of a room with a ghost and enemies it would not let me even though i blew it with a red bomb
-speedytimer shoukd be set for standard peashooter time but adjust down for the more powerful gun you have we dont have to be super precise with this and min max it mayber have perOverPeashooter and it uses this to adjsut the speedy bonus accordingly, that can read speedy pea shooter bonuses
-maybe add room unlocks
-    add critical gun
-    add freeze gun
-    angry gun
-    add fps item
-    add the counters to the session, end game and all time counts
+Bug fix  10
+
+    unlock spwan that are already unlocked
+    total ghost time is npot updated
+    timer should not reset on the next level it is a game timer
+    teleport sound missing
     when you run into a biullet it gets stuck in you we should go back to the methid where the you ate the bullets and place the first shot so many 
     frames in from the player so its a prolonged push that eats the bullet not a simple move forward
+   
     somme gold doors wont unlock you have to clear the room go out and go back in and its fine it appers to be when you pick a key up in the room as if you leave and come back it is fine
+   
     fix debug logs 
-    add a ghsot timer, time survived with ghost and update ghsot timr session & real time
+   
     matrix romm shootable items (chests) that unlocck all of that item type
+   
     when you are facing north but shooting south the gun turret should be pointing south not north
 the bomb raudis should not hit you at once as the wave is coming to you should be able to run but make add wave speed as its a little slow
 matrix room does not spawn untik after first boss
@@ -282,12 +283,18 @@ items
     inventory screen
     inventory screen should show the items that are unlocked
     only drop items that are unlocked
-    shield+
     speed+
     luck+
     randomstat+
     kick bombs
     speical item is game.json
+        add fps item
+
+    guns 
+
+        add critical gun
+        add freeze gun
+        angry gun
 
      bombs
         size
