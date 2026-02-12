@@ -966,6 +966,7 @@ export function updateBulletsAndShards(aliveEnemies) {
                 }
                 if (!b.isShard && b.ownerType !== 'enemy' && !b.hasHit) {
                     Globals.perfectStreak = 0; // Missed Shot (Hit Wall)
+                    Globals.shooterStreak = 0; // Shooter Reset
                 }
                 Globals.bullets.splice(i, 1);
                 return; // Use return to skip further processing for this bullet
@@ -993,7 +994,10 @@ export function updateBulletsAndShards(aliveEnemies) {
                 } else if (bomb.solid) {
                     // Solid but not shootable = block bullet (destroy bullet)
                     // Optional: Spawn particles/sparks?
-                    if (b.ownerType !== 'enemy' && !b.hasHit) Globals.perfectStreak = 0; // Missed (Hit Solid Bomb non-shootable)
+                    if (b.ownerType !== 'enemy' && !b.hasHit) {
+                        Globals.perfectStreak = 0; // Missed (Hit Solid Bomb non-shootable)
+                        Globals.shooterStreak = 0; // Shooter Reset
+                    }
                     Globals.bullets.splice(i, 1);
                     hitBomb = true;
                     break;
@@ -1005,7 +1009,10 @@ export function updateBulletsAndShards(aliveEnemies) {
         // --- Enemy Collision ---
         b.life--;
         if (b.life <= 0) {
-            if (!b.isShard && b.ownerType !== 'enemy' && !b.hasHit) Globals.perfectStreak = 0; // Missed Shot (Expired)
+            if (!b.isShard && b.ownerType !== 'enemy' && !b.hasHit) {
+                Globals.perfectStreak = 0; // Missed Shot (Expired)
+                Globals.shooterStreak = 0; // Shooter Reset
+            }
             Globals.bullets.splice(i, 1);
         }
     });
@@ -2248,6 +2255,7 @@ export function takeDamage(amount) {
     Globals.player.hp -= amount;
     Globals.player.tookDamageInRoom = true;
     Globals.perfectStreak = 0; // Failed Streak (Hit)
+    Globals.noDamageStreak = 0; // No Damage Reset
     SFX.playerHit();
 
     // Trigger I-Frames

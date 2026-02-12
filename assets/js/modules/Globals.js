@@ -65,6 +65,9 @@ export const Globals = {
     // Game Logic
     gameState: 0, // Will correspond to STATES.START
     gameData: { perfectGoal: 3 }, // Default config
+    perfectStreak: 0,
+    noDamageStreak: 0,
+    shooterStreak: 0,
 
     // Entities
     player: {

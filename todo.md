@@ -65,14 +65,20 @@ next up
     server    
 
 Bug fix  9 
-404571 spawns without bos
-    when you run into a biulletit gets stuck in you we should go back to the methid where the you ate the bullets and place the first shot so many 
+404571 spawns    no route to boss room
+10539 so=pawns one room
+414200 spawns 4 roooms no biss
+    when you run into a biullet it gets stuck in you we should go back to the methid where the you ate the bullets and place the first shot so many 
     frames in from the player so its a prolonged push that eats the bullet not a simple move forward
-    no route to boss room
+ 
     somme gold doors wont unlock you have to clear the room go out and go back in and its fine it appers to be when you pick a key up in the room as if you leave and come back it is fine
     fix debug logs 
+    damage count
+    sharp shooter count
     
     ^^^^
+    add criticl gun
+    add freexe gun
         add fps item
     add a ghsot timer, time survived with ghost and update ghsot timr session & real time
     matrix romm shootable items (chests) that unlocck all of that item type

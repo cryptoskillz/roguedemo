@@ -12,6 +12,8 @@
         "game/logic/timer",
         "game/logic/speedytimer",
         "game/logic/perfectcount",
+        "game/logic/nodamagecount",
+        "game/logic/shootercount",
         "game/logic/seed",
         "game/logic/_restart",
         "game/logic/_speedrun",

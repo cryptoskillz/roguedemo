@@ -296,12 +296,41 @@ export async function updateUI() {
         if (Globals.gameData.showPerfectCount || unlockedIds.includes('perfectcount')) {
             perfectCountEl.style.display = 'block';
             const valEl = document.getElementById('pc-val');
-            // Show Streak / Goal
             const streak = Globals.perfectStreak || 0;
             const goal = Globals.gameData.perfectGoal || 3;
             if (valEl) valEl.innerText = `${streak} / ${goal}`;
         } else {
             perfectCountEl.style.display = 'none';
+        }
+    }
+
+    // --- NO DAMAGE COUNT ---
+    const noDamageEl = document.getElementById('nodamage-count');
+    if (noDamageEl) {
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        if (Globals.gameData.showNoDamageCount || unlockedIds.includes('nodamagecount')) {
+            noDamageEl.style.display = 'block';
+            const valEl = document.getElementById('nd-val');
+            const streak = Globals.noDamageStreak || 0;
+            const goal = Globals.gameData.noDamageGoal || 3;
+            if (valEl) valEl.innerText = `${streak} / ${goal}`;
+        } else {
+            noDamageEl.style.display = 'none';
+        }
+    }
+
+    // --- SHOOTER COUNT ---
+    const shooterEl = document.getElementById('shooter-count');
+    if (shooterEl) {
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        if (Globals.gameData.showShooterCount || unlockedIds.includes('shootercount')) {
+            shooterEl.style.display = 'block';
+            const valEl = document.getElementById('sc-val');
+            const streak = Globals.shooterStreak || 0;
+            const goal = Globals.gameData.shooterGoal || 3;
+            if (valEl) valEl.innerText = `${streak} / ${goal}`;
+        } else {
+            shooterEl.style.display = 'none';
         }
     }
 }

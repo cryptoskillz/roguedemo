@@ -1,0 +1,11 @@
+{
+    "name": "No Damage Bonus Count",
+    "description": "Unlocks the no damage bonus counter",
+    "unlock": "nodamagecount",
+    "json": "game.json",
+    "attr": "showNoDamageCount",
+    "value": true,
+    "spawnable": true,
+    "hasItem": false,
+    "instantTrigger": true
+}

@@ -86,6 +86,8 @@
     "showTimer": false,
     "showSpeedyTimer": false,
     "showPerfectCount": false,
+    "showNoDamageCount": true,
+    "showShooterCount": true,
     "music": false,
     "pause": false,
     "items": true,

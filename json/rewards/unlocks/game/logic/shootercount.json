@@ -1,0 +1,11 @@
+{
+    "name": "Perfect Bonus Count",
+    "description": "Unlocks the perfect bonus counter",
+    "unlock": "shootercount",
+    "json": "game.json",
+    "attr": "showShooterCount",
+    "value": true,
+    "spawnable": true,
+    "hasItem": false,
+    "instantTrigger": true
+}
