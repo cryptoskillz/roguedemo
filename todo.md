@@ -53,20 +53,19 @@ next up
 
 Bug fix  10
 
-    unlock spwan that are already unlocked
-    total ghost time is npot updated
+    unlock spawn that have already been already unlocked
+
     timer should not reset on the next level it is a game timer
-    teleport sound missing
+
     when you run into a biullet it gets stuck in you we should go back to the methid where the you ate the bullets and place the first shot so many 
     frames in from the player so its a prolonged push that eats the bullet not a simple move forward
-   
     somme gold doors wont unlock you have to clear the room go out and go back in and its fine it appers to be when you pick a key up in the room as if you leave and come back it is fine
    
     fix debug logs 
    
     matrix romm shootable items (chests) that unlocck all of that item type
    
-    when you are facing north but shooting south the gun turret should be pointing south not north
+    
 the bomb raudis should not hit you at once as the wave is coming to you should be able to run but make add wave speed as its a little slow
 matrix room does not spawn untik after first boss
 

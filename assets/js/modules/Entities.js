@@ -4057,9 +4057,20 @@ export function drawPlayer() {
             Globals.ctx.restore();
         };
 
-        // 1. Main Barrel (Based on movement)
+        // 1. Main Barrel (Based on Shooting Direction, or Movement if not shooting)
         let aimAngle = 0;
-        if (Globals.player.lastMoveX || Globals.player.lastMoveY) {
+        let shootX = 0;
+        let shootY = 0;
+
+        // Check Shooting Keys
+        if (Globals.keys['ArrowUp']) shootY = -1;
+        if (Globals.keys['ArrowDown']) shootY = 1;
+        if (Globals.keys['ArrowLeft']) shootX = -1;
+        if (Globals.keys['ArrowRight']) shootX = 1;
+
+        if (shootX !== 0 || shootY !== 0) {
+            aimAngle = Math.atan2(shootY, shootX);
+        } else if (Globals.player.lastMoveX || Globals.player.lastMoveY) {
             aimAngle = Math.atan2(Globals.player.lastMoveY, Globals.player.lastMoveX);
         }
         drawBarrel(aimAngle);
