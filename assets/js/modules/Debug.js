@@ -183,6 +183,8 @@ export function renderDebugForm() {
             log("Spawned:", itemTemplate.name);
         };
 
+        select.ondblclick = () => spawnBtn.click();
+
         container.appendChild(searchInput);
         container.appendChild(select);
         container.appendChild(spawnBtn);
@@ -428,6 +430,8 @@ export function renderDebugForm() {
                 console.error("Globals.loadRoom not defined.");
             }
         };
+
+        select.ondblclick = () => loadBtn.click();
 
         container.appendChild(select);
         container.appendChild(loadBtn);

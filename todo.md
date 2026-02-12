@@ -63,9 +63,7 @@ next up
     server    
 
 Bug fix  9
-    double click on debug should spwan the item 
     search on other sections on debug
-    unlocks as a dro down list
     bomb drop don has a big B
     ghot dropped as a spwan item
     dont allow P from welcome screen as it brings up pause menu
