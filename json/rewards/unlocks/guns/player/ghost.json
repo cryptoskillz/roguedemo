@@ -5,5 +5,5 @@
     "json": "rewards/items/guns/player/ghost.json",
     "attr": "",
     "value": true,
-    "spawnable": true
+    "spawnable": false
 }
