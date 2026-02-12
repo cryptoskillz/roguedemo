@@ -50,6 +50,7 @@ next up
     server    
 
 Bug fix  9 
+Check for Start Room Bonus (First Start) make the bousn look better
     enemy health item
     404571 spawns    no route to boss room
     10539 so=pawns one room

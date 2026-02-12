@@ -1209,8 +1209,7 @@ export function startGame(keepState = false) {
             if (Globals.gameData.rewards && Globals.gameData.rewards.startroom) {
                 const dropped = spawnRoomRewards(Globals.gameData.rewards.startroom);
                 if (dropped) {
-                    Globals.elements.perfect.innerText = "START BONUS!";
-                    triggerPerfectText();
+                    spawnFloatingText(Globals.player.x, Globals.player.y, "START BONUS!", "#3498db");
                 }
             }
 

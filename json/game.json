@@ -1,5 +1,4 @@
 {
-    "perfectGoal": 5,
     "startLevel": "json/levels/0.json",
     "hardness": 8,
     "enemyConfig": {
@@ -88,6 +87,9 @@
     "showPerfectCount": false,
     "showNoDamageCount": false,
     "showShooterCount": false,
+    "perfectGoal": 5,
+    "noDamageGoal": 20,
+    "shooterGoal": 15,
     "music": false,
     "pause": false,
     "items": true,
@@ -120,8 +122,6 @@
     "room": {
         "freezeTimer": 100
     },
-    "noDamageGoal": 3,
-    "shooterGoal": 3,
     "rewards": {
         "shards": {
             "green": {

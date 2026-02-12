@@ -768,4 +768,9 @@ export function resetSessionStats() {
     Globals.killEnemySessionCount = 0;
     Globals.killBossSessionCount = 0;
     Globals.playerDeathSessionCount = 0;
+
+    // Reset Bonus Streaks
+    Globals.perfectStreak = 0;
+    Globals.noDamageStreak = 0;
+    Globals.shooterStreak = 0;
 }
