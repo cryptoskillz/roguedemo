@@ -297,7 +297,7 @@
                 "modifiers*"
             ],
             "canShoot": true,
-            "locked": false,
+            "locked": true,
             "canBomb": true,
             "x": 100,
             "y": 200,
