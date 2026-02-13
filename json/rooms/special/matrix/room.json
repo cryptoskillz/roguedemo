@@ -31,8 +31,155 @@
     },
     "chests": {
         "name": "Bomb Unlocks!",
-        "manfest": "rewards/unlocks/manifest.json",
-        "bombs!": {
+        "item bombs!": {
+            "manfest": "rewards/items/manifest.json",
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "bombs*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 100,
+            "y": 400,
+            "solid": true,
+            "moveable": true
+        },
+        "item clothing!": {
+            "manfest": "rewards/items/manifest.json",
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "clothing*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 250,
+            "y": 400,
+            "solid": true,
+            "moveable": true
+        },
+        "item game!": {
+            "manfest": "rewards/items/manifest.json",
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "game/*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 400,
+            "y": 400,
+            "solid": true,
+            "moveable": true
+        },
+        "item guns!": {
+            "manfest": "rewards/items/manifest.json",
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "guns/player*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 550,
+            "y": 400,
+            "solid": true,
+            "moveable": true
+        },
+        "item inventory!": {
+            "manfest": "rewards/items/manifest.json",
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "inventory*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 700,
+            "y": 400,
+            "solid": true,
+            "moveable": true
+        },
+        "item bullet modifiers!": {
+            "manfest": "rewards/items/manifest.json",
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "modifier/bullets*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 100,
+            "y": 500,
+            "solid": true,
+            "moveable": true
+        },
+        "item player modifiers!": {
+            "manfest": "rewards/items/manifest.json",
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "modifier/player*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 250,
+            "y": 500,
+            "solid": true,
+            "moveable": true
+        },
+        "unlock bombs!": {
+            "manfest": "rewards/unlocks/manifest.json",
             "instantSpawn": {
                 "active": true,
                 "spawnChance": 1
@@ -52,7 +199,8 @@
             "solid": true,
             "moveable": true
         },
-        "clothing": {
+        "unlock clothing": {
+            "manfest": "rewards/unlocks/manifest.json",
             "instantSpawn": {
                 "active": true,
                 "spawnChance": 1
@@ -67,12 +215,13 @@
             "canShoot": true,
             "locked": false,
             "canBomb": true,
-            "x": 200,
+            "x": 250,
             "y": 100,
             "solid": true,
             "moveable": true
         },
-        "game": {
+        "unlock game": {
+            "manfest": "rewards/unlocks/manifest.json",
             "instantSpawn": {
                 "active": true,
                 "spawnChance": 1
@@ -87,12 +236,13 @@
             "canShoot": true,
             "locked": false,
             "canBomb": true,
-            "x": 300,
+            "x": 400,
             "y": 100,
             "solid": true,
             "moveable": true
         },
-        "player guns!": {
+        "unlock player guns!": {
+            "manfest": "rewards/unlocks/manifest.json",
             "instantSpawn": {
                 "active": true,
                 "spawnChance": 1
@@ -107,12 +257,13 @@
             "canShoot": true,
             "locked": false,
             "canBomb": true,
-            "x": 400,
+            "x": 550,
             "y": 100,
             "solid": true,
             "moveable": true
         },
-        "inventory!": {
+        "unlock inventory!": {
+            "manfest": "rewards/unlocks/manifest.json",
             "instantSpawn": {
                 "active": true,
                 "spawnChance": 1
@@ -127,12 +278,13 @@
             "canShoot": true,
             "locked": false,
             "canBomb": true,
-            "x": 500,
+            "x": 700,
             "y": 100,
             "solid": true,
             "moveable": true
         },
-        "modidiers!": {
+        "unlock modifiers!": {
+            "manfest": "rewards/unlocks/manifest.json",
             "instantSpawn": {
                 "active": true,
                 "spawnChance": 1
@@ -142,13 +294,13 @@
                 "spawnChance": 1
             },
             "contains": [
-                "modidiers*"
+                "modifiers*"
             ],
             "canShoot": true,
             "locked": false,
             "canBomb": true,
-            "x": 600,
-            "y": 100,
+            "x": 100,
+            "y": 200,
             "solid": true,
             "moveable": true
         }

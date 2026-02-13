@@ -83,49 +83,76 @@ export function spawnChests(roomData) {
 
 export function updateChests() {
     // Check Room Clear to reveal hidden chests
-    // Logic: If no enemies and not cleared? Or just check enemies.length
-    const roomCleared = Globals.enemies.length === 0; // Simple check
+    const roomCleared = Globals.enemies.length === 0;
 
     Globals.chests.forEach(chest => {
         if (chest.state === 'hidden') {
             if (roomCleared) {
                 // Check spawnChance for late spawn
                 const clearConfig = chest.config.spawnsOnClear || chest.config.spawnsOnClear;
-                if (clearConfig && typeof clearConfig === 'object' && clearConfig.spawnChance !== undefined) {
-                    if (Math.random() > clearConfig.spawnChance) {
-                        chest.state = 'despawned'; // Failed chance
+                if (clearConfig && typeof clearConfig === 'object') {
+                    if (Math.random() > (clearConfig.spawnChance || 1)) {
+                        chest.state = 'despawned';
                         return;
                     }
                 }
                 chest.state = 'closed';
-                SFX.doorUnlocked(); // Sound cue?
+                SFX.doorUnlocked();
                 spawnFloatingText(chest.x, chest.y - 20, "Appeared!", "#f1c40f");
             }
             return;
         }
+
         if (chest.state === 'despawned') return;
+
         // If open, we usually skip unless solid
-        if (chest.state === 'open' && !chest.solid) return;
-
-        // collision with player
-        if (Globals.player) {
-            if (checkCollision(Globals.player, chest)) {
-                // If already open (and solid), just push back
-                if (chest.state === 'open') {
+        // If open, we still need collision?
+        if (chest.state === 'open') {
+            if (chest.solid) {
+                if (Globals.player && checkCollision(Globals.player, chest)) {
                     resolveCollision(Globals.player, chest);
-                    return;
                 }
+            }
+            return;
+        }
 
-                // Interact?
-                const isInteractKey = Globals.keys['Space'] || Globals.keys['Enter'] || Globals.keys['e']; // Support E/Enter/Space
+        // Logic for Closed Chests
+        if (Globals.player) {
+            const player = Globals.player;
 
-                if (chest.locked) {
-                    if (isInteractKey) {
-                        // Debounce?
-                        Globals.keys['Space'] = false; // Consume
-                        Globals.keys['Enter'] = false;
-                        Globals.keys['e'] = false;
+            // 1. Physics Collision (Solid pushback)
+            if (checkCollision(player, chest)) {
+                if (chest.locked || chest.solid) {
+                    resolveCollision(player, chest);
+                } else {
+                    // Non-solid, non-locked -> Auto Open on bump?
+                    // User said "if not locked space should open chest"
+                    // But also "locked space should use a key".
+                    // Does user want SPACE for UNLOCKED chests too?
+                    // Previous logic allowed auto-open for non-solid.
+                    // If SOLID, we must USE KEY (if locked) or USE KEY (if unlocked).
+                    // If NOT SOLID, maybe auto-open?
+                    // Assuming Space required for SOLID chests. 
+                    // Auto-open for non-solid.
+                    openChest(chest);
+                }
+            }
 
+            // 2. Interaction (Proximity) - Space/E/Enter
+            const cx = chest.x + chest.width / 2;
+            const cy = chest.y + chest.height / 2;
+            const dist = Math.hypot(player.x - cx, player.y - cy);
+
+            if (dist < 90) {
+                const isInteractKey = Globals.keys['Space'] || Globals.keys['Enter'] || Globals.keys['KeyE'];
+
+                if (isInteractKey) {
+                    // Consume Input
+                    Globals.keys['Space'] = false;
+                    Globals.keys['Enter'] = false;
+                    Globals.keys['KeyE'] = false;
+
+                    if (chest.locked) {
                         if (Globals.player.inventory.keys > 0) {
                             Globals.player.inventory.keys--;
                             openChest(chest);
@@ -133,24 +160,8 @@ export function updateChests() {
                         } else {
                             spawnFloatingText(chest.x, chest.y - 20, "Locked", "#e74c3c");
                         }
-                    }
-                    // Always resolve collision if locked
-                    resolveCollision(Globals.player, chest);
-                } else {
-                    // Unlocked
-                    if (chest.solid) {
-                        // Push back
-                        resolveCollision(Globals.player, chest);
-
-                        // Open only on key press
-                        if (isInteractKey) {
-                            Globals.keys['Space'] = false; // Consume
-                            Globals.keys['Enter'] = false;
-                            Globals.keys['e'] = false;
-                            openChest(chest);
-                        }
                     } else {
-                        // Non-solid (auto-open on bump)
+                        // Unlocked - Manual Open (if solid prevented auto-open)
                         openChest(chest);
                     }
                 }
@@ -287,14 +298,17 @@ async function openChest(chest) {
         return;
     }
 
-    let items = manifestData.items;
-    let basePath = 'rewards/items/';
-
-    if (!items && manifestData.unlocks) {
-        items = manifestData.unlocks;
-        basePath = 'rewards/unlocks/';
+    // Determine Base Path from Manifest Location
+    let basePath = chest.manifest;
+    if (basePath.startsWith('/')) basePath = basePath.substring(1);
+    const lastSlash = basePath.lastIndexOf('/');
+    if (lastSlash !== -1) {
+        basePath = basePath.substring(0, lastSlash + 1);
+    } else {
+        basePath = '';
     }
 
+    const items = manifestData.items || manifestData.unlocks;
     if (!manifestData || !items) return;
 
     // Filter Items
@@ -334,7 +348,7 @@ async function spawnItem(path, x, y, basePath = 'rewards/items/') {
     try {
         const res = await fetch(`${JSON_PATHS.ROOT}${fullPath}.json?t=${Date.now()}`);
         const itemData = await res.json();
-        if (!itemData.spawnable) return
+        if (itemData.spawnable === false) return;
 
         Globals.groundItems.push({
             x: x + 10 + (Math.random() - 0.5) * 20, // Spread spawn
