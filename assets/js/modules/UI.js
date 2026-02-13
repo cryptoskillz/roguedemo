@@ -1,5 +1,6 @@
 import { Globals } from './Globals.js';
 import { STATES, CONFIG, STORAGE_KEYS } from './Constants.js';
+import { drawSwitch } from './Game.js'
 // Utils might be needed if logging
 import { log } from './Utils.js';
 
@@ -380,9 +381,11 @@ export function drawTutorial() {
     if (Globals.roomData.name == "The Beginning" && Globals.player.roomX === 0 && Globals.player.roomY === 0 && !Globals.roomData.isBoss && !STATES.DEBUG_START_BOSS && !STATES.DEBUG_TEST_ROOM) {
         Globals.ctx.save();
 
+
         //uodate start room name in the UI
         if (Globals.elements.roomName) Globals.elements.roomName.innerText = Globals.roomData.name;
 
+        drawSwitch()
         // Internal helper for keycaps
         const drawKey = (text, x, y) => {
             Globals.ctx.fillStyle = "rgba(0, 0, 0, 0.3)";

@@ -6,6 +6,10 @@ export const Globals = {
     mctx: null,
     statsPanel: null,
 
+    randomGreenMinCount: 1,
+    randomGreenMaxCount: 100,
+    randomGreenPerAward: 30,
+
     // UI Elements
     elements: {
         hp: null,

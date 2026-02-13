@@ -4426,6 +4426,9 @@ export function spawnShard(x, y, type, amount) {
     const offset = 30 + Math.random() * 20;
     const spawnX = x + Math.cos(angle) * offset;
     const spawnY = y + Math.sin(angle) * offset;
+    let shardMessage = 'shard'
+    if (amount > 1)
+        shardMessage = 'shards'
 
     Globals.groundItems.push({
         x: spawnX, y: spawnY,
@@ -4438,11 +4441,12 @@ export function spawnShard(x, y, type, amount) {
         size: 10,
         floatOffset: Math.random() * 100,
         pickupCooldown: 30, // 0.5s cooldown
+
         data: {
             type: 'shard',
             shardType: type, // 'red' or 'green'
             amount: amount,
-            name: type === 'red' ? "Red Shard" : "Green Shard",
+            name: type === 'red' ? `${amount} Red ${shardMessage}` : `${amount} Green ${shardMessage}`,
             rarity: 'common',
             colour: type === 'red' ? "#e74c3c" : "#2ecc71"
         }
@@ -4806,7 +4810,7 @@ export function drawItems() {
 
 function calculateShardDrop(type, sourceKey, entity) {
     const rewards = Globals.gameData.rewards;
-    if (!rewards || !rewards.shards) return 1; // Default fallback
+    if (!rewards || !rewards.shards) return 0; // Default fallback
 
     const config = rewards.shards[type];
     if (!config) return 1;
@@ -4830,14 +4834,20 @@ function calculateShardDrop(type, sourceKey, entity) {
         // enterPortal has no bonus logic yet (just min/max)
     }
 
-    if (!dropConfig) return 1;
+    if (!dropConfig) return 0;
 
     const min = dropConfig.minCount || 1;
     const max = dropConfig.maxCount || 1;
 
     // Random between min and max, plus bonus
-    const base = Math.floor(min + Math.random() * (max - min + 1));
-    return base + bonus;
+    //60% of the time override and award no bonus
+    const awardIt = Math.floor(Math.random() * (Globals.randomGreenMaxCount - Globals.randomGreenMinCount) + Globals.randomGreenMinCount)
+    if (awardIt < Globals.randomGreenPerAward) {
+        const base = Math.floor(min + Math.random() * (max - min + 1));
+        return base + bonus
+    }
+    else
+        return 0;
 }
 // Helper for Item Colors based on Type
 function getItemTypeColor(type, data) {

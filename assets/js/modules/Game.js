@@ -2021,9 +2021,7 @@ export function drawPortal() {
     Globals.ctx.restore();
 }
 
-export function drawBossSwitch() {
-    if (!Globals.roomData.isBoss) return;
-
+export function drawSwitch() {
     const cx = Globals.canvas.width / 2;
     const cy = Globals.canvas.height / 2;
     const size = 40; // Smaller to be hidden by portal
@@ -2038,6 +2036,11 @@ export function drawBossSwitch() {
     Globals.ctx.strokeRect(cx - size / 2, cy - size / 2, size, size);
 
     Globals.ctx.restore();
+}
+
+export function drawBossSwitch() {
+    if (!Globals.roomData.isBoss) return;
+    drawSwitch()
 }
 
 export function updateMusicToggle() {
