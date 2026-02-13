@@ -144,6 +144,7 @@ export function updateChests() {
             const dist = Math.hypot(player.x - cx, player.y - cy);
 
             if (dist < 90) {
+                if (Globals.keys['Space']) console.log("Space Pressed! Dist:", dist);
                 const isInteractKey = Globals.keys['Space'] || Globals.keys['Enter'] || Globals.keys['KeyE'];
 
                 if (isInteractKey) {
@@ -276,6 +277,7 @@ function resolveCollision(player, chest) {
 }
 
 async function openChest(chest) {
+    console.log("Opening Chest:", chest.id);
     if (chest.state === 'open') return;
     chest.state = 'open';
     SFX.doorUnlocked(); // Use unlock sound?
