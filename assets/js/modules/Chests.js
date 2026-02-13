@@ -154,6 +154,7 @@ export function updateChests() {
         // Globals.bullets contains only active bullets. Remove !bullet.active check.
         Globals.chests.forEach(chest => {
             if (chest.state !== 'closed') return;
+            if (chest.locked) return; // Locked chests are immune to bullets
             if (chest.config.canShoot === false) return; // Explicit check
 
             if (checkCollision(bullet, chest)) {
@@ -173,10 +174,11 @@ export function updateChests() {
             // Check dist
             Globals.chests.forEach(chest => {
                 if (chest.state !== 'closed') return;
+                if (chest.locked) return; // Locked chests are immune to bombs
                 // Check boolean false
                 if (chest.config.canBomb === false) return;
                 // Check object config
-                if (chest.config.canBomb && typeof chest.config.canBomb === 'object' && chest.config.canBomb.active === false) return;
+                if (chest.config.canBomb && typeof chest.config.canBomb === 'object' && chest.config.canBomb.active === false && !chest.config.locked) return;
 
                 const dx = bomb.x - chest.x;
                 const dy = bomb.y - chest.y;
