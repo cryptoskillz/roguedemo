@@ -1209,7 +1209,13 @@ export function updateUse() {
 
     const roomLocked = Globals.isRoomLocked();
     const doors = Globals.roomData.doors || {};
-    if (roomLocked) return; // keep your existing rule: can't unlock while enemies alive
+
+    // Feedback for Room Lock
+    if (roomLocked) {
+        log("Cannot use doors - Room is Locked (Enemies active)");
+        spawnFloatingText(Globals.player.x, Globals.player.y - 40, "Room Locked!", "red");
+        return;
+    }
 
     // Helper: are we close enough to a door?
     const inRangeTop = (door) => {
@@ -1271,6 +1277,7 @@ export function updateUse() {
             SFX.doorUnlocked();
         } else {
             log("Door is locked - no keys");
+            spawnFloatingText(Globals.player.x, Globals.player.y - 40, "Locked (Need Key)", "red");
             SFX.doorLocked();
         }
         return;
@@ -3065,11 +3072,11 @@ export function updateMovementAndDoors(doors, roomLocked) {
         if (Math.abs(Globals.player.vx) < 0.1) Globals.player.vx = 0;
         if (Math.abs(Globals.player.vy) < 0.1) Globals.player.vy = 0;
 
-        // Basic Boundary Clamp for Momentum
+        // Basic Boundary Clamp for Momentum (Use simple boundary to allow door proximity)
         const s = Globals.roomShrinkSize || 0;
         const p = Globals.player;
-        p.x = Math.max(BOUNDARY + s + p.size, Math.min(Globals.canvas.width - BOUNDARY - s - p.size, p.x));
-        p.y = Math.max(BOUNDARY + s + p.size, Math.min(Globals.canvas.height - BOUNDARY - s - p.size, p.y));
+        p.x = Math.max(BOUNDARY + s, Math.min(Globals.canvas.width - BOUNDARY - s, p.x));
+        p.y = Math.max(BOUNDARY + s, Math.min(Globals.canvas.height - BOUNDARY - s, p.y));
     }
 
     // --- 4. MOVEMENT & DOOR COLLISION ---
@@ -3304,10 +3311,23 @@ export async function pickupItem(item, index) {
 
             // Persistence for Instant ID
             const detailID = details.unlock || data.unlockId;
+            let historyUpdated = false;
+
             if (detailID && !history.includes(detailID)) {
                 history.push(detailID);
-                localStorage.setItem('game_unlocked_ids', JSON.stringify(history));
+                historyUpdated = true;
                 log(`Instant Unlock Detail ID Saved: ${detailID}`);
+            }
+
+            // Fix: Also save the Manifest ID (data.unlockId) if different, to prevent respawning
+            if (data.unlockId && data.unlockId !== detailID && !history.includes(data.unlockId)) {
+                history.push(data.unlockId);
+                historyUpdated = true;
+                log(`Instant Unlock Manifest ID Saved: ${data.unlockId}`);
+            }
+
+            if (historyUpdated) {
+                localStorage.setItem('game_unlocked_ids', JSON.stringify(history));
             }
 
             // SPECIAL: Instant sound effect

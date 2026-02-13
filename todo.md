@@ -1,4 +1,9 @@
 bugs
+    unlock spawn that have already been already unlocked
+    fix debug logs 
+    the bomb raudis should not hit you at once as the wave is coming to you should be able to run but make add wave speed as its a little slow
+    matrix room does not spawn untik after first boss
+    add god mode to the debug window
  tried to run out of a room with a ghost and enemies it would not let me even though i blew it with a red bomb
     speedytimer shoukd be set for standard peashooter time but adjust down for the more powerful gun you have we dont have to be super precise with this and min max it mayber have perOverPeashooter and it uses this to adjsut the speedy bonus accordingly, that can read speedy pea shooter bonuses
     bomb drop don has a big B
@@ -31,8 +36,7 @@ level 5 = loads credits fine then shows last screen a little before going to wel
 
 
 next up 
-  bug fix 10
-  sfx & ui updates
+ ui updates
         game settings
             inventory
             stats
@@ -51,28 +55,18 @@ next up
     unlocks / permance
     server    
 
-Bug fix  10
+    
 
-    if you delete your game your stats (not session) should be saved
-    can you use the level name from josn level 
-    use descrription on level.json to for the start room text 
 
-    unlock spawn that have already been already unlocked
+    
+   
 
-    when you run into a biullet it gets stuck in you we should go back to the methid where the you ate the bullets and place the first shot so many 
-    frames in from the player so its a prolonged push that eats the bullet not a simple move forward
    
-    somme gold doors wont unlock you have to clear the room go out and go back in and its fine it appers to be when you pick a key up in the room as if you leave and come back it is fine
-   
-    fix debug logs 
-   
-    matrix romm shootable items (chests) that unlocck all of that item type
-   
-    the bomb raudis should not hit you at once as the wave is coming to you should be able to run but make add wave speed as its a little slow
-
-    matrix room does not spawn untik after first boss
 
     ^^^^
+
+
+
  
   
 
