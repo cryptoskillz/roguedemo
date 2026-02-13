@@ -1708,8 +1708,8 @@ export function update() {
     if (Globals.audioCtx.state === 'suspended') Globals.audioCtx.resume();
 
     updateItems(); // Check for item pickups
-    updateChests();
     updateFloatingTexts(); // Animate floating texts
+    // Removed updateChests from here to fix collision order
 
     //const now = Date.now(); // Check for item pickups
 
@@ -1796,6 +1796,8 @@ export function update() {
     checkRemoteExplosions(); // Check for off-screen booms
     updateBombsPhysics(); // Bomb Physics (Push/Slide)
     updateMovementAndDoors(doors, roomLocked);
+
+    updateChests(); // Resolve new position collision
 
     // 3. Combat Logic
     updateShooting();

@@ -30,6 +30,7 @@
         }
     },
     "chests": {
+        "name": "Bomb Unlocks!",
         "manfest": "rewards/unlocks/manifest.json",
         "bombs!": {
             "instantSpawn": {
@@ -44,11 +45,112 @@
                 "bombs*"
             ],
             "canShoot": true,
-            "locked": true,
+            "locked": false,
             "canBomb": true,
             "x": 100,
             "y": 100,
-            "solid": true
+            "solid": true,
+            "moveable": true
+        },
+        "clothing": {
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "clothing*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 200,
+            "y": 100,
+            "solid": true,
+            "moveable": true
+        },
+        "game": {
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "game*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 300,
+            "y": 100,
+            "solid": true,
+            "moveable": true
+        },
+        "player guns!": {
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "guns/player*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 400,
+            "y": 100,
+            "solid": true,
+            "moveable": true
+        },
+        "inventory!": {
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "inventory*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 500,
+            "y": 100,
+            "solid": true,
+            "moveable": true
+        },
+        "modidiers!": {
+            "instantSpawn": {
+                "active": true,
+                "spawnChance": 1
+            },
+            "spawnsOnClear": {
+                "active": false,
+                "spawnChance": 1
+            },
+            "contains": [
+                "modidiers*"
+            ],
+            "canShoot": true,
+            "locked": false,
+            "canBomb": true,
+            "x": 600,
+            "y": 100,
+            "solid": true,
+            "moveable": true
         }
     },
     "width": 900,

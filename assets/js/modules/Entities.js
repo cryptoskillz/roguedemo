@@ -4468,6 +4468,50 @@ export function updateItems() {
             }
         }
 
+        // 3.6 Chest Collision (Push items away from solid chests)
+        Globals.chests.forEach(chest => {
+            if (chest.solid || chest.state !== 'hidden') { // Avoid all visible chests? User said "chest is solid!"
+                // Use AABB vs Circle
+                const padding = 5;
+                const cX = chest.x - padding;
+                const cY = chest.y - padding;
+                const cW = chest.width + padding * 2;
+                const cH = chest.height + padding * 2;
+
+                const iR = item.size || 15;
+
+                // Find closest point on AABB to Circle Center
+                const closestX = Math.max(cX, Math.min(item.x, cX + cW));
+                const closestY = Math.max(cY, Math.min(item.y, cY + cH));
+
+                const dx = item.x - closestX;
+                const dy = item.y - closestY;
+                const distSq = dx * dx + dy * dy;
+
+                if (distSq < iR * iR) {
+                    // Collision!
+                    const dist = Math.sqrt(distSq);
+                    const overlap = iR - dist;
+
+                    // Normal
+                    let nx = dx / dist;
+                    let ny = dy / dist;
+
+                    // Edge case: item inside chest center? dist=0
+                    if (dist === 0) {
+                        nx = 1; ny = 0; // Push right
+                    }
+
+                    item.x += nx * overlap;
+                    item.y += ny * overlap;
+
+                    // Bounce
+                    item.vx += nx * 2;
+                    item.vy += ny * 2;
+                }
+            }
+        });
+
         // Decrement Cooldown
         if (item.pickupCooldown > 0) item.pickupCooldown--;
 

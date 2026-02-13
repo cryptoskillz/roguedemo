@@ -117,31 +117,40 @@ export function updateChests() {
                 }
 
                 // Interact?
-                // Interact?
+                const isInteractKey = Globals.keys['Space'] || Globals.keys['Enter'] || Globals.keys['e']; // Support E/Enter/Space
+
                 if (chest.locked) {
-                    if (Globals.player.inventory.keys > 0) {
-                        Globals.player.inventory.keys--;
-                        openChest(chest);
-                        spawnFloatingText(chest.x, chest.y - 20, "Unlocked!", "#f1c40f");
-                    } else {
-                        spawnFloatingText(chest.x, chest.y - 20, "Locked", "#e74c3c");
-                        // Push player back
-                        resolveCollision(Globals.player, chest);
+                    if (isInteractKey) {
+                        // Debounce?
+                        Globals.keys['Space'] = false; // Consume
+                        Globals.keys['Enter'] = false;
+                        Globals.keys['e'] = false;
+
+                        if (Globals.player.inventory.keys > 0) {
+                            Globals.player.inventory.keys--;
+                            openChest(chest);
+                            spawnFloatingText(chest.x, chest.y - 20, "Unlocked!", "#f1c40f");
+                        } else {
+                            spawnFloatingText(chest.x, chest.y - 20, "Locked", "#e74c3c");
+                        }
                     }
+                    // Always resolve collision if locked
+                    resolveCollision(Globals.player, chest);
                 } else {
-                    // Just open? Or need interaction key?
-                    // If SOLID, push back. Maybe open on contact?
+                    // Unlocked
                     if (chest.solid) {
+                        // Push back
                         resolveCollision(Globals.player, chest);
-                        // Don't auto-open if solid? Or open AND solid?
-                        // "Auto-open" on bump usually implies walk-through or minor bump.
-                        // If explicit solid, maybe only open via INTERACT key?
-                        // Or "canShoot"?
-                        // Let's assume bump opens for now, but still pushes back slightly?
-                        // No, if I push back, I might not count as "collision" for opening next frame?
-                        // Actually, collision happened THIS frame.
-                        openChest(chest);
+
+                        // Open only on key press
+                        if (isInteractKey) {
+                            Globals.keys['Space'] = false; // Consume
+                            Globals.keys['Enter'] = false;
+                            Globals.keys['e'] = false;
+                            openChest(chest);
+                        }
                     } else {
+                        // Non-solid (auto-open on bump)
                         openChest(chest);
                     }
                 }
@@ -192,25 +201,66 @@ export function updateChests() {
 }
 
 function checkCollision(a, b) {
-    return a.x < b.x + b.width &&
-        a.x + (a.width || a.size) > b.x &&
-        a.y < b.y + b.height &&
-        a.y + (a.height || a.size) > b.y;
+    // a = Entity (Player/Bullet) - Center Origin (size) or TopLeft (width)
+    // b = Chest - Top-Left Origin (width/height)
+
+    // A Bounds
+    let aLeft, aRight, aTop, aBottom;
+    if (a.size && !a.width) { // Radius/Center logic (and no explicit width override)
+        aLeft = a.x - a.size;
+        aRight = a.x + a.size;
+        aTop = a.y - a.size;
+        aBottom = a.y + a.size;
+    } else { // Top-Left logic (fallback)
+        aLeft = a.x;
+        aRight = a.x + (a.width || 30);
+        aTop = a.y;
+        aBottom = a.y + (a.height || 30);
+    }
+
+    // B Bounds (Chest)
+    const bLeft = b.x;
+    const bRight = b.x + b.width;
+    const bTop = b.y;
+    const bBottom = b.y + b.height;
+
+    return aLeft < bRight && aRight > bLeft && aTop < bBottom && aBottom > bTop;
 }
 
 function resolveCollision(player, chest) {
-    // Simple pushback
-    const dx = (player.x + 15) - (chest.x + 20);
-    const dy = (player.y + 15) - (chest.y + 20);
-    const absX = Math.abs(dx);
-    const absY = Math.abs(dy);
+    // PAD COLLISION to fix "20px into it"
+    const padding = 25; // Increased buffer for gun
+    const chestW = chest.width + padding * 2;
+    const chestH = chest.height + padding * 2;
+    const chestX = chest.x - padding;
+    const chestY = chest.y - padding;
 
-    if (absX > absY) {
-        if (dx > 0) player.x = chest.x + chest.width;
-        else player.x = chest.x - 30;
-    } else {
-        if (dy > 0) player.y = chest.y + chest.height;
-        else player.y = chest.y - 30;
+    // Use Player Size/Dimensions
+    const pW = player.width || player.size || 30;
+    const pH = player.height || player.size || 30;
+
+    const playerCX = player.x + pW / 2;
+    const playerCY = player.y + pH / 2;
+    const chestCX = chestX + chestW / 2;
+    const chestCY = chestY + chestH / 2;
+
+    const dx = playerCX - chestCX;
+    const dy = playerCY - chestCY;
+
+    const combinedHalfW = pW / 2 + chestW / 2;
+    const combinedHalfH = pH / 2 + chestH / 2;
+
+    const overlapX = combinedHalfW - Math.abs(dx);
+    const overlapY = combinedHalfH - Math.abs(dy);
+
+    if (overlapX > 0 && overlapY > 0) {
+        if (overlapX < overlapY) {
+            if (dx > 0) player.x += overlapX;
+            else player.x -= overlapX;
+        } else {
+            if (dy > 0) player.y += overlapY;
+            else player.y -= overlapY;
+        }
     }
 }
 
@@ -227,8 +277,6 @@ async function openChest(chest) {
 
     // Load Manifest
     let manifestData = null;
-    // Cache check?
-    // We accept raw path.
     const url = chest.manifest.startsWith('/') ? JSON_PATHS.ROOT + chest.manifest.substring(1) : JSON_PATHS.ROOT + chest.manifest;
 
     try {
@@ -239,7 +287,14 @@ async function openChest(chest) {
         return;
     }
 
-    const items = manifestData.items || manifestData.unlocks;
+    let items = manifestData.items;
+    let basePath = 'rewards/items/';
+
+    if (!items && manifestData.unlocks) {
+        items = manifestData.unlocks;
+        basePath = 'rewards/unlocks/';
+    }
+
     if (!manifestData || !items) return;
 
     // Filter Items
@@ -247,15 +302,12 @@ async function openChest(chest) {
     const pool = [];
 
     items.forEach(itemPath => {
-        // Check if itemPath matches any regex in 'contains'
-        // itemPath might be "unlocks/bombs/bigbomb"
-        // Regex: "unlocks/bombs*"
-
         const match = contains.some(pattern => {
-            // Convert wildcard * to regex .*
-            // Escape other chars?
             const regexStr = pattern.replace(/\*/g, '.*');
-            const regex = new RegExp(`^${regexStr}$`);
+            const regex = new RegExp(`^${regexStr}`); // Remove $ to allow partial match if desired? User used "game*" vs "game/logic..."
+            // "game*" -> "^game.*" matches "game/logic/items"
+            // With ^ and $, "game*" matches "game/logic/items". 
+            // Correct.
             return regex.test(itemPath);
         });
 
@@ -267,30 +319,26 @@ async function openChest(chest) {
         return;
     }
 
-    // Spawn All Matches if * is used?
-    // User request: "* means spawn all matches"
-    // So we iterate the pool and spawn everything.
-
     pool.forEach(itemToSpawn => {
-        spawnItem(itemToSpawn, chest.x, chest.y);
+        spawnItem(itemToSpawn, chest.x, chest.y, basePath);
     });
 }
 
-async function spawnItem(path, x, y) {
+async function spawnItem(path, x, y, basePath = 'rewards/items/') {
     // Load item template
-    // Prepend rewards/items/ if missing and not absolute
     let fullPath = path;
     if (!path.startsWith('/') && !path.startsWith('rewards/') && !path.startsWith('json/')) {
-        fullPath = 'rewards/items/' + path;
+        fullPath = basePath + path;
     }
 
     try {
         const res = await fetch(`${JSON_PATHS.ROOT}${fullPath}.json?t=${Date.now()}`);
         const itemData = await res.json();
+        if (!itemData.spawnable) return
 
         Globals.groundItems.push({
-            x: x + 10,
-            y: y + 10,
+            x: x + 10 + (Math.random() - 0.5) * 20, // Spread spawn
+            y: y + 10 + (Math.random() - 0.5) * 20,
             data: itemData,
             roomX: Globals.roomData.x || 0,
             roomY: Globals.roomData.y || 0,
@@ -309,19 +357,101 @@ async function spawnItem(path, x, y) {
 export function drawChests() {
     Globals.chests.forEach(chest => {
         const ctx = Globals.ctx;
+
+        // --- DRAW CHEST GRAPHIC ---
+        // Box Body
+        const x = chest.x;
+        const y = chest.y;
+        const w = chest.width;
+        const h = chest.height;
+        const baseColor = chest.config.color || '#8e44ad'; // Purple default
+
+        // Shadow/Base
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(x + 2, y + h - 5, w - 4, 5);
+
         if (chest.state === 'closed') {
-            ctx.fillStyle = chest.config.color || '#8e44ad'; // Purple
-            ctx.fillRect(chest.x, chest.y, chest.width, chest.height);
-            // Lock icon
+            // Main Box
+            ctx.fillStyle = baseColor;
+            ctx.fillRect(x, y + 10, w, h - 10);
+
+            // Lid (Top part)
+            ctx.fillStyle = adjustColor(baseColor, 20); // Lighter
+            ctx.fillRect(x, y, w, 10);
+
+            // Trim / Detail (Dark border or straps)
+            ctx.fillStyle = '#34495e';
+            ctx.fillRect(x + 5, y + 10, 5, h - 10); // Left strap
+            ctx.fillRect(x + w - 10, y + 10, 5, h - 10); // Right strap
+
+            // Lock
             if (chest.locked) {
-                ctx.fillStyle = '#f1c40f';
-                ctx.fillRect(chest.x + 15, chest.y + 15, 10, 10);
+                ctx.fillStyle = '#f1c40f'; // Gold lock
+                ctx.fillRect(x + w / 2 - 5, y + 5, 10, 10);
+
+                // Keyhole
+                ctx.fillStyle = '#000';
+                ctx.fillRect(x + w / 2 - 2, y + 8, 4, 4);
+            } else {
+                // Metal clasp
+                ctx.fillStyle = '#bdc3c7';
+                ctx.fillRect(x + w / 2 - 4, y + 5, 8, 8);
             }
         } else {
-            ctx.fillStyle = '#555'; // Open
-            ctx.fillRect(chest.x, chest.y, chest.width, chest.height);
-            ctx.strokeStyle = '#8e44ad';
-            ctx.strokeRect(chest.x, chest.y, chest.width, chest.height);
+            // Open State
+            // Back of box (dark inside)
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(x, y + 10, w, h - 10);
+
+            // Front panel (fallen?) or just open box logic
+            // Let's draw open box (top flap open?)
+
+            // Front face (same color)
+            ctx.fillStyle = baseColor;
+            ctx.fillRect(x, y + 15, w, h - 15);
+
+            // Lid (Open, maybe slanted up)
+            ctx.fillStyle = adjustColor(baseColor, 20);
+            // Draw Lid rotated? Simplified: Just a thin rect above?
+            ctx.fillRect(x, y - 10, w, 10);
+
+            // Trim
+            ctx.fillStyle = '#34495e';
+            ctx.fillRect(x + 5, y + 15, 5, h - 15);
+            ctx.fillRect(x + w - 10, y + 15, 5, h - 15);
         }
+
+        // --- DRAW NAME ABOVE ---
+        // Name Logic: config.name || id
+        const name = chest.config.name || chest.id || "Chest";
+
+        ctx.save();
+        ctx.font = "12px 'Press Start 2P', monospace"; // Match game font if possible
+        ctx.textAlign = "center";
+
+        // Text Shadow
+        ctx.fillStyle = "black";
+        ctx.fillText(name, x + w / 2 + 1, y - 8 + 1);
+
+        // Text Color
+        ctx.fillStyle = "white";
+        ctx.fillText(name, x + w / 2, y - 8);
+
+        // INTERACTION PROMPT
+        if (chest.state === 'closed') {
+            const dist = Math.hypot(Globals.player.x - (x + w / 2), Globals.player.y - (y + h / 2));
+            if (dist < 60) {
+                ctx.font = "10px 'Press Start 2P', monospace";
+                ctx.fillStyle = "#f1c40f"; // Gold
+                ctx.fillText("SPACE", x + w / 2, y - 22);
+            }
+        }
+
+        ctx.restore();
     });
+}
+// Helper (Quick HSL adjust or similar would be better but simple hex logic is tricky without libs)
+// Placeholder for color adjust, just using hex for specific parts above.
+function adjustColor(color, amount) {
+    return color; // TODO: Implement color adjustment or use static variants
 }
