@@ -1012,7 +1012,7 @@ export function updateBulletsAndShards(aliveEnemies) {
             } else {
                 // Check for wallExplode OR general explode on impact if not a shard
                 if (Globals.gun.Bullet?.Explode?.active && !b.isShard) {
-                    if (Globals.gun.Bullet.Explode.wallExplode) spawnShards(b); // Can count as hit? Maybe.
+                    if (Globals.gun.Bullet.Explode.wallExplode) spawnBulletShards(b); // Can count as hit? Maybe.
                     // If it explodes, maybe NOT a miss? But usually wall hit = miss.
                 }
                 if (!b.isShard && b.ownerType !== 'enemy' && !b.hasHit) {
@@ -1840,7 +1840,7 @@ export function updateEnemies() {
                     en.freezeEnd = now + (Globals.gun.Bullet?.freezeDuration || 1000);
                 }
 
-                if (Globals.gun.Bullet?.Explode?.active && !b.isShard) spawnShards(b);
+                if (Globals.gun.Bullet?.Explode?.active && !b.isShard) spawnBulletShards(b);
 
                 if (Globals.gun.Bullet?.pierce) {
                     if (!b.hitEnemies) b.hitEnemies = [];
@@ -1866,7 +1866,7 @@ export function updateEnemies() {
                 updateGameStats('kill');
 
                 if (amount > 0) {
-                    spawnShard(en.x, en.y, 'green', amount);
+                    spawnCurrencyShard(en.x, en.y, 'green', amount);
                 }
 
                 // UNLOCK ITEM DROP (New Logic for Normal Enemies)
@@ -1893,7 +1893,7 @@ export function updateEnemies() {
                 const amount = calculateShardDrop('red', 'killBoss', en);
                 //update kill enemy global counter
                 updateGameStats('bossKill');
-                spawnShard(en.x, en.y, 'red', amount);
+                spawnCurrencyShard(en.x, en.y, 'red', amount);
 
                 Globals.bossKilled = true;
 
@@ -3770,7 +3770,7 @@ export async function spawnUnlockItem(x, y, isBossDrop = false, rarityFilter = n
 
         if (available.length === 0) {
             log("All items unlocked! Spawning EXTRA Shards!");
-            spawnShard(x, y, 'red', 25);
+            spawnCurrencyShard(x, y, 'red', 25);
             return;
         }
 
@@ -3814,7 +3814,7 @@ export async function spawnUnlockItem(x, y, isBossDrop = false, rarityFilter = n
         } else if (candidates.length > 0) {
             nextUnlockId = candidates[Math.floor(Math.random() * candidates.length)];
         } else {
-            spawnShard(x, y, 'red', 25);
+            spawnCurrencyShard(x, y, 'red', 25);
             return;
         }
         log("Spawning Unlock Item:", nextUnlockId);
@@ -4048,7 +4048,7 @@ export function spawnRoomRewards(dropConfig, label = null) {
             // I need to decide where to spawn it.
             // I'll spawn it near the player for now, or calculate a safe spot.
             // Let's spawn near player to be safe.
-            spawnShard(Globals.player.x, Globals.player.y - 20, 'red', shardReward);
+            spawnCurrencyShard(Globals.player.x, Globals.player.y - 20, 'red', shardReward);
             return; // Skip spawn
         }
 
@@ -4417,7 +4417,7 @@ export function drawBulletsAndShards() {
 }
 
 // --- RESTORED SHARD LOGIC ---
-export function spawnShard(x, y, type, amount) {
+export function spawnCurrencyShard(x, y, type, amount) {
     // Check config
     if (!Globals.gameData.redShards && type === 'red') return;
     if (!Globals.gameData.greenShards && type === 'green') return;
@@ -4453,7 +4453,7 @@ export function spawnShard(x, y, type, amount) {
     });
 }
 
-export function spawnShards(b) {
+export function spawnBulletShards(b) {
     const ex = Globals.gun.Bullet.Explode;
     for (let j = 0; j < ex.shards; j++) {
         const angle = (Math.PI * 2 / ex.shards) * j;

@@ -9,7 +9,7 @@ import { generateLevel } from './Level.js';
 import {
     spawnEnemies, updateEnemies, updateBulletsAndShards,
     pickupItem, applyModifierToGun, spawnRoomRewards,
-    drawPlayer, drawBulletsAndShards, spawnShards, spawnShard, drawItems, drawEnemies,
+    drawPlayer, drawBulletsAndShards, spawnBulletShards, spawnCurrencyShard, drawItems, drawEnemies,
     spawnBullet, dropBomb, drawBombs, updateBombDropping, updateMovementAndDoors, updateItems,
     updateRestart, updateRemoteDetonation, updateBombInteraction, updateUse, checkRemoteExplosions,
     updateBombsPhysics, updateShooting, updateShield, updatePortal, updateGhost,

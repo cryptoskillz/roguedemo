@@ -1,0 +1,63 @@
+{
+    "name": "Fast Room 1",
+    "description": "These enemies are fast!",
+    "hardness": 4,
+    "keyBonus": 1.0,
+    "speedGoal": 10000,
+    "item": {
+        "common": {
+            "count": 1,
+            "dropChance": 0
+        },
+        "uncommon": {
+            "count": 1,
+            "dropChance": 0
+        },
+        "rare": {
+            "count": 1,
+            "dropChance": 1
+        },
+        "legendary": {
+            "count": 1,
+            "dropChance": 0
+        }
+    },
+    "doors": {
+        "top": {
+            "locked": 1,
+            "active": 1,
+            "x": 400
+        },
+        "bottom": {
+            "locked": 0,
+            "active": 0,
+            "x": 400
+        },
+        "left": {
+            "locked": 0,
+            "active": 1,
+            "y": 400
+        },
+        "right": {
+            "locked": 0,
+            "active": 1,
+            "y": 400
+        }
+    },
+    "width": 800,
+    "height": 800,
+    "enemies": [
+        {
+            "type": "grunt",
+            "variant": "speedy",
+            "shape": "small",
+            "mode": "normal",
+            "randomiseVariant": false,
+            "randomiseShape": true,
+            "randomiseColour": false,
+            "modifiers": {},
+            "count": 8,
+            "moveType": {}
+        }
+    ]
+}

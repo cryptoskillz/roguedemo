@@ -1,0 +1,16 @@
+{
+    "rooms": [
+        "1_angry_tank",
+        "2_gun_room_1",
+        "3_easy_room_1",
+        "4_easy_room_2",
+        "5_hard_room_1",
+        "6_lots_of_turrets",
+        "7_fast_room_1",
+        "8_treasure_room_1",
+        "9_very_hard_room_1",
+        "10_1_big_enemy",
+        "11_1_big_enemy_and_friends",
+        "special/matrix"
+    ]
+}
