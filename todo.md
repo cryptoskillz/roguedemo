@@ -1,4 +1,5 @@
 bugs
+    when debug log is active send to green debug and console log, if its disabed dont send to console log
     never spaw a shop next to the start room as you start with a locked door
     show the shop on the mini map as another colour
     gun turret requrie its x y back (if it spawns off screen move it until it is on screen)
