@@ -19,6 +19,12 @@ import { spawnChests, updateChests, drawChests } from './Chests.js';
 import { spawnSwitches, updateSwitches, drawSwitches } from './Switches.js';
 
 // Placeholders for functions to be appended
+// Prevent accidental tab closure
+window.addEventListener('beforeunload', (e) => {
+    e.preventDefault();
+    e.returnValue = '';
+});
+
 export async function initGame(isRestart = false, nextLevel = null, keepStats = false) {
 
     // 0. Force Audio Resume (Must be first, to catch user interaction)

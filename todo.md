@@ -1,4 +1,6 @@
-bugs
+DONT DO ANY OF THESE TASKS AI
+
+bug
     when debug log is active send to green debug and console log, if its disabed dont send to console log
     never spaw a shop next to the start room as you start with a locked door
     show the shop on the mini map as another colour
