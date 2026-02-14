@@ -12,20 +12,28 @@
     "doors": {
         "top": {
             "locked": 1,
-            "active": 0
+            "active": 1
         },
         "bottom": {
             "locked": 0,
-            "active": 0
+            "active": 1
         },
         "left": {
             "locked": 0,
-            "active": 0
+            "active": 1
         },
         "right": {
             "locked": 0,
-            "active": 0
+            "active": 1
         }
+    },
+    "switches": {
+        "name": "switch",
+        "size": 40,
+        "count": 1,
+        "x": 30,
+        "y": 150,
+        "action": "shop"
     },
     "chests": {
         "name": "Bomb Unlocks!",
@@ -53,7 +61,7 @@
             "solid": true,
             "moveable": false
         },
-        "item clothing!": {
+        "Chest 2": {
             "manfest": "rewards/items/manifest.json",
             "instantSpawn": {
                 "active": true,
@@ -64,7 +72,7 @@
                 "spawnChance": 1
             },
             "contains": [
-                "clothing*"
+                "/rewards/items/guns/player/4way.json"
             ],
             "canShoot": true,
             "locked": {
@@ -77,7 +85,7 @@
             "solid": true,
             "moveable": true
         },
-        "item clothing2!": {
+        "Chest 3": {
             "manfest": "rewards/items/manifest.json",
             "instantSpawn": {
                 "active": true,
@@ -88,7 +96,7 @@
                 "spawnChance": 1
             },
             "contains": [
-                "clothing*"
+                "/rewards/items/guns/player/2way.json"
             ],
             "canShoot": true,
             "locked": {

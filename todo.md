@@ -1,10 +1,7 @@
 bugs
     shops should always be lockde
     add stich to shuffle chests
-    locked chests are not moveable
     remove swithc from tutorial
-    chests lock with shards is not moveable
-    ghost spawns in shop and is in ghost locked mode
     remove the matrix att in room and use id instead
     add speech attr to enemy, used for bosses, enter, die
     if ghost / enemy speech is at top of screen you cant read it so make it show below the enemy

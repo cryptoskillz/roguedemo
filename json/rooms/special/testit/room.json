@@ -27,22 +27,22 @@
     },
     "doors": {
         "top": {
-            "active": 0,
+            "active": 1,
             "locked": 0,
             "secret": false
         },
         "bottom": {
-            "active": 0,
+            "active": 1,
             "locked": 0,
             "secret": false
         },
         "left": {
-            "active": 0,
+            "active": 1,
             "locked": 0,
             "secret": false
         },
         "right": {
-            "active": 0,
+            "active": 1,
             "locked": 0,
             "secret": false
         }

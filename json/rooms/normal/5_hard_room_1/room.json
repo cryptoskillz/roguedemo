@@ -25,23 +25,19 @@
     "doors": {
         "top": {
             "locked": 1,
-            "active": 0,
-            "x": 400
+            "active": 1
         },
         "bottom": {
             "locked": 0,
-            "active": 1,
-            "x": 400
+            "active": 1
         },
         "left": {
             "locked": 0,
-            "active": 1,
-            "y": 200
+            "active": 1
         },
         "right": {
             "locked": 0,
-            "active": 1,
-            "y": 200
+            "active": 1
         }
     },
     "width": 800,

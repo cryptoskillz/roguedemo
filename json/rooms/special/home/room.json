@@ -10,23 +10,19 @@
     "doors": {
         "top": {
             "locked": 1,
-            "active": 0,
-            "x": 400
+            "active": 1
         },
         "bottom": {
             "locked": 0,
-            "active": 0,
-            "x": 400
+            "active": 1
         },
         "left": {
             "locked": 0,
-            "active": 0,
-            "y": 300
+            "active": 1
         },
         "right": {
             "locked": 0,
-            "active": 0,
-            "y": 300
+            "active": 1
         }
     },
     "chests": {
@@ -101,7 +97,6 @@
                 "cost": 1
             },
             "canBomb": true,
-            "x": 400,
             "y": 700,
             "solid": true,
             "moveable": true
@@ -276,7 +271,6 @@
                 "cost": 1
             },
             "canBomb": true,
-            "x": 400,
             "y": 100,
             "solid": true,
             "moveable": false
