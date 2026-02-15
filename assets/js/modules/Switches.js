@@ -100,9 +100,12 @@ function activateSwitch(s) {
 
         // Increment Cost handling
         if (s.rerollIncrement > 0) {
-            if (s.rerollIncrement < 1) {
-                // Percentage (e.g. 0.1 = 10%)
-                s.rerollCost = Math.ceil(cost * (1 + s.rerollIncrement));
+            if (s.rerollIncrement <= 1) {
+                // Percentage (e.g. 1 = 100%, 0.1 = +10%)
+                const newCost = cost * (1 + s.rerollIncrement);
+                s.rerollCost = Math.round(newCost);
+                // Ensure it always increases by at least 1
+                if (s.rerollCost <= cost) s.rerollCost = cost + 1;
             } else {
                 // Flat addition
                 s.rerollCost = cost + s.rerollIncrement;
@@ -244,7 +247,7 @@ export function drawSwitches() {
 
         let label = s.action === 'shop' ? "REROLL" : "SWITCH";
         if (s.rerollCost > 0) {
-            //  const typeChar = (s.shard === 'red') ? 'R' : 'G';
+            // Updated Label as per Step 1480 logic
             label += ` (${s.rerollCost} Shards)`;
         }
         ctx.fillText(label, x, y + size / 2 + 15);

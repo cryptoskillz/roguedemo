@@ -1,14 +1,13 @@
 DONT DO ANY OF THESE TASKS AI
 
 bug
-    update the hard code music  introMusic.src = 'assets/music/intro.mp3'; to use introMusic in game.json and music for the level
+    incremebt reroll
+    shop can spawm a locked door as the only way to the boss there should always be a keysless way to the boss if we not we should spawn them a key in the start room as a hint its a hard level, save that key
+    live portals should be purple used ones should be green (when you spawn them from debug)
     shops should be an unlock
     secret rooms should be an unlock
-    add red reroll switch to the shop 1
-    make the swutch floor switches you stand on like pressure pads
     show the shop on the mini map as another colour
     secret rooms dont show on the mini map
-    add music to level json 
     add level 6 maze level (World 7-4) 
     gun turret requrie its x y back (if it spawns off screen move it until it is on screen)
     remove the matrix att in room and use id instead
@@ -140,7 +139,9 @@ achivements
 
 
 Balance
-
+    add mobile inputes / touch screen
+    add pyshics matter.js
+    add joypad support 
     rtophy room has matrix room and house requiring house and matrix key
 
     this is why he never goes in the portal room or the start room (which will have a portal)
