@@ -536,6 +536,8 @@ export function drawMinimap() {
             // Special Colors
             if (rx === 0 && ry === 0) color = "#f1c40f"; // Yellow for Start
             if (Globals.visitedRooms[coord].roomData.isBoss) color = "#c0392b"; // Dark Red for Boss
+            const rData = Globals.visitedRooms[coord].roomData;
+            if (rData.type === 'shop' || rData._type === 'shop' || rData.name?.toLowerCase().includes("shop")) color = "#9b59b6"; // Purple for Shop
 
             // --- GOLDEN PATH VISUALS ---
             if (!Globals.goldenPathFailed && Globals.goldenPath.includes(coord)) {
