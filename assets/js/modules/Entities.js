@@ -2129,8 +2129,13 @@ function proceedLevelComplete() {
     }
 
     // 1. Next Level?
+    console.log("Checking Next Level Transition. Room:", Globals.roomData.name, "Next:", Globals.roomData.nextLevel);
     if (Globals.roomData.nextLevel && Globals.roomData.nextLevel.trim() !== "") {
-        log("Proceeding to Next Level:", Globals.roomData.nextLevel);
+        console.log("Proceeding to Next Level:", Globals.roomData.nextLevel);
+        if (Globals.introMusic) {
+            Globals.introMusic.pause();
+            Globals.introMusic.currentTime = 0;
+        }
         localStorage.setItem('rogue_transition', 'true');
         localStorage.setItem('rogue_current_level', Globals.roomData.nextLevel);
         localStorage.setItem('rogue_player_state', JSON.stringify(Globals.player));

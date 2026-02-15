@@ -367,74 +367,85 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             DEBUG_FLAGS.GODMODE = Globals.gameData.debug.godMode ?? false;
             DEBUG_FLAGS.WINDOW = Globals.gameData.debug.windowEnabled ?? false;
             DEBUG_FLAGS.LOG = Globals.gameData.debug.log ?? false;
+        }
 
-            // Initialize Music Source (Now that gameData is loaded & merged)
-            // Priority: level.json "music" (if string) > game.json "introMusic" > default
-            let musicSrc = Globals.gameData.introMusic;
+        // Initialize Music Source (Now that gameData is loaded & merged)
+        // Priority: level.json "music" (if string) > game.json "introMusic" > default
+        let musicSrc = Globals.gameData.introMusic;
 
-            // Unlock Status (Check Persistence or Game Config Override)
-            const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
-            let isMusicEnabled = unlockedIds.includes('music');
-            if (Globals.gameData.music === true) isMusicEnabled = true;
+        // Unlock Status (Check Persistence or Game Config Override)
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        let isMusicEnabled = unlockedIds.includes('music');
+        if (Globals.gameData.music === true) isMusicEnabled = true;
 
-            // Capture Level Override (Persistence across Welcome Screen)
-            if (typeof Globals.gameData.music === 'string') {
-                Globals.levelMusic = Globals.gameData.music;
-            } else {
-                Globals.levelMusic = null;
+        // Capture Level Override (Persistence across Welcome Screen)
+        if (typeof Globals.gameData.music === 'string') {
+            Globals.levelMusic = Globals.gameData.music;
+        } else {
+            Globals.levelMusic = null;
+        }
+
+        // DEBUG / HOTFIX: Force Level 5 Music if loading Level 5
+        try {
+            // Check nextLevel argument
+            if (nextLevel && typeof nextLevel === 'string' && nextLevel.includes('5.json')) {
+                log("HOTFIX: Forcing Level 5 Music");
+                Globals.levelMusic = 'assets/music/level_05.mp3';
+            }
+        } catch (e) { }
+
+        // FORCED WELCOME SCREEN BEHAVIOR
+        // 1. Always Use Intro Music (Ignore Level Override)
+        if (!isRestart && !nextLevel) {
+            musicSrc = Globals.gameData.introMusic; // Force Intro Source
+        } else {
+            // Normal Gameplay: Respect Level Override if exists
+            if (Globals.levelMusic) {
+                musicSrc = Globals.levelMusic;
+            }
+        }
+
+        // Apply Enabled State to Global Config (replacing any string override with boolean)
+        Globals.gameData.music = isMusicEnabled;
+
+        if (introMusic && musicSrc) {
+            // Check if we need to change track
+            const currentFile = introMusic.src ? introMusic.src.split('/').pop() : "";
+            const targetFile = musicSrc.split('/').pop();
+
+            if (currentFile !== targetFile) {
+                log("Switching Music Track:", currentFile, "->", targetFile);
+                introMusic.pause();
+                introMusic.currentTime = 0;
+                introMusic.src = musicSrc;
+                introMusic.load();
             }
 
-            // FORCED WELCOME SCREEN BEHAVIOR
-            // 1. Always Use Intro Music (Ignore Level Override)
-            if (!isRestart && !nextLevel) {
-                musicSrc = Globals.gameData.introMusic; // Force Intro Source
-            } else {
-                // Normal Gameplay: Respect Level Override if exists
-                if (Globals.levelMusic) {
-                    musicSrc = Globals.levelMusic;
-                }
-            }
-
-
-
-            // Apply Enabled State to Global Config (replacing any string override with boolean)
-            Globals.gameData.music = isMusicEnabled;
-
-            if (introMusic && musicSrc) {
-                // Check if we need to change track
-                const currentFile = introMusic.src ? introMusic.src.split('/').pop() : "";
-                const targetFile = musicSrc.split('/').pop();
-
-                if (currentFile !== targetFile) {
-                    introMusic.src = musicSrc;
-                    introMusic.load(); // Force load
-                    log("Music Track Changed to:", musicSrc);
-                }
-
-                // Auto-Play (if enabled)
-                if (Globals.gameData.music && introMusic.paused) {
-                    // Check AudioContext state
+            // Auto-Play (if enabled)
+            if (Globals.gameData.music) {
+                // Force volume and play if paused or if we just switched
+                if (introMusic.paused || currentFile !== targetFile) {
                     if (Globals.audioCtx.state === 'running') {
-                        fadeIn(introMusic, 2000, 0.4);
+                        introMusic.volume = 0.4;
+                        introMusic.play().catch(e => console.warn("Music Play Blocked", e));
                     } else {
-                        // Will play on user interaction
                         log("Music waiting for interaction (AudioCtx suspended)");
                     }
-                } else if (!Globals.gameData.music && !introMusic.paused) {
-                    // Enforce Lock: Stop music if disabled/locked
-                    fadeOut(introMusic, 500); // Friendly fade out
-                    log("Music Halted (Locked/Disabled)");
                 }
+            } else if (!Globals.gameData.music && !introMusic.paused) {
+                // Enforce Lock: Stop music if disabled/locked
+                fadeOut(introMusic, 500); // Friendly fade out
+                log("Music Halted (Locked/Disabled)");
             }
+        }
 
-            if (Globals.gameData.debug.spawn) {
-                DEBUG_FLAGS.SPAWN_ALL_ITEMS = Globals.gameData.debug.spawn.allItems ?? false;
-                DEBUG_FLAGS.SPAWN_GUNS = Globals.gameData.debug.spawn.guns ?? false;
-                DEBUG_FLAGS.SPAWN_BOMBS = Globals.gameData.debug.spawn.bombs ?? false;
-                DEBUG_FLAGS.SPAWN_INVENTORY = Globals.gameData.debug.spawn.inventory ?? false;
-                DEBUG_FLAGS.SPAWN_MODS_PLAYER = Globals.gameData.debug.spawn.modsPlayer ?? false;
-                DEBUG_FLAGS.SPAWN_MODS_BULLET = Globals.gameData.debug.spawn.modsBullet ?? true;
-            }
+        if (Globals.gameData.debug && Globals.gameData.debug.spawn) {
+            DEBUG_FLAGS.SPAWN_ALL_ITEMS = Globals.gameData.debug.spawn.allItems ?? false;
+            DEBUG_FLAGS.SPAWN_GUNS = Globals.gameData.debug.spawn.guns ?? false;
+            DEBUG_FLAGS.SPAWN_BOMBS = Globals.gameData.debug.spawn.bombs ?? false;
+            DEBUG_FLAGS.SPAWN_INVENTORY = Globals.gameData.debug.spawn.inventory ?? false;
+            DEBUG_FLAGS.SPAWN_MODS_PLAYER = Globals.gameData.debug.spawn.modsPlayer ?? false;
+            DEBUG_FLAGS.SPAWN_MODS_BULLET = Globals.gameData.debug.spawn.modsBullet ?? true;
         }
 
         // Apply Debug UI state
