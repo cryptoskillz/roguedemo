@@ -2630,6 +2630,17 @@ export function gameOver() {
 export function gameWon() {
     Globals.gameState = STATES.WIN;
 
+    // Play End Game Music if configured and allowed
+    // Play End Game Music if configured and allowed
+    if (Globals.gameData.music) {
+        const endMusic = Globals.gameData.endGameMusic || 'assets/music/endgame.mp3';
+        if (!introMusic.src || !introMusic.src.includes(endMusic.split('/').pop())) {
+            introMusic.src = endMusic;
+            introMusic.play().catch(e => console.warn("Failed to play end music", e));
+            log("Playing End Game Music:", endMusic);
+        }
+    }
+
     // Stats Update
     Globals.gameBeatCount++;
     Globals.gameBeatSessionCount++;

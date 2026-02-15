@@ -83,8 +83,8 @@
         }
     },
     "introMusic": "assets/music/intro.mp3",
-    "ghostMusic": "assets/music/ghost.mp3",
     "endGameMusic": "assets/music/endgame.mp3",
+    "ghostMusic": "assets/music/ghost.mp3",
     "levelCount": 6,
     "showTimer": false,
     "showSpeedyTimer": false,

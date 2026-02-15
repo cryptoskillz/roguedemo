@@ -1,6 +1,7 @@
 import { Globals } from './Globals.js';
 import { STATES, CONFIG, STORAGE_KEYS } from './Constants.js';
-import { drawPortal, drawSwitch } from './Game.js'
+import { drawPortal, drawSwitch } from './Game.js';
+import { introMusic } from './Audio.js';
 // Utils might be needed if logging
 import { log } from './Utils.js';
 
@@ -678,6 +679,18 @@ export function drawRoomIntro() {
 
 export function showCredits() {
     Globals.gameState = STATES.CREDITS;
+
+    // Play End Game Music
+    if (Globals.gameData.music) {
+        const endMusic = Globals.gameData.endGameMusic || 'assets/music/endgame.mp3';
+        if (!introMusic.src || !introMusic.src.includes(endMusic.split('/').pop())) {
+            introMusic.src = endMusic;
+            introMusic.play().catch(e => console.warn("Credits Music Error", e));
+            console.log("Playing Credits Music:", endMusic);
+        }
+    } else {
+        introMusic.pause();
+    }
 
     // Hide Game UI
     if (Globals.elements.ui) Globals.elements.ui.style.display = 'none';
