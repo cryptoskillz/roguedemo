@@ -287,10 +287,15 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
         if (!levelFile) {
             if (isRestart) {
+                // Restart: Resume current run or fallback to start
                 levelFile = storedLevel || gData.startLevel;
             } else {
-                levelFile = gData.startLevel || storedLevel;
+                // Fresh Load: ALWAYS use Start Level (Welcome)
+                levelFile = gData.startLevel;
+                // Fallback only if configured startLevel is missing
+                if (!levelFile) levelFile = storedLevel;
             }
+            log(`Initiating game. Level File: ${levelFile} (isRestart: ${isRestart}, stored: ${storedLevel}, default: ${gData.startLevel})`);
         }
 
         if (levelFile) {
@@ -367,13 +372,33 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             // Priority: level.json "music" (if string) > game.json "introMusic" > default
             let musicSrc = Globals.gameData.introMusic;
 
-            // Check for level override (merged into gameData.music as string?)
-            // If active level has "music": "path/to/track.mp3"
+            // Unlock Status (Check Persistence or Game Config Override)
+            const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+            let isMusicEnabled = unlockedIds.includes('music');
+            if (Globals.gameData.music === true) isMusicEnabled = true;
+
+            // Capture Level Override (Persistence across Welcome Screen)
             if (typeof Globals.gameData.music === 'string') {
-                musicSrc = Globals.gameData.music;
-                // Set flag to true so it plays
-                Globals.gameData.music = true;
+                Globals.levelMusic = Globals.gameData.music;
+            } else {
+                Globals.levelMusic = null;
             }
+
+            // FORCED WELCOME SCREEN BEHAVIOR
+            // 1. Always Use Intro Music (Ignore Level Override)
+            if (!isRestart && !nextLevel) {
+                musicSrc = Globals.gameData.introMusic; // Force Intro Source
+            } else {
+                // Normal Gameplay: Respect Level Override if exists
+                if (Globals.levelMusic) {
+                    musicSrc = Globals.levelMusic;
+                }
+            }
+
+
+
+            // Apply Enabled State to Global Config (replacing any string override with boolean)
+            Globals.gameData.music = isMusicEnabled;
 
             if (introMusic && musicSrc) {
                 // Check if we need to change track
@@ -395,6 +420,10 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
                         // Will play on user interaction
                         log("Music waiting for interaction (AudioCtx suspended)");
                     }
+                } else if (!Globals.gameData.music && !introMusic.paused) {
+                    // Enforce Lock: Stop music if disabled/locked
+                    fadeOut(introMusic, 500); // Friendly fade out
+                    log("Music Halted (Locked/Disabled)");
                 }
             }
 
@@ -1055,6 +1084,31 @@ export function startGame(keepState = false) {
     console.log("TRACER: startGame Called");
     if (Globals.gameState === STATES.PLAY || Globals.isGameStarting || Globals.isInitializing || Globals.isUnlocking) return;
     Globals.isGameStarting = true;
+
+    // MUSIC TRANSITION (Welcome -> Gameplay)
+    const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+    const isMusicUnlocked = unlockedIds.includes('music');
+    // Force update Globals music state
+    Globals.gameData.music = isMusicUnlocked;
+
+    if (isMusicUnlocked) {
+        // If we have a specific level track pending
+        if (Globals.levelMusic) {
+            // Switch track
+            // Check current src to avoid reload if same
+            if (!introMusic.src || !introMusic.src.includes(Globals.levelMusic.split('/').pop())) {
+                introMusic.src = Globals.levelMusic;
+                introMusic.load();
+                introMusic.play();
+                log("Switched to Level Music:", Globals.levelMusic);
+            }
+        }
+        // If no level override, keep playing whatever is playing (Intro)
+    } else {
+        // Locked -> Stop any music from Welcome screen
+        fadeOut(introMusic, 500);
+        log("Music Locked - Stopping Playback");
+    }
 
     // Check Lock
     const p = Globals.availablePlayers[Globals.selectedPlayerIndex];
@@ -2275,7 +2329,7 @@ export function updateRoomLock() {
             if (Globals.wasMusicPlayingBeforeGhost === undefined) Globals.wasMusicPlayingBeforeGhost = !introMusic.paused;
 
             console.log("GHOST TRAP: Switching to Ghost Music and FORCING Play. Previous:", Globals.wasMusicPlayingBeforeGhost);
-            introMusic.src = 'assets/music/ghost.mp3';
+            introMusic.src = Globals.gameData.ghostMusic || 'assets/music/ghost.mp3';
             introMusic.volume = 0.4; // Force Volume Up (Override mute)
             // Force Play
             introMusic.play().then(() => console.log("Ghost Music Started")).catch((e) => { console.error("Ghost Music Force Play Failed:", e); });
@@ -2284,7 +2338,12 @@ export function updateRoomLock() {
     } else if (!isGhostTrap && Globals.ghostTrapActive) {
         // Trap Ended - Revert to Tron and Previous State
         if (introMusic) {
-            introMusic.src = Globals.gameData.introMusic;
+            let revertSrc = Globals.gameData.introMusic;
+            // Check for level override (merged into gameData.music as string?)
+            if (typeof Globals.gameData.music === 'string') {
+                revertSrc = Globals.gameData.music;
+            }
+            introMusic.src = revertSrc;
             if (Globals.wasMusicPlayingBeforeGhost) {
                 introMusic.play().catch(() => { });
             } else {

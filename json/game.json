@@ -83,7 +83,8 @@
         }
     },
     "introMusic": "assets/music/intro.mp3",
-    "ghostMusic": "asseta/music/ghost.mp3",
+    "ghostMusic": "assets/music/ghost.mp3",
+    "endGameMusic": "assets/music/endgame.mp3",
     "levelCount": 6,
     "showTimer": false,
     "showSpeedyTimer": false,
@@ -94,6 +95,7 @@
     "perfectGoal": 5,
     "noDamageGoal": 20,
     "shooterGoal": 15,
+    "shops": false,
     "music": false,
     "pause": false,
     "items": true,

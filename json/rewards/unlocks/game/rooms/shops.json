@@ -1,0 +1,11 @@
+{
+    "name": "Shops",
+    "description": "Unlocks shops",
+    "unlock": "shops",
+    "json": "game.json",
+    "attr": "music",
+    "value": true,
+    "spawnable": true,
+    "hasItem": false,
+    "instantTrigger": false
+}
