@@ -221,7 +221,7 @@ export function spawnEnemies() {
             const suffix = parts.slice(1).join('_');
 
             let tmpl = templates[type];
-            if (!tmpl) tmpl = { type: type, size: 25, color: '#95a5a6', speed: 1, hp: 1 };
+            if (!tmpl) tmpl = { type: type, name: type, size: 25, color: '#95a5a6', speed: 1, hp: 1 };
 
             const en = JSON.parse(JSON.stringify(tmpl));
             en.id = `trophy_${i}`;
@@ -251,7 +251,13 @@ export function spawnEnemies() {
                 }
             }
             if (!variantApplied) applyEnemyConfig(en, { variant: 'medium' });
-            en.displayInfo = labelParts.length > 0 ? labelParts.join(' ') : "Normal";
+
+            const variantsStr = labelParts.length > 0 ? labelParts.join(' ') : "";
+            if (en.name) {
+                en.displayInfo = en.name + (variantsStr ? " " + variantsStr : "");
+            } else {
+                en.displayInfo = variantsStr || "Normal";
+            }
 
 
             en.killCount = combos[key] || 0;
@@ -274,6 +280,7 @@ export function spawnEnemies() {
             // Safety check for size
             if (!en.size) en.size = 25;
             Globals.enemies.push(en);
+            console.log("Spawned Trophy:", en.type, en.x, en.y, en.color, en.shape, "Stat:", en.isStatDisplay);
         });
         return; // Skip normal spawn
     }
@@ -2660,8 +2667,8 @@ export function drawEnemies() {
             bounceY = Math.sin(time) * 5; // Float up and down
             sizeMod = Math.cos(time) * 2; // Pulse size slightly
 
-            // Translucency (Base 0.4 for spookier effect)
-            const baseAlpha = 0.4;
+            // Translucency (Base 0.8 for better visibility)
+            const baseAlpha = 0.8;
             Globals.ctx.globalAlpha = en.isDead ? (en.deathTimer / 30) * baseAlpha : baseAlpha;
             Globals.ctx.globalCompositeOperation = "screen"; // Additive glow
 
@@ -2738,7 +2745,18 @@ export function drawEnemies() {
                 Globals.ctx.font = "bold 14px monospace";
             }
 
-            Globals.ctx.fillText(`Kills: ${en.killCount}`, en.x, en.y + en.size + 20);
+            // Calculate Max Kills based on type
+            let maxKills = 1000;
+            const mkc = Globals.gameData.maxKillCount;
+            if (typeof mkc === 'number') {
+                maxKills = mkc;
+            } else if (mkc) {
+                if (en.type === 'boss') maxKills = mkc.boss || 100;
+                else if (en.type === 'ghost') maxKills = mkc.ghost || 1;
+                else maxKills = mkc.normal || 1000;
+            }
+
+            Globals.ctx.fillText(`Kills: ${en.killCount} / ${maxKills}`, en.x, en.y + en.size + 20);
             Globals.ctx.restore();
             // Skip Health Bar
         } else if (Globals.gameData.showEnemyHealth !== false && !en.isDead && en.maxHp > 0 && en.hp <= en.maxHp) {

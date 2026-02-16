@@ -2161,8 +2161,6 @@ export async function draw() {
             Globals.ctx.arc(gx, gy + 15, 6, 0, Math.PI * 2);
             Globals.ctx.stroke();
 
-            Globals.ctx.font = "bold 30px monospace";
-            Globals.ctx.fillText("?", 0, 15);
 
             Globals.ctx.restore();
         }

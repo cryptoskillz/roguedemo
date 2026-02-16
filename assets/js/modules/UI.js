@@ -853,7 +853,10 @@ export function updateGameStats(statType, data) {
 
 function trackEnemyKill(en) {
     if (!en) return;
-    const type = en.type || 'unknown';
+    let type = en.type || 'unknown';
+    if (type === 'boss' && en.templateId) {
+        type = en.templateId;
+    }
     const variant = en.variant || 'normal';
     const shape = en.shape || 'circle';
 
