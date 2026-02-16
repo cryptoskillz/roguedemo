@@ -217,10 +217,15 @@ export function spawnEnemies() {
         keys.forEach((key, i) => {
 
             const parts = key.split('_');
-            const type = parts[0];
+            let type = parts[0];
             const suffix = parts.slice(1).join('_');
 
             let tmpl = templates[type];
+            // Fix: If type is a variant name (turret/gunner), create a base template from it
+            if (!tmpl && (type === 'turret' || type === 'gunner')) {
+                tmpl = { type: type, name: type, size: 25, color: '#95a5a6', speed: 1, hp: 1 };
+            }
+
             if (!tmpl) tmpl = { type: type, name: type, size: 25, color: '#95a5a6', speed: 1, hp: 1 };
 
             const en = JSON.parse(JSON.stringify(tmpl));
@@ -234,6 +239,12 @@ export function spawnEnemies() {
             const shapes = config.shapes || [];
             let labelParts = [];
             let variantApplied = false;
+
+            // Fix: Apply variant config if the "type" itself is a variant
+            if (variants.includes(type)) {
+                applyEnemyConfig(en, { variant: type });
+                variantApplied = true;
+            }
 
             for (let j = 1; j < parts.length; j++) {
                 const p = parts[j];
@@ -268,7 +279,7 @@ export function spawnEnemies() {
             en.x = 100 + Math.random() * (w - 200);
             en.y = 100 + Math.random() * (h - 200);
 
-            en.moveType = 'wander';
+            en.moveType = (en.type === 'turret' || en.moveType === 'static') ? 'static' : 'wander';
             en.hostile = false;
             en.gun = null;
             en.gunConfig = null;

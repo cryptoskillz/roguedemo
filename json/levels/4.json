@@ -16,5 +16,7 @@
     "specialrooms": [
         ""
     ],
-    "secrectrooms": []
+    "secrectrooms": [
+        "/json/rooms/secret/trophy_room/room.json"
+    ]
 }

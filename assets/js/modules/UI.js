@@ -854,10 +854,16 @@ export function updateGameStats(statType, data) {
 function trackEnemyKill(en) {
     if (!en) return;
     let type = en.type || 'unknown';
+
+    // Fix: Treat specific variants as their own 'type' for Trophy Room purposes
+    const variant = en.variant || 'normal';
+    if (variant === 'turret' || variant === 'gunner') {
+        type = variant;
+    }
+
     if (type === 'boss' && en.templateId) {
         type = en.templateId;
     }
-    const variant = en.variant || 'normal';
     const shape = en.shape || 'circle';
 
     // Size bucket
