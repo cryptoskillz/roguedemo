@@ -2122,10 +2122,43 @@ export async function draw() {
             Globals.ctx.strokeStyle = "#3e2723";
             Globals.ctx.lineWidth = 2;
             Globals.ctx.beginPath();
-            Globals.ctx.arc(0, -10, 25, Math.PI, 0); // Head
-            Globals.ctx.lineTo(25, 20);
-            Globals.ctx.lineTo(-25, 20);
-            Globals.ctx.lineTo(-25, -10);
+
+            const r = 25;
+            const gx = 0;
+            const gy = -10;
+            const skirtH = 30;
+
+            // Head (Top Semicircle)
+            Globals.ctx.arc(gx, gy, r, Math.PI, 0);
+
+            // Right Side
+            Globals.ctx.lineTo(gx + r, gy + skirtH);
+
+            // Bottom Skirt (Waves Right to Left)
+            const waves = 3;
+            const wWidth = (r * 2) / waves;
+            for (let i = 1; i <= waves; i++) {
+                const wx = (gx + r) - (wWidth * i);
+                const wy = gy + skirtH;
+                const cX = (gx + r) - (wWidth * (i - 0.5));
+                const cY = wy - 8;
+                Globals.ctx.quadraticCurveTo(cX, cY, wx, wy);
+            }
+            Globals.ctx.lineTo(gx - r, gy); // Close Left side up
+
+            Globals.ctx.closePath();
+            Globals.ctx.stroke();
+
+            // Eyes
+            Globals.ctx.fillStyle = "#3e2723";
+            Globals.ctx.beginPath();
+            Globals.ctx.arc(gx - 8, gy - 5, 4, 0, Math.PI * 2); // Left Eye
+            Globals.ctx.arc(gx + 8, gy - 5, 4, 0, Math.PI * 2); // Right Eye
+            Globals.ctx.fill();
+
+            // Mouth (O shape)
+            Globals.ctx.beginPath();
+            Globals.ctx.arc(gx, gy + 15, 6, 0, Math.PI * 2);
             Globals.ctx.stroke();
 
             Globals.ctx.font = "bold 30px monospace";
