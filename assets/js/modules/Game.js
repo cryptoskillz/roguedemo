@@ -2087,6 +2087,52 @@ export async function draw() {
         grad.addColorStop(1, "rgba(0,10,20,0.8)");
         Globals.ctx.fillStyle = grad;
         Globals.ctx.fillRect(0, 0, w, h);
+
+        // Wanted Poster (If Ghost not killed)
+        const ghostKills = Globals.killStatsTotal?.types?.ghost || 0;
+        if (ghostKills === 0) {
+            const px = w / 2;
+            const py = h / 2;
+
+            Globals.ctx.save();
+            Globals.ctx.translate(px, py);
+            Globals.ctx.rotate(Math.sin(Date.now() * 0.001) * 0.05); // Subtle swing
+
+            // Paper
+            Globals.ctx.fillStyle = "#f4f1e1"; // Parchment
+            Globals.ctx.fillRect(-60, -90, 120, 180);
+            Globals.ctx.strokeStyle = "#5d4037";
+            Globals.ctx.lineWidth = 4;
+            Globals.ctx.strokeRect(-60, -90, 120, 180);
+
+            // Pin
+            Globals.ctx.fillStyle = "#c0392b"; // Red Pin
+            Globals.ctx.beginPath();
+            Globals.ctx.arc(0, -75, 6, 0, Math.PI * 2);
+            Globals.ctx.fill();
+
+            // Text
+            Globals.ctx.fillStyle = "#3e2723";
+            Globals.ctx.textAlign = "center";
+            Globals.ctx.font = "bold 20px monospace";
+            Globals.ctx.fillText("WANTED", 0, -50);
+            Globals.ctx.fillText("DEAD", 0, 60);
+
+            // Ghost Sketch
+            Globals.ctx.strokeStyle = "#3e2723";
+            Globals.ctx.lineWidth = 2;
+            Globals.ctx.beginPath();
+            Globals.ctx.arc(0, -10, 25, Math.PI, 0); // Head
+            Globals.ctx.lineTo(25, 20);
+            Globals.ctx.lineTo(-25, 20);
+            Globals.ctx.lineTo(-25, -10);
+            Globals.ctx.stroke();
+
+            Globals.ctx.font = "bold 30px monospace";
+            Globals.ctx.fillText("?", 0, 15);
+
+            Globals.ctx.restore();
+        }
     }
 
     // Global Matrix Effect (Background)
