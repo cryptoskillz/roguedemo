@@ -451,14 +451,19 @@ export function renderDebugForm() {
             select.appendChild(opt);
         });
 
-        // Append Boss Rooms
-        const bosses = ['boss0', 'boss1', 'boss2', 'boss3', 'boss4', 'boss5'];
-        bosses.forEach(b => {
-            const opt = document.createElement('option');
-            opt.value = "bosses/" + b;
-            opt.innerText = b.toUpperCase();
-            select.appendChild(opt);
-        });
+        // Append Boss Rooms (Dynamic)
+        fetch('json/rooms/bosses/manifest.json')
+            .then(res => res.json())
+            .then(data => {
+                const list = data.rooms || data.items || [];
+                list.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = "bosses/" + b;
+                    opt.innerText = "BOSS: " + b.toUpperCase();
+                    select.appendChild(opt);
+                });
+            })
+            .catch(e => console.warn("No boss room manifest found:", e));
 
         // Append Shop Rooms (Dynamic)
         fetch('json/rooms/shops/manfiest.json')

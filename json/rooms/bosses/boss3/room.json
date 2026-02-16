@@ -23,21 +23,9 @@
         },
         "special": []
     },
+    "boss": "json/enemies/bosses/boss3.json",
     "isBoss": true,
-    "enemies": [
-        {
-            "type": "secondboss",
-            "variant": "normal",
-            "shape": "",
-            "mode": "normal",
-            "randomiseVariant": false,
-            "randomiseShape": false,
-            "randomiseColour": false,
-            "modifiers": {},
-            "count": 1,
-            "moveType": {}
-        }
-    ],
+    "enemies": [],
     "doors": {},
     "width": 800,
     "height": 600,

@@ -26,13 +26,9 @@
             "json/rewards/items/bombs/normal.json"
         ]
     },
+    "boss": "json/enemies/bosses/boss2.json",
     "isBoss": true,
-    "enemies": [
-        {
-            "type": "firstboss",
-            "count": 1
-        }
-    ],
+    "enemies": [],
     "doors": {},
     "width": 800,
     "height": 600,

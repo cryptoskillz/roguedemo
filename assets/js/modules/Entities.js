@@ -182,7 +182,7 @@ export function spawnEnemies() {
 
     // TROPHY ROOM LOGIC
     const rData = Globals.roomData || {};
-    console.log(Globals.killStatsTotal.sizes)
+    //console.log(Globals.killStatsTotal.sizes)
 
     if (rData.type === 'trophy' || rData._type === 'trophy') {
         const stats = (Globals.killStatsTotal && Globals.killStatsTotal.types) ? Globals.killStatsTotal.types : {};
@@ -210,66 +210,48 @@ export function spawnEnemies() {
         Globals.trophyCounts = { killed: killedCount, total: totalCount };
 
         // Spawn Ghosts for each Unique Combo
-        // console.log(combos)
-        Object.keys(combos).forEach((key, i) => {
+        const keys = Object.keys(combos);
+        console.log("TROPHY DEBUG: Keys:", keys, "Templates:", Object.keys(Globals.enemyTemplates || {}).length);
 
-            //console.log(combos)
+        keys.forEach((key, i) => {
+
             const parts = key.split('_');
             const type = parts[0];
             const suffix = parts.slice(1).join('_');
 
-            /*
-            //load the music if it has a music var
-                    if (data.music) {
-                        //load if
-                        introMusic.src = data.music;
-                        introMusic.volume = 0.4; // Force Volume Up (Override mute)
-                        // Force Play
-                        introMusic.play().then(() => console.log("`room` Music Started")).catch((e) => { console.error("Ghost Music Force Play Failed:", e); });
-            
-                    }
-                        
-            console.log("parts")
-            console.log(parts)
-            console.log("type")
-            console.log(type)
-            console.log("suffix")
-            console.log(suffix)
-             */
-
             let tmpl = templates[type];
             if (!tmpl) tmpl = { type: type, size: 25, color: '#95a5a6', speed: 1, hp: 1 };
-            //console.log(tmpl)
+
             const en = JSON.parse(JSON.stringify(tmpl));
             en.id = `trophy_${i}`;
 
-            // Apply Config based on suffix
-            //console.log("suffix" + suffix)
-            if (variantsList.includes(suffix)) {
+            // Apply Configuration using Game Data
+            const config = Globals.gameData.enemyConfig || {};
+            const variants = config.variants || [];
+            const colors = config.colors || [];
+
+            if (variants.includes(suffix)) {
+                // Apply Stats (Size, Speed, etc) from variantStats
                 applyEnemyConfig(en, { variant: suffix });
-                // Custom Variant Colors
-                const variantColors = {
-                    'speedy': '#3498db', 'small': '#2ecc71', 'large': '#e67e22',
-                    'massive': '#8e44ad', 'mega': '#2c3e50', 'turret': '#7f8c8d',
-                    'gunner': '#c0392b'
-                };
-                if (variantColors[suffix]) en.color = variantColors[suffix];
+
+                // Apply Color (Map variant index to color index from game.json)
+                const index = variants.indexOf(suffix);
+                if (index !== -1 && colors[index]) {
+                    en.color = colors[index];
+                }
+
                 en.displayInfo = suffix;
-            } else if (shapesList.includes(suffix)) {
+
+            } else if (config.shapes && config.shapes.includes(suffix)) {
                 en.shape = suffix;
-                en.displayInfo = suffix;
                 // Ensure base stats
                 applyEnemyConfig(en, { variant: 'medium' });
+                en.displayInfo = suffix;
             } else {
                 // Fallback
                 applyEnemyConfig(en, { variant: 'medium' });
                 en.displayInfo = "Normal";
             }
-            const variantColors = {
-                'speedy': '#3498db', 'small': '#2ecc71', 'large': '#e67e22',
-                'massive': '#8e44ad', 'mega': '#2c3e50', 'turret': '#7f8c8d',
-                'gunner': '#c0392b'
-            };
 
             en.killCount = combos[key] || 0;
 
@@ -288,8 +270,7 @@ export function spawnEnemies() {
             en.isStatDisplay = true;
             en.solid = false;
 
-            console.log(en)
-
+            // Safety check for size
             if (!en.size) en.size = 25;
             Globals.enemies.push(en);
         });
@@ -410,6 +391,42 @@ export function spawnEnemies() {
 
     // Skip if explicitly set to 0 enemies
     if (Globals.roomData.enemyCount === 0) return;
+
+    // Handle Explicit Boss Property (e.g. "boss": "enemies/bosses/boss1.json")
+    if (Globals.roomData.boss) {
+        const bossKey = Globals.roomData.boss.split('/').pop().replace('.json', '');
+        const template = Globals.enemyTemplates[bossKey];
+
+        if (template) {
+            console.log("Spawning Boss from Property:", bossKey);
+            const inst = JSON.parse(JSON.stringify(template));
+            inst.templateId = bossKey;
+
+            // Init Defaults
+            inst.x = (Globals.canvas.width / 2);
+            inst.y = (Globals.canvas.height / 2);
+            if (inst.size) {
+                inst.x -= inst.size / 2;
+                inst.y -= inst.size / 2;
+            }
+
+            // Use template overrides if valid
+            if (template.x !== undefined) inst.x = template.x;
+            if (template.y !== undefined) inst.y = template.y;
+
+            // Standard Init
+            inst.frozen = true;
+            inst.freezeEnd = freezeUntil;
+            inst.invulnerable = true; // Wait for freeze
+
+            // Ensure ID/Key is set for uniqueness/logic
+            inst.isBoss = true;
+
+            Globals.enemies.push(inst);
+        } else {
+            console.error("Boss Template Not Found for key:", bossKey);
+        }
+    }
 
     // Use roomData.enemies if defined (array of {type, count}), otherwise fallback
     if (Globals.roomData.enemies && Array.isArray(Globals.roomData.enemies)) {

@@ -955,7 +955,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         }
         bosses = bosses.filter(p => p && p.trim() !== "");
         bosses.forEach(path => roomProtos.push(loadRoomFile(path, 'boss')));
-
+        console.log(bosses)
         // C. Shop Room
         if (Globals.gameData.shop && Globals.gameData.shop.active && Globals.gameData.shop.shopRoom) {
             roomProtos.push(loadRoomFile(Globals.gameData.shop.shopRoom, 'shop'));
@@ -974,6 +974,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
                 .then(data => {
                     // Use the last part of the path as the key (e.g. "special/firstboss" -> "firstboss")
                     const key = id.split('/').pop();
+                    console.log(key, data)
                     Globals.enemyTemplates[key] = data;
                 })
         );

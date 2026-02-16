@@ -52,6 +52,12 @@ export function setupInput(callbacks) {
             if (e.code === 'KeyR') callbacks.restartGame();
             if (e.code === 'KeyM') callbacks.goToWelcome();
         }
+        else if (Globals.gameState === STATES.PLAY) {
+            // Pause Game
+            if (e.code === 'KeyP' || e.code === 'Escape') {
+                if (callbacks.goPause) callbacks.goPause();
+            }
+        }
         else if (Globals.gameState === STATES.START) {
             // Allow Arrow Keys for char select (handled in handleGlobalInputs, but prevent start on them?)
             // Also prevent Music/SFX toggles (0/9) from starting game

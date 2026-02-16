@@ -1,5 +1,5 @@
 {
-    "name": "Boss Room 4",
+    "name": "Boss Room 5",
     "description": "",
     "keyBonus": 1.0,
     "speedGoal": 10000,
@@ -10,11 +10,11 @@
         },
         "uncommon": {
             "count": 1,
-            "dropChance": 0
+            "dropChance": 0.5
         },
         "rare": {
             "count": 1,
-            "dropChance": 0
+            "dropChance": 0.5
         },
         "legendary": {
             "count": 1,
@@ -22,8 +22,8 @@
         },
         "special": []
     },
-    "boss": "json/enemies/bosses/boss4.json",
     "isBoss": true,
+    "boss": "json/enemies/bosses/boss6.json",
     "enemies": [],
     "doors": {},
     "width": 800,
@@ -41,7 +41,7 @@
             "legendary": true
         }
     },
-    "nextLevel": "json/levels/5.json",
+    "nextLevel": "",
     "welcomeScreen": false,
-    "completedItMate": false
+    "completedItMate": true
 }

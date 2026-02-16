@@ -1,6 +1,99 @@
 DONT DO ANY OF THESE TASKS AI
 
 bug
+
+
+updates boss rendering have to point to the boss
+
+
+It would like you are not applying the stat size here 
+
+applyEnemyConfig
+
+
+we have the sizes applied in spwan enmies for trophy room here
+
+const stats = (Globals.killStatsTotal && Globals.killStatsTotal.types) ? Globals.killStatsTotal.types : {};
+        const sizes = Globals.killStatsTotal.sizes;
+        const types = Object.keys(stats);
+        console.log("TROPHY LOG: Stats", stats, "Types", types, "sizes", sizes);
+
+
+it also look like you set a local array for colours sizes etc when it is in game.json
+
+ "enemyConfig": {
+        "variants": [
+            "speedy",
+            "small",
+            "large",
+            "massive",
+            "mega",
+            "gunner",
+            "turret",
+            "medium"
+        ],
+        "shapes": [
+            "circle",
+            "square",
+            "triangle",
+            "hexagon",
+            "diamond",
+            "star"
+        ],
+        "colors": [
+            "#e74c3c",
+            "#3498db",
+            "#2ecc71",
+            "#f1c40f",
+            "#9b59b6",
+            "#e67e22",
+            "#1abc9c",
+            "#34495e"
+        ],
+        "variantStats": {
+            "speedy": {
+                "size": 0.75,
+                "speed": 1.5,
+                "hp": 0.5
+            },
+            "small": {
+                "size": 0.5,
+                "hp": 0.5
+            },
+            "large": {
+                "size": 1.5,
+                "speed": 0.75,
+                "hp": 1.5,
+                "damage": 1.25
+            },
+            "massive": {
+                "size": 2.0,
+                "speed": 0.5,
+                "hp": 2.0,
+                "damage": 1.5
+            },
+            "mega": {
+                "size": 6.0,
+                "speed": 0.25,
+                "hp": 10.0,
+                "damage": 5.0
+            },
+            "gunner": {
+                "gun": "json/rewards/items/guns/enemy/peashooter.json"
+            },
+            "turret": {
+                "gun": "json/rewards/items/guns/enemy/peashooter.json",
+                "moveType": "static"
+            },
+            "medium": {}
+        },
+   
+
+
+
+
+
+    update room.json to have a boss that we can point to its better than firstboss etc
     trophy room
         trophy room ghosts look around not follow the player 
         show all vairants of caught ghosts variant,size,shape,colour
@@ -13,6 +106,7 @@ bug
     load music from room json is it exists when you leave that room go back to the old
     music
     live portals should be purple used ones should be green (when you spawn them from debug)
+    look into json compressors 
     seret room
         secret rooms should be an unlock
         secret rooms dont show on the mini map
@@ -385,16 +479,18 @@ key binding
     
 mini map
     item should show the whole mini map
-    item suould shou secret rooms
+    item to show secret rooms
     item will show boss
     whole mini map should be shown always (is this true we have a button which will show the full map)
     mini map should not show red for static enemies once the room is clear it should go yellow
     when you have killed the boss all rooms go red until you go through them
-
+    bigger mini map item
+    even bigger mini map item
+    massive mini map item 
+    full screen mini map item 
 debug window 
     updateDebugEditor make it update in realtime when something happens in the game
     when you click off of it it should focus back on the game
-    add a export json option
 
 modifiers
     luck
