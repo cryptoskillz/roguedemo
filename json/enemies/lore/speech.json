@@ -51,6 +51,15 @@
             "Foolish mortal!",
             "Bow before me!",
             "My domain!"
+        ],
+        "ghost_trophy": [
+            "oh no...hes here",
+            "Why does he keep up here?",
+            "I was looking after my children now i am here",
+            "Trapped for an eternity",
+            "I can't leave",
+            "LET ME GO ON TO THE NEXT WORLD. PLEASE!",
+            "it is so cold here"
         ]
     },
     "shapes": {

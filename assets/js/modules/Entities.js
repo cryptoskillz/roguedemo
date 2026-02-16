@@ -279,6 +279,10 @@ export function spawnEnemies() {
 
             // Safety check for size
             if (!en.size) en.size = 25;
+
+            // Always assign ghost_trophy type for maximum chattiness
+            en.type = 'ghost_trophy';
+
             Globals.enemies.push(en);
             console.log("Spawned Trophy:", en.type, en.x, en.y, en.color, en.shape, "Stat:", en.isStatDisplay);
         });
@@ -1599,7 +1603,7 @@ export function updateEnemies() {
         }
 
         // GHOST SPEECH - Idle Chatter
-        if (en.type === 'ghost') triggerSpeech(en, 'idle');
+        if (en.type === 'ghost' || en.type === 'ghost_trophy') triggerSpeech(en, 'idle');
 
         // ROOM FREEZE OVERRIDE
         if (isRoomFrozen) {
@@ -2622,7 +2626,7 @@ export function drawEnemies() {
             ctx.lineTo(x, y + size);
             ctx.lineTo(x - size, y);
             ctx.closePath();
-        } else if (en.type === 'ghost' || (isGhost && (shape === 'circle' || !shape))) {
+        } else if (en.type === 'ghost' || en.type === 'ghost_trophy' || (isGhost && (shape === 'circle' || !shape))) {
             const r = size;
             const h = r * 0.8;
             ctx.arc(x, y - (r * 0.2), r, Math.PI, 0);
@@ -2821,7 +2825,7 @@ export function drawEnemies() {
         }
 
         // DRAW EYES
-        if (en.type === 'ghost') {
+        if (en.type === 'ghost' || en.type === 'ghost_trophy') {
             // Large Black Ghost Eyes (Geometric)
             const eyeSize = en.size * 0.3; // BIG
             const eyeXOffset = en.size * 0.4;
@@ -2830,10 +2834,13 @@ export function drawEnemies() {
             // Calculate Look Vector
             const dx = Globals.player.x - en.x;
             const dy = Globals.player.y - en.y;
+
             const d = Math.hypot(dx, dy);
             let lx = 0, ly = 0;
             if (d > 0) { lx = (dx / d) * lookDist; ly = (dy / d) * lookDist; }
 
+            // Fix: Ensure eyes are drawn over the ghost glow (screen mode makes black invisible)
+            Globals.ctx.globalCompositeOperation = "source-over";
             Globals.ctx.fillStyle = "black";
 
             // Left Eye
