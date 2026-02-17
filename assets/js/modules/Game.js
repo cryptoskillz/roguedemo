@@ -1692,7 +1692,7 @@ export function changeRoom(dx, dy) {
             let desiredTrack = Globals.levelMusic || Globals.gameData.introMusic;
 
             if (Globals.roomData.type === 'trophy' || Globals.roomData._type === 'trophy') {
-                desiredTrack = Globals.gameData.trophyMusic || 'assets/music/trophy.mp3';
+                desiredTrack = Globals.gameData.trophyMusic || 'assets/music/trophyroom.mp3';
             }
 
             // Check if we need to switch
@@ -2138,7 +2138,11 @@ export async function draw() {
             Globals.ctx.textAlign = "center";
             Globals.ctx.font = "bold 20px monospace";
             Globals.ctx.fillText("WANTED", 0, -50);
+
             Globals.ctx.fillText("DEAD", 0, 60);
+
+            const ghostName = Globals.enemyTemplates?.ghost?.displayName || "Player Snr";
+            Globals.ctx.fillText(ghostName, 0, 80);
 
             // Ghost Sketch
             Globals.ctx.strokeStyle = "#3e2723";

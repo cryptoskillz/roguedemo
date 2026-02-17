@@ -55,6 +55,9 @@ export function setupInput(callbacks) {
         else if (Globals.gameState === STATES.PLAY) {
             // Pause Game
             if (e.code === 'KeyP' || e.code === 'Escape') {
+                // Prevent pause if Ghost is hunting
+                if (Globals.ghostSpawned) return;
+
                 if (callbacks.goPause) callbacks.goPause();
             }
         }

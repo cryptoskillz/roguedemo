@@ -90,7 +90,7 @@
     "introMusic": "assets/music/intro.mp3",
     "endGameMusic": "assets/music/endgame.mp3",
     "ghostMusic": "assets/music/ghost.mp3",
-    "trophyMusic": "assets/music/trophy.mp3",
+    "trophyMusic": "assets/music/trophyroom.mp3",
     "levelCount": 6,
     "showTimer": false,
     "showSpeedyTimer": false,

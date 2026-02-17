@@ -1,5 +1,6 @@
 {
     "type": "ghost",
+    "displayName": "Player Snr",
     "description": "The scarty ghost.",
     "damage": 1000,
     "knockback": 0,
