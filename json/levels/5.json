@@ -2,6 +2,7 @@
     "name": "Level 5",
     "description": "Oh My God, LEVEL 5!!",
     "NoRooms": 10,
+    "music": "assets/music/level_05.mp3",
     "startRoom": "json/rooms/special/start/room.json",
     "bossRoom": "json/rooms/bosses/boss5/room.json",
     "shop": {

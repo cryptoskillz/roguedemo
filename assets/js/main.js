@@ -1,7 +1,7 @@
 import { Globals } from './modules/Globals.js'; // Path relative to index.html? No, relative to main.js?
 // If main.js is in assets/js/, then ./modules/Globals.js is correct.
 import { setupInput } from './modules/Input.js';
-import { initGame, restartGame, newRun, goToWelcome, goContinue, confirmNewGame, cancelNewGame } from './modules/Game.js';
+import { initGame, restartGame, newRun, goToWelcome, goContinue, confirmNewGame, cancelNewGame, gameMenu } from './modules/Game.js';
 
 window.addEventListener('load', () => {
     console.log("Main.js loaded - Initializing Game...");
@@ -14,7 +14,8 @@ window.addEventListener('load', () => {
         goToWelcome: () => goToWelcome(),
         goContinue: () => goContinue(),
         confirmNewGame: () => confirmNewGame(),
-        cancelNewGame: () => cancelNewGame()
+        cancelNewGame: () => cancelNewGame(),
+        goPause: () => gameMenu()
     });
 
     // Start Game Initialization

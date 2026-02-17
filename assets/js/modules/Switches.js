@@ -7,20 +7,48 @@ export function spawnSwitches(roomData) {
     if (!roomData.switches) return;
 
     const config = roomData.switches;
+    let list = [];
 
-    // Handle single or array (future proofing)
-    const list = Array.isArray(config) ? config : [config];
+    // Dictionary Support (Object of Objects)
+    if (typeof config === 'object' && !Array.isArray(config) && config.x === undefined) {
+        list = Object.values(config);
+    }
+    // Single Object
+    else if (!Array.isArray(config)) {
+        list = [config];
+    }
+    // Array
+    else {
+        list = config;
+    }
 
     list.forEach(cfg => {
-        if (!cfg.x || !cfg.y) return; // Skip if no validation
+        if (!cfg.x || !cfg.y) return;
+
+        // Parse Reroll Cost Logic
+        let startCost = 0;
+        let increment = 0;
+        if (cfg.reroll && typeof cfg.reroll === 'object') {
+            startCost = cfg.reroll.cost || 0;
+            increment = cfg.reroll.incrementCost || 0;
+        } else {
+            // Legacy / Simple support
+            startCost = (cfg.rerollCost !== undefined) ? cfg.rerollCost : (cfg.defaultCost || 0);
+            increment = 0;
+        }
+
         Globals.switches.push({
             x: cfg.x,
             y: cfg.y,
             size: cfg.size || 40,
             action: cfg.action || 'none',
-            rerollCost: (cfg.rerollCost !== undefined) ? cfg.rerollCost : (cfg.defaultCost || 0),
+            rerollCost: startCost,
+            rerollIncrement: increment,
+            shard: cfg.shard || 'green', // Default to green
+            colour: cfg.colour || cfg.color || null, // Store custom color
             state: 'idle', // idle, active
-            cooldown: 0
+            cooldown: 0,
+            isPressed: false
         });
     });
 }
@@ -35,8 +63,11 @@ export function updateSwitches() {
 
         const dist = Math.hypot(p.x - s.x, p.y - s.y);
 
+        // Visual Press State (Down if player is on it)
+        s.isPressed = (dist < s.size);
+
         // Activation Distance (Step on)
-        if (dist < s.size && s.state === 'idle' && s.cooldown <= 0) {
+        if (s.isPressed && s.state === 'idle' && s.cooldown <= 0) {
             activateSwitch(s);
         }
 
@@ -51,16 +82,35 @@ function activateSwitch(s) {
     // Check Cost
     if (s.rerollCost > 0) {
         const cost = s.rerollCost;
-        const currentShards = Globals.player.inventory.greenShards || 0;
+        const shardType = s.shard || 'green';
+        const inventoryKey = shardType === 'red' ? 'redShards' : 'greenShards';
+        const currentShards = Globals.player.inventory[inventoryKey] || 0;
+
         if (currentShards < cost) {
-            spawnFloatingText(s.x, s.y, cost + " Shards required!", "#e74c3c"); // Red
+            spawnFloatingText(s.x, s.y, cost + " " + shardType.toUpperCase() + " Shards!", "#e74c3c"); // Red Text
             s.cooldown = 60;
             SFX.cantDoIt()
             return;
         }
 
-        Globals.player.inventory.greenShards -= cost;
-        spawnFloatingText(s.x, s.y - 10, "-" + cost, "#e74c3c");
+        Globals.player.inventory[inventoryKey] -= cost;
+        // Determine color for floating text based on shard type
+        const floatColor = shardType === 'red' ? '#e74c3c' : '#2ecc71';
+        spawnFloatingText(s.x, s.y - 10, "-" + cost, floatColor);
+
+        // Increment Cost handling
+        if (s.rerollIncrement > 0) {
+            if (s.rerollIncrement <= 1) {
+                // Percentage (e.g. 1 = 100%, 0.1 = +10%)
+                const newCost = cost * (1 + s.rerollIncrement);
+                s.rerollCost = Math.round(newCost);
+                // Ensure it always increases by at least 1
+                if (s.rerollCost <= cost) s.rerollCost = cost + 1;
+            } else {
+                // Flat addition
+                s.rerollCost = cost + s.rerollIncrement;
+            }
+        }
     }
 
     s.state = 'active';
@@ -83,17 +133,18 @@ function rerollShop(s) {
     // 2. Assign new random item
     // 3. Reset state logic
 
-    const allItems = window.allItemTemplates || [];
+    const allItems = window.allItemTemplates || Globals.itemTemplates; // Ensure consistent access
     // Filter for valid spawnable items only
 
     // User requested active check for shop items
-    const pool = allItems.filter(i =>
+    const pool = Array.isArray(allItems) ? allItems.filter(i =>
         i && i.location &&
         i.spawnable !== false &&
         i.type !== 'unlock' &&
         i.rarity !== 'special' &&
         (!i.purchasable || i.purchasable.active !== false)
-    );
+    ) : []; // Handle if itemTemplates is object not array? logic implies array.
+
     if (pool.length === 0) {
         spawnFloatingText(s.x, s.y, "No Items!", "red");
         return;
@@ -165,21 +216,29 @@ export function drawSwitches() {
         const x = s.x;
         const y = s.y;
         const size = s.size;
+        const isActive = s.state === 'active';
+        const isDepressed = isActive || s.isPressed;
 
-        // Base
-        ctx.fillStyle = '#333';
-        ctx.fillRect(x - size / 2, y - size / 2, size, size);
+        // Depression Offset: Idle = -4px (Up), Active = 0px (Flush)
+        const offset = isDepressed ? 0 : -4;
 
-        // Button
-        const offset = s.state === 'active' ? 2 : 5;
-        const btnColor = s.state === 'active' ? '#27ae60' : '#c0392b'; // Green/Red
+        // Shadow (if raised)
+        if (!isDepressed) {
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(x - size / 2 + 4, y - size / 2 + 4, size, size);
+        }
 
+        // Main Plate Color (User Custom or Default Red/Green)
+        const btnColor = isActive ? '#27ae60' : (s.colour || s.color || '#c0392b');
+
+        // Fill
         ctx.fillStyle = btnColor;
-        ctx.fillRect(x - size / 2 + 2, y - size / 2 + 2, size - 4, size - 4);
+        ctx.fillRect(x - size / 2, y - size / 2 + offset, size, size);
 
-        // Highlight
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.fillRect(x - size / 2 + 2, y - size / 2 + 2, size - 4, (size - 4) / 2);
+        // Border (Thick, darker - mimicking the snippet's style)
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)'; // Generic darkening for border
+        ctx.strokeRect(x - size / 2, y - size / 2 + offset, size, size);
 
         // Label
         ctx.font = "8px 'Press Start 2P'";
@@ -187,7 +246,10 @@ export function drawSwitches() {
         ctx.textAlign = "center";
 
         let label = s.action === 'shop' ? "REROLL" : "SWITCH";
-        if (s.rerollCost > 0) label += ` (${s.rerollCost})`;
+        if (s.rerollCost > 0) {
+            // Updated Label as per Step 1480 logic
+            label += ` (${s.rerollCost} Shards)`;
+        }
         ctx.fillText(label, x, y + size / 2 + 15);
     });
     ctx.restore();

@@ -1,0 +1,27 @@
+{
+    "type": "boss",
+    "name": "The Guardian!",
+    "description": "The big bad.",
+    "hp": 20,
+    "alwaysAngry": false,
+    "angryAfterHit": 0.1,
+    "angryTime": 5000,
+    "damage": 2,
+    "knockback": 100,
+    "shake": 2,
+    "speed": 0.5,
+    "size": 50,
+    "color": "rgba(192, 57, 43, 0.9)",
+    "hitColor": "#ffffff",
+    "deathType": "fadeaway",
+    "deathDuration": 30,
+    "shape": "circle",
+    "gun": "",
+    "solid": true,
+    "moveType": {
+        "type": "track",
+        "x": 0,
+        "y": 0
+    },
+    "special": true
+}

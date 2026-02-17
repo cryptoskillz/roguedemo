@@ -19,6 +19,12 @@ import { spawnChests, updateChests, drawChests } from './Chests.js';
 import { spawnSwitches, updateSwitches, drawSwitches } from './Switches.js';
 
 // Placeholders for functions to be appended
+// Prevent accidental tab closure
+window.addEventListener('beforeunload', (e) => {
+    e.preventDefault();
+    e.returnValue = '';
+});
+
 export async function initGame(isRestart = false, nextLevel = null, keepStats = false) {
 
     // 0. Force Audio Resume (Must be first, to catch user interaction)
@@ -45,7 +51,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     // Music Reset handled in startGame or updateRoomLock if state persists?
     // Force music reset if coming from Ghost Trap
     if (introMusic && introMusic.src.includes('ghost')) {
-        introMusic.src = 'assets/music/tron.mp3';
+        introMusic.src = Globals.gameData.introMusic;
         if (!introMusic.paused) introMusic.play().catch(() => { });
     }
 
@@ -87,6 +93,18 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     // Debug panel setup moved after config load
 
     // MOVED: Music start logic is now handled AFTER game.json is loaded to respect "music": false setting.
+
+    // Initialize Music Source
+    if (introMusic && Globals.gameData.introMusic) {
+        // Only valid if src works (check valid path)
+        const target = Globals.gameData.introMusic;
+        // Avoid resetting if already playing same track (via relative check)
+        // new Audio() src is empty initially.
+        if (!introMusic.src || !introMusic.src.includes(target.split('/').pop())) {
+            introMusic.src = target;
+            log("Initialized Music Source:", target);
+        }
+    }
 
     Globals.gameState = STATES.START; // Always reset to START first, let startGame() transition to PLAY
     if (Globals.elements.overlay) Globals.elements.overlay.style.display = 'none';
@@ -269,10 +287,15 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
         if (!levelFile) {
             if (isRestart) {
+                // Restart: Resume current run or fallback to start
                 levelFile = storedLevel || gData.startLevel;
             } else {
-                levelFile = gData.startLevel || storedLevel;
+                // Fresh Load: ALWAYS use Start Level (Welcome)
+                levelFile = gData.startLevel;
+                // Fallback only if configured startLevel is missing
+                if (!levelFile) levelFile = storedLevel;
             }
+            log(`Initiating game. Level File: ${levelFile} (isRestart: ${isRestart}, stored: ${storedLevel}, default: ${gData.startLevel})`);
         }
 
         if (levelFile) {
@@ -344,15 +367,85 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             DEBUG_FLAGS.GODMODE = Globals.gameData.debug.godMode ?? false;
             DEBUG_FLAGS.WINDOW = Globals.gameData.debug.windowEnabled ?? false;
             DEBUG_FLAGS.LOG = Globals.gameData.debug.log ?? false;
+        }
 
-            if (Globals.gameData.debug.spawn) {
-                DEBUG_FLAGS.SPAWN_ALL_ITEMS = Globals.gameData.debug.spawn.allItems ?? false;
-                DEBUG_FLAGS.SPAWN_GUNS = Globals.gameData.debug.spawn.guns ?? false;
-                DEBUG_FLAGS.SPAWN_BOMBS = Globals.gameData.debug.spawn.bombs ?? false;
-                DEBUG_FLAGS.SPAWN_INVENTORY = Globals.gameData.debug.spawn.inventory ?? false;
-                DEBUG_FLAGS.SPAWN_MODS_PLAYER = Globals.gameData.debug.spawn.modsPlayer ?? false;
-                DEBUG_FLAGS.SPAWN_MODS_BULLET = Globals.gameData.debug.spawn.modsBullet ?? true;
+        // Initialize Music Source (Now that gameData is loaded & merged)
+        // Priority: level.json "music" (if string) > game.json "introMusic" > default
+        let musicSrc = Globals.gameData.introMusic;
+
+        // Unlock Status (Check Persistence or Game Config Override)
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        let isMusicEnabled = unlockedIds.includes('music');
+        if (Globals.gameData.music === true) isMusicEnabled = true;
+
+        // Capture Level Override (Persistence across Welcome Screen)
+        if (typeof Globals.gameData.music === 'string') {
+            Globals.levelMusic = Globals.gameData.music;
+        } else {
+            Globals.levelMusic = null;
+        }
+
+        // DEBUG / HOTFIX: Force Level 5 Music if loading Level 5
+        try {
+            // Check nextLevel argument
+            if (nextLevel && typeof nextLevel === 'string' && nextLevel.includes('5.json')) {
+                log("HOTFIX: Forcing Level 5 Music");
+                Globals.levelMusic = 'assets/music/level_05.mp3';
             }
+        } catch (e) { }
+
+        // FORCED WELCOME SCREEN BEHAVIOR
+        // 1. Always Use Intro Music (Ignore Level Override)
+        if (!isRestart && !nextLevel) {
+            musicSrc = Globals.gameData.introMusic; // Force Intro Source
+        } else {
+            // Normal Gameplay: Respect Level Override if exists
+            if (Globals.levelMusic) {
+                musicSrc = Globals.levelMusic;
+            }
+        }
+
+        // Apply Enabled State to Global Config (replacing any string override with boolean)
+        Globals.gameData.music = isMusicEnabled;
+
+        if (introMusic && musicSrc) {
+            // Check if we need to change track
+            const currentFile = introMusic.src ? introMusic.src.split('/').pop() : "";
+            const targetFile = musicSrc.split('/').pop();
+
+            if (currentFile !== targetFile) {
+                log("Switching Music Track:", currentFile, "->", targetFile);
+                introMusic.pause();
+                introMusic.currentTime = 0;
+                introMusic.src = musicSrc;
+                introMusic.load();
+            }
+
+            // Auto-Play (if enabled)
+            if (Globals.gameData.music) {
+                // Force volume and play if paused or if we just switched
+                if (introMusic.paused || currentFile !== targetFile) {
+                    if (Globals.audioCtx.state === 'running') {
+                        introMusic.volume = 0.4;
+                        introMusic.play().catch(e => console.warn("Music Play Blocked", e));
+                    } else {
+                        log("Music waiting for interaction (AudioCtx suspended)");
+                    }
+                }
+            } else if (!Globals.gameData.music && !introMusic.paused) {
+                // Enforce Lock: Stop music if disabled/locked
+                fadeOut(introMusic, 500); // Friendly fade out
+                log("Music Halted (Locked/Disabled)");
+            }
+        }
+
+        if (Globals.gameData.debug && Globals.gameData.debug.spawn) {
+            DEBUG_FLAGS.SPAWN_ALL_ITEMS = Globals.gameData.debug.spawn.allItems ?? false;
+            DEBUG_FLAGS.SPAWN_GUNS = Globals.gameData.debug.spawn.guns ?? false;
+            DEBUG_FLAGS.SPAWN_BOMBS = Globals.gameData.debug.spawn.bombs ?? false;
+            DEBUG_FLAGS.SPAWN_INVENTORY = Globals.gameData.debug.spawn.inventory ?? false;
+            DEBUG_FLAGS.SPAWN_MODS_PLAYER = Globals.gameData.debug.spawn.modsPlayer ?? false;
+            DEBUG_FLAGS.SPAWN_MODS_BULLET = Globals.gameData.debug.spawn.modsBullet ?? true;
         }
 
         // Apply Debug UI state
@@ -687,7 +780,6 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         if (!fetchedGun) {
             console.error("CRITICAL: Could not load ANY gun. Player will be unarmed.");
             Globals.gun = { Bullet: { NoBullets: true } };
-            spawnFloatingText(canvas.width / 2, canvas.height / 2, "ERROR: GUN LOAD FAILED", "red");
         } else {
             Globals.gun = fetchedGun;
             log("Loaded Gun Data:", Globals.gun.name);
@@ -797,6 +889,8 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
                     return res.json();
                 })
                 .then(data => {
+                    console.log(data)
+
                     // ID Generation: Handle "room.json" collision
                     const parts = path.split('/');
                     let id = parts[parts.length - 1].replace('.json', '');
@@ -861,7 +955,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         }
         bosses = bosses.filter(p => p && p.trim() !== "");
         bosses.forEach(path => roomProtos.push(loadRoomFile(path, 'boss')));
-
+        console.log(bosses)
         // C. Shop Room
         if (Globals.gameData.shop && Globals.gameData.shop.active && Globals.gameData.shop.shopRoom) {
             roomProtos.push(loadRoomFile(Globals.gameData.shop.shopRoom, 'shop'));
@@ -880,6 +974,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
                 .then(data => {
                     // Use the last part of the path as the key (e.g. "special/firstboss" -> "firstboss")
                     const key = id.split('/').pop();
+                    console.log(key, data)
                     Globals.enemyTemplates[key] = data;
                 })
         );
@@ -1003,6 +1098,31 @@ export function startGame(keepState = false) {
     console.log("TRACER: startGame Called");
     if (Globals.gameState === STATES.PLAY || Globals.isGameStarting || Globals.isInitializing || Globals.isUnlocking) return;
     Globals.isGameStarting = true;
+
+    // MUSIC TRANSITION (Welcome -> Gameplay)
+    const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+    const isMusicUnlocked = unlockedIds.includes('music');
+    // Force update Globals music state
+    Globals.gameData.music = isMusicUnlocked;
+
+    if (isMusicUnlocked) {
+        // If we have a specific level track pending
+        if (Globals.levelMusic) {
+            // Switch track
+            // Check current src to avoid reload if same
+            if (!introMusic.src || !introMusic.src.includes(Globals.levelMusic.split('/').pop())) {
+                introMusic.src = Globals.levelMusic;
+                introMusic.load();
+                introMusic.play();
+                log("Switched to Level Music:", Globals.levelMusic);
+            }
+        }
+        // If no level override, keep playing whatever is playing (Intro)
+    } else {
+        // Locked -> Stop any music from Welcome screen
+        fadeOut(introMusic, 500);
+        log("Music Locked - Stopping Playback");
+    }
 
     // Check Lock
     const p = Globals.availablePlayers[Globals.selectedPlayerIndex];
@@ -1566,6 +1686,28 @@ export function changeRoom(dx, dy) {
         }
 
         Globals.roomData = nextEntry.roomData;
+
+        // MUSIC SWITCH LOGIC (Trophy Room)
+        if (Globals.introMusic) {
+            let desiredTrack = Globals.levelMusic || Globals.gameData.introMusic;
+
+            if (Globals.roomData.type === 'trophy' || Globals.roomData._type === 'trophy') {
+                desiredTrack = Globals.gameData.trophyMusic || 'assets/music/trophyroom.mp3';
+            }
+
+            // Check if we need to switch
+            // Use loose check for filename match to avoid full URL issues
+            const currentFilename = Globals.introMusic.src ? Globals.introMusic.src.split('/').pop() : "";
+            const targetFilename = desiredTrack ? desiredTrack.split('/').pop() : "";
+
+            if (targetFilename && currentFilename !== targetFilename) {
+                log("Switching Room Music:", currentFilename, "->", targetFilename);
+                Globals.introMusic.src = desiredTrack;
+                if (!Globals.musicMuted && Globals.gameData.music) {
+                    Globals.introMusic.play().catch(e => console.warn("Music Switch Play Blocked", e));
+                }
+            }
+        }
         Globals.roomIntroEndTime = Globals.roomData.showIntro ? (Date.now() + 2000) : 0;
         Globals.visitedRooms[nextCoord] = nextEntry; // Add to visited for minimap
 
@@ -1937,6 +2079,119 @@ export async function draw() {
     await updateUI();
     Globals.ctx.clearRect(0, 0, Globals.canvas.width, Globals.canvas.height);
 
+    // Trophy Room Background (Ghostly Effect)
+    if (Globals.roomData && (Globals.roomData.type === 'trophy' || Globals.roomData._type === 'trophy')) {
+        const w = Globals.canvas.width;
+        const h = Globals.canvas.height;
+
+        // Dark Base
+        Globals.ctx.fillStyle = "#020205";
+        Globals.ctx.fillRect(0, 0, w, h);
+
+        // Procedural Fog/Orbs
+        const time = Date.now() * 0.0002;
+        for (let i = 0; i < 15; i++) {
+            // Random-ish movement based on time and index
+            const x = ((Math.sin(time + i * 132.1) + 1) / 2) * w;
+            const y = ((Math.cos(time * 0.7 + i * 35.2) + 1) / 2) * h;
+            const s = 100 + Math.sin(time * 2 + i) * 50;
+            const alpha = 0.03 + (Math.sin(time + i) * 0.02);
+
+            Globals.ctx.fillStyle = `rgba(100, 220, 255, ${alpha})`;
+            Globals.ctx.beginPath();
+            Globals.ctx.arc(x, y, s, 0, Math.PI * 2);
+            Globals.ctx.fill();
+        }
+
+        // Vignette Overlay
+        const grad = Globals.ctx.createRadialGradient(w / 2, h / 2, w / 3, w / 2, h / 2, w * 0.8);
+        grad.addColorStop(0, "rgba(0,0,0,0)");
+        grad.addColorStop(1, "rgba(0,10,20,0.8)");
+        Globals.ctx.fillStyle = grad;
+        Globals.ctx.fillRect(0, 0, w, h);
+
+        // Wanted Poster (If Ghost not killed)
+        const ghostKills = Globals.killStatsTotal?.types?.ghost || 0;
+        if (ghostKills === 0) {
+            const px = w / 2;
+            const py = h / 2;
+
+            Globals.ctx.save();
+            Globals.ctx.translate(px, py);
+            Globals.ctx.rotate(Math.sin(Date.now() * 0.001) * 0.05); // Subtle swing
+
+            // Paper
+            Globals.ctx.fillStyle = "#f4f1e1"; // Parchment
+            Globals.ctx.fillRect(-60, -90, 120, 180);
+            Globals.ctx.strokeStyle = "#5d4037";
+            Globals.ctx.lineWidth = 4;
+            Globals.ctx.strokeRect(-60, -90, 120, 180);
+
+            // Pin
+            Globals.ctx.fillStyle = "#c0392b"; // Red Pin
+            Globals.ctx.beginPath();
+            Globals.ctx.arc(0, -75, 6, 0, Math.PI * 2);
+            Globals.ctx.fill();
+
+            // Text
+            Globals.ctx.fillStyle = "#3e2723";
+            Globals.ctx.textAlign = "center";
+            Globals.ctx.font = "bold 20px monospace";
+            Globals.ctx.fillText("WANTED", 0, -50);
+
+            Globals.ctx.fillText("DEAD", 0, 60);
+
+            const ghostName = Globals.enemyTemplates?.ghost?.displayName || "Player Snr";
+            Globals.ctx.fillText(ghostName, 0, 80);
+
+            // Ghost Sketch
+            Globals.ctx.strokeStyle = "#3e2723";
+            Globals.ctx.lineWidth = 2;
+            Globals.ctx.beginPath();
+
+            const r = 25;
+            const gx = 0;
+            const gy = -10;
+            const skirtH = 30;
+
+            // Head (Top Semicircle)
+            Globals.ctx.arc(gx, gy, r, Math.PI, 0);
+
+            // Right Side
+            Globals.ctx.lineTo(gx + r, gy + skirtH);
+
+            // Bottom Skirt (Waves Right to Left)
+            const waves = 3;
+            const wWidth = (r * 2) / waves;
+            for (let i = 1; i <= waves; i++) {
+                const wx = (gx + r) - (wWidth * i);
+                const wy = gy + skirtH;
+                const cX = (gx + r) - (wWidth * (i - 0.5));
+                const cY = wy - 8;
+                Globals.ctx.quadraticCurveTo(cX, cY, wx, wy);
+            }
+            Globals.ctx.lineTo(gx - r, gy); // Close Left side up
+
+            Globals.ctx.closePath();
+            Globals.ctx.stroke();
+
+            // Eyes
+            Globals.ctx.fillStyle = "#3e2723";
+            Globals.ctx.beginPath();
+            Globals.ctx.arc(gx - 8, gy - 5, 4, 0, Math.PI * 2); // Left Eye
+            Globals.ctx.arc(gx + 8, gy - 5, 4, 0, Math.PI * 2); // Right Eye
+            Globals.ctx.fill();
+
+            // Mouth (O shape)
+            Globals.ctx.beginPath();
+            Globals.ctx.arc(gx, gy + 15, 6, 0, Math.PI * 2);
+            Globals.ctx.stroke();
+
+
+            Globals.ctx.restore();
+        }
+    }
+
     // Global Matrix Effect (Background)
     if (Globals.roomData && Globals.roomData.name === "Guns Lots of Guns") {
         Globals.portal.active = true;
@@ -2223,7 +2478,7 @@ export function updateRoomLock() {
             if (Globals.wasMusicPlayingBeforeGhost === undefined) Globals.wasMusicPlayingBeforeGhost = !introMusic.paused;
 
             console.log("GHOST TRAP: Switching to Ghost Music and FORCING Play. Previous:", Globals.wasMusicPlayingBeforeGhost);
-            introMusic.src = 'assets/music/ghost.mp3';
+            introMusic.src = Globals.gameData.ghostMusic || 'assets/music/ghost.mp3';
             introMusic.volume = 0.4; // Force Volume Up (Override mute)
             // Force Play
             introMusic.play().then(() => console.log("Ghost Music Started")).catch((e) => { console.error("Ghost Music Force Play Failed:", e); });
@@ -2232,7 +2487,12 @@ export function updateRoomLock() {
     } else if (!isGhostTrap && Globals.ghostTrapActive) {
         // Trap Ended - Revert to Tron and Previous State
         if (introMusic) {
-            introMusic.src = 'assets/music/tron.mp3';
+            let revertSrc = Globals.gameData.introMusic;
+            // Check for level override (merged into gameData.music as string?)
+            if (typeof Globals.gameData.music === 'string') {
+                revertSrc = Globals.gameData.music;
+            }
+            introMusic.src = revertSrc;
             if (Globals.wasMusicPlayingBeforeGhost) {
                 introMusic.play().catch(() => { });
             } else {
@@ -2518,6 +2778,17 @@ export function gameOver() {
 
 export function gameWon() {
     Globals.gameState = STATES.WIN;
+
+    // Play End Game Music if configured and allowed
+    // Play End Game Music if configured and allowed
+    if (Globals.gameData.music) {
+        const endMusic = Globals.gameData.endGameMusic || 'assets/music/endgame.mp3';
+        if (!introMusic.src || !introMusic.src.includes(endMusic.split('/').pop())) {
+            introMusic.src = endMusic;
+            introMusic.play().catch(e => console.warn("Failed to play end music", e));
+            log("Playing End Game Music:", endMusic);
+        }
+    }
 
     // Stats Update
     Globals.gameBeatCount++;

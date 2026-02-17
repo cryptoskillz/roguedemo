@@ -80,8 +80,17 @@
         },
         "turretDefaults": {
             "gun": "json/rewards/items/guns/enemy/peashooter.json"
+        },
+        "maxKillCount": {
+            "normal": 1000,
+            "boss": 100,
+            "ghost": 1
         }
     },
+    "introMusic": "assets/music/intro.mp3",
+    "endGameMusic": "assets/music/endgame.mp3",
+    "ghostMusic": "assets/music/ghost.mp3",
+    "trophyMusic": "assets/music/trophyroom.mp3",
     "levelCount": 6,
     "showTimer": false,
     "showSpeedyTimer": false,
@@ -92,6 +101,13 @@
     "perfectGoal": 5,
     "noDamageGoal": 20,
     "shooterGoal": 15,
+    "maxKillCount": {
+        "normal": 1000,
+        "boss": 100,
+        "ghost": 1
+    },
+    "secretRooms": true,
+    "shops": false,
     "music": false,
     "pause": false,
     "items": true,

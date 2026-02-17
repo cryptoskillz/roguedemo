@@ -27,14 +27,36 @@
         }
     },
     "switches": {
-        "name": "switch",
-        "size": 40,
-        "count": 1,
-        "defaultCost": 100,
-        "x": 50,
-        "y": 300,
-        "action": "shop",
-        "rerollCost": 10
+        "switch 1": {
+            "name": "switch",
+            "shard": "green",
+            "colour": "#008000",
+            "size": 40,
+            "count": 1,
+            "defaultCost": 100,
+            "x": 50,
+            "y": 250,
+            "action": "shop",
+            "reroll": {
+                "cost": 5,
+                "incrementCost": 1
+            }
+        },
+        "switch 2": {
+            "name": "switch",
+            "shard": "red",
+            "colour": "#FF0000",
+            "size": 40,
+            "count": 1,
+            "defaultCost": 100,
+            "x": 50,
+            "y": 350,
+            "action": "shop",
+            "reroll": {
+                "cost": 5,
+                "incrementCost": 0.1
+            }
+        }
     },
     "chests": {
         "name": "Bomb Unlocks!",

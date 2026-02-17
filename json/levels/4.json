@@ -2,6 +2,7 @@
     "name": "Level 4",
     "description": "Sokath, his eyes uncovered!",
     "NoRooms": 5,
+    "music": "assets/music/level_04.mp3",
     "startRoom": "json/rooms/special/start/room.json",
     "bossRoom": "json/rooms/bosses/boss4/room.json",
     "shop": {
@@ -14,5 +15,8 @@
     ],
     "specialrooms": [
         ""
+    ],
+    "secrectrooms": [
+        "/json/rooms/secret/trophy_room/room.json"
     ]
 }

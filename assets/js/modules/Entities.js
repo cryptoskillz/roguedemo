@@ -86,6 +86,7 @@ export function applyEnemyConfig(inst, group) {
     }
 
     // 2. Apply Variant Stats
+    inst.variant = group.variant;
     const stats = config.variantStats[group.variant];
     if (stats) {
         if (stats.size) inst.size = (inst.size || 25) * stats.size;
@@ -98,7 +99,16 @@ export function applyEnemyConfig(inst, group) {
         if (group.variant === 'turret' && stats.moveType === 'static') {
             if (!group.moveType) group.moveType = {};
             if (!group.moveType.type) group.moveType.type = 'static';
+
+            // Fix: Apply to instance immediately
+            inst.moveType = 'static';
         }
+    }
+
+    // Apply moveType if present in group (explicit logic)
+    if (group.moveType) {
+        inst.moveType = group.moveType;
+        if (group.moveType.type) inst.moveType = group.moveType.type;
     }
 
     // 2b. Special Case for Turret Object Schema (New)
@@ -179,6 +189,125 @@ export function applyEnemyConfig(inst, group) {
 }
 export function spawnEnemies() {
     Globals.enemies = [];
+
+    // TROPHY ROOM LOGIC
+    const rData = Globals.roomData || {};
+    //console.log(Globals.killStatsTotal.sizes)
+
+    if (rData.type === 'trophy' || rData._type === 'trophy') {
+        const stats = (Globals.killStatsTotal && Globals.killStatsTotal.types) ? Globals.killStatsTotal.types : {};
+        const sizes = Globals.killStatsTotal.sizes;
+        const types = Object.keys(stats);
+        console.log("TROPHY LOG: Stats", stats, "Types", types, "sizes", sizes);
+
+        const startX = 100;
+        const startY = 100;
+        const gap = 120;
+        const cols = 7;
+        const templates = Globals.enemyTemplates || {};
+
+        // Calculate Collection Stats (Combinations)
+        const config = Globals.gameData.enemyConfig || {};
+        const variantsList = config.variants || [];
+        const shapesList = config.shapes || [];
+
+        const totalTypes = Object.keys(templates).length;
+        const totalCount = totalTypes * (variantsList.length + shapesList.length);
+
+        const combos = (Globals.killStatsTotal && Globals.killStatsTotal.combos) ? Globals.killStatsTotal.combos : {};
+        const killedCount = Object.keys(combos).length;
+
+        Globals.trophyCounts = { killed: killedCount, total: totalCount };
+
+        // Spawn Ghosts for each Unique Combo
+        const keys = Object.keys(combos);
+        console.log("TROPHY DEBUG: Keys:", keys, "Templates:", Object.keys(Globals.enemyTemplates || {}).length);
+
+        keys.forEach((key, i) => {
+
+            const parts = key.split('_');
+            let type = parts[0];
+            const suffix = parts.slice(1).join('_');
+
+            let tmpl = templates[type];
+            // Fix: If type is a variant name (turret/gunner), create a base template from it
+            if (!tmpl && (type === 'turret' || type === 'gunner')) {
+                tmpl = { type: type, name: type, size: 25, color: '#95a5a6', speed: 1, hp: 1 };
+            }
+
+            if (!tmpl) tmpl = { type: type, name: type, size: 25, color: '#95a5a6', speed: 1, hp: 1 };
+
+            const en = JSON.parse(JSON.stringify(tmpl));
+            en.id = `trophy_${i}`;
+
+            // Apply Configuration using Game Data
+            const config = Globals.gameData.enemyConfig || {};
+            const variants = config.variants || [];
+            const colors = config.colors || [];
+
+            const shapes = config.shapes || [];
+            let labelParts = [];
+            let variantApplied = false;
+
+            // Fix: Apply variant config if the "type" itself is a variant
+            if (variants.includes(type)) {
+                applyEnemyConfig(en, { variant: type });
+                variantApplied = true;
+            }
+
+            for (let j = 1; j < parts.length; j++) {
+                const p = parts[j];
+                if (variants.includes(p)) {
+                    applyEnemyConfig(en, { variant: p });
+                    variantApplied = true;
+                    labelParts.push(p);
+                    const idx = variants.indexOf(p);
+                    if (colors[idx]) en.color = colors[idx];
+                } else if (shapes.includes(p)) {
+                    en.shape = p;
+                    labelParts.push(p);
+                } else if (p !== 'normal' && p !== 'circle') {
+                    labelParts.push(p);
+                }
+            }
+            if (!variantApplied) applyEnemyConfig(en, { variant: 'medium' });
+
+            const variantsStr = labelParts.length > 0 ? labelParts.join(' ') : "";
+            if (en.name) {
+                en.displayInfo = en.name + (variantsStr ? " " + variantsStr : "");
+            } else {
+                en.displayInfo = variantsStr || "Normal";
+            }
+
+
+            en.killCount = combos[key] || 0;
+
+            // Random Position
+            const w = (Globals.canvas && Globals.canvas.width) || 800;
+            const h = (Globals.canvas && Globals.canvas.height) || 600;
+            en.x = 100 + Math.random() * (w - 200);
+            en.y = 100 + Math.random() * (h - 200);
+
+            en.moveType = (en.type === 'turret' || en.moveType === 'static') ? 'static' : 'wander';
+            en.hostile = false;
+            en.gun = null;
+            en.gunConfig = null;
+            en.indestructible = true;
+            en.hp = 9999;
+            en.isStatDisplay = true;
+            en.solid = false;
+
+            // Safety check for size
+            if (!en.size) en.size = 25;
+
+            // Always assign ghost_trophy type for maximum chattiness
+            en.type = 'ghost_trophy';
+
+            Globals.enemies.push(en);
+            console.log("Spawned Trophy:", en.type, en.x, en.y, en.color, en.shape, "Stat:", en.isStatDisplay);
+        });
+        return; // Skip normal spawn
+    }
     //add the invul timer to the freeze until so they invulnerable for the time in player json
     const freezeUntil = Date.now() + (Globals.gameData.enterRoomFreezeTime || Globals.player.invulTimer || 1000);
 
@@ -294,6 +423,42 @@ export function spawnEnemies() {
 
     // Skip if explicitly set to 0 enemies
     if (Globals.roomData.enemyCount === 0) return;
+
+    // Handle Explicit Boss Property (e.g. "boss": "enemies/bosses/boss1.json")
+    if (Globals.roomData.boss) {
+        const bossKey = Globals.roomData.boss.split('/').pop().replace('.json', '');
+        const template = Globals.enemyTemplates[bossKey];
+
+        if (template) {
+            console.log("Spawning Boss from Property:", bossKey);
+            const inst = JSON.parse(JSON.stringify(template));
+            inst.templateId = bossKey;
+
+            // Init Defaults
+            inst.x = (Globals.canvas.width / 2);
+            inst.y = (Globals.canvas.height / 2);
+            if (inst.size) {
+                inst.x -= inst.size / 2;
+                inst.y -= inst.size / 2;
+            }
+
+            // Use template overrides if valid
+            if (template.x !== undefined) inst.x = template.x;
+            if (template.y !== undefined) inst.y = template.y;
+
+            // Standard Init
+            inst.frozen = true;
+            inst.freezeEnd = freezeUntil;
+            inst.invulnerable = true; // Wait for freeze
+
+            // Ensure ID/Key is set for uniqueness/logic
+            inst.isBoss = true;
+
+            Globals.enemies.push(inst);
+        } else {
+            console.error("Boss Template Not Found for key:", bossKey);
+        }
+    }
 
     // Use roomData.enemies if defined (array of {type, count}), otherwise fallback
     if (Globals.roomData.enemies && Array.isArray(Globals.roomData.enemies)) {
@@ -1458,7 +1623,7 @@ export function updateEnemies() {
         }
 
         // GHOST SPEECH - Idle Chatter
-        if (en.type === 'ghost') triggerSpeech(en, 'idle');
+        if (en.type === 'ghost' || en.type === 'ghost_trophy') triggerSpeech(en, 'idle');
 
         // ROOM FREEZE OVERRIDE
         if (isRoomFrozen) {
@@ -1505,9 +1670,8 @@ export function updateEnemies() {
             if (!isStatic) {
                 // --- STEERING BEHAVIORS ---
                 // Determine Move Strategy
-                let isRunAway = false;
-                if (en.moveType === 'runAway') isRunAway = true;
-                if (typeof en.moveType === 'object' && en.moveType.type === 'runAway') isRunAway = true;
+                const isRunAway = en.moveType === 'runAway' || (typeof en.moveType === 'object' && en.moveType.type === 'runAway');
+                const isWander = en.moveType === 'wander';
 
                 // 1. Seek (or Flee) Player
                 let dx = Globals.player.x - en.x;
@@ -1515,7 +1679,12 @@ export function updateEnemies() {
                 const distToPlayer = Math.hypot(dx, dy);
                 let dirX = 0, dirY = 0;
 
-                if (distToPlayer > 0.1) {
+                if (isWander) {
+                    if (en.wanderAngle === undefined) en.wanderAngle = Math.random() * Math.PI * 2;
+                    en.wanderAngle += (Math.random() - 0.5) * 0.5; // Turn slightly
+                    dirX = Math.cos(en.wanderAngle);
+                    dirY = Math.sin(en.wanderAngle);
+                } else if (distToPlayer > 0.1) {
                     // If runAway, we invert the direction to push AWAY from player
                     const factor = isRunAway ? -1.0 : 1.0;
                     dirX = (dx / distToPlayer) * factor;
@@ -1688,22 +1857,26 @@ export function updateEnemies() {
         } // End !en.frozen
 
         // 3. Player Collision (Thorns)
-        const distToPlayer = Math.hypot(Globals.player.x - en.x, Globals.player.y - en.y);
-        if (distToPlayer < en.size + Globals.player.size) {
-            const baseDmg = Globals.gun.Bullet?.damage || 1;
-            const thornsDmg = baseDmg / 2;
-            if (thornsDmg > 0 && !en.frozen && !en.invulnerable && !en.indestructible) {
-                en.hp -= thornsDmg;
-                en.hitTimer = 5;
-                if (en.hp <= 0 && !en.isDead) { // Kill check handled by shared block below? No, separate logs usually.
-                    // But shared block is safer. Let's rely on falling through.
+        // Skip for trophy display
+        if (!en.isStatDisplay) {
+            const distToPlayer = Math.hypot(Globals.player.x - en.x, Globals.player.y - en.y);
+            if (distToPlayer < en.size + Globals.player.size) {
+                const baseDmg = Globals.gun.Bullet?.damage || 1;
+                const thornsDmg = baseDmg / 2;
+                if (thornsDmg > 0 && !en.frozen && !en.invulnerable && !en.indestructible) {
+                    en.hp -= thornsDmg;
+                    en.hitTimer = 5;
+                    if (en.hp <= 0 && !en.isDead) { // Kill check handled by shared block below? No, separate logs usually.
+                        // But shared block is safer. Let's rely on falling through.
+                    }
                 }
+                playerHit(en, true, true, true);
             }
-            playerHit(en, true, true, true);
         }
 
         // 4. BULLET COLLISION
         Globals.bullets.forEach((b, bi) => {
+            if (en.isStatDisplay) return;
             // Skip checks only if invulnerable AND NOT explicitly solid
             // (Standard enemies are valid targets, but if invulnerable we usually skip unless solid)
             // Default "solid" to false if undefined? No, standard behavior for invuln is pass-through.
@@ -1863,7 +2036,7 @@ export function updateEnemies() {
             if (en.type !== 'boss') { // Bosses drop Red Shards separately
                 const amount = calculateShardDrop('green', 'killEnemy', en);
                 //update kill enemy global counter
-                updateGameStats('kill');
+                updateGameStats('kill', en);
 
                 if (amount > 0) {
                     spawnCurrencyShard(en.x, en.y, 'green', amount);
@@ -1892,7 +2065,7 @@ export function updateEnemies() {
                 // RED SHARD REWARD
                 const amount = calculateShardDrop('red', 'killBoss', en);
                 //update kill enemy global counter
-                updateGameStats('bossKill');
+                updateGameStats('bossKill', en);
                 spawnCurrencyShard(en.x, en.y, 'red', amount);
 
                 Globals.bossKilled = true;
@@ -2129,8 +2302,13 @@ function proceedLevelComplete() {
     }
 
     // 1. Next Level?
+    console.log("Checking Next Level Transition. Room:", Globals.roomData.name, "Next:", Globals.roomData.nextLevel);
     if (Globals.roomData.nextLevel && Globals.roomData.nextLevel.trim() !== "") {
-        log("Proceeding to Next Level:", Globals.roomData.nextLevel);
+        console.log("Proceeding to Next Level:", Globals.roomData.nextLevel);
+        if (Globals.introMusic) {
+            Globals.introMusic.pause();
+            Globals.introMusic.currentTime = 0;
+        }
         localStorage.setItem('rogue_transition', 'true');
         localStorage.setItem('rogue_current_level', Globals.roomData.nextLevel);
         localStorage.setItem('rogue_player_state', JSON.stringify(Globals.player));
@@ -2386,14 +2564,53 @@ export function drawEnemies() {
     // Helper for 3D/Shape Drawing
     const drawEnemyShape = (ctx, en, x, y, size) => {
         const shape = en.shape || "circle";
+        const isGhost = en.type === 'ghost' || (en.isStatDisplay && !en.needsKill);
+
         ctx.beginPath();
         if (shape === "square") {
-            ctx.rect(x - size, y - size, size * 2, size * 2);
+            if (isGhost) {
+                // Square with wavy feet
+                ctx.moveTo(x - size, y + size); // Bottom Left
+                ctx.lineTo(x - size, y - size); // Top Left
+                ctx.lineTo(x + size, y - size); // Top Right
+                ctx.lineTo(x + size, y + size); // Bottom Right
+                // Waves (R -> L)
+                const width = size * 2;
+                const waves = 3;
+                const waveWidth = width / waves;
+                for (let i = 1; i <= waves; i++) {
+                    const waveX = (x + size) - (waveWidth * i);
+                    const waveY = (y + size);
+                    const cX = (x + size) - (waveWidth * (i - 0.5));
+                    const cY = waveY - (size * 0.3);
+                    ctx.quadraticCurveTo(cX, cY, waveX, waveY);
+                }
+                ctx.closePath();
+            } else {
+                ctx.rect(x - size, y - size, size * 2, size * 2);
+            }
         } else if (shape === "triangle") {
-            ctx.moveTo(x, y - size);
-            ctx.lineTo(x + size, y + size);
-            ctx.lineTo(x - size, y + size);
-            ctx.closePath();
+            if (isGhost) {
+                ctx.moveTo(x, y - size); // Top
+                ctx.lineTo(x + size, y + size); // Bottom Right
+                // Waves
+                const width = size * 2;
+                const waves = 3;
+                const waveWidth = width / waves;
+                for (let i = 1; i <= waves; i++) {
+                    const waveX = (x + size) - (waveWidth * i);
+                    const waveY = (y + size);
+                    const cX = (x + size) - (waveWidth * (i - 0.5));
+                    const cY = waveY - (size * 0.3);
+                    ctx.quadraticCurveTo(cX, cY, waveX, waveY);
+                }
+                ctx.closePath();
+            } else {
+                ctx.moveTo(x, y - size);
+                ctx.lineTo(x + size, y + size);
+                ctx.lineTo(x - size, y + size);
+                ctx.closePath();
+            }
         } else if (shape === "star") {
             const spikes = 5;
             const outerRadius = size;
@@ -2429,7 +2646,7 @@ export function drawEnemies() {
             ctx.lineTo(x, y + size);
             ctx.lineTo(x - size, y);
             ctx.closePath();
-        } else if (en.type === 'ghost') {
+        } else if (en.type === 'ghost' || en.type === 'ghost_trophy' || (isGhost && (shape === 'circle' || !shape))) {
             const r = size;
             const h = r * 0.8;
             ctx.arc(x, y - (r * 0.2), r, Math.PI, 0);
@@ -2459,14 +2676,23 @@ export function drawEnemies() {
         let bounceY = 0;
         let sizeMod = 0;
 
-        if (en.type === 'ghost') {
+        // PICTURE FRAME (Unkilled in Trophy Room)
+        if (en.needsKill) {
+            Globals.ctx.save();
+            Globals.ctx.strokeStyle = "#f1c40f"; // Gold Frame
+            Globals.ctx.lineWidth = 5;
+            Globals.ctx.strokeRect(en.x - en.size - 10, en.y - en.size - 10, (en.size * 2) + 20, (en.size * 2) + 20);
+            Globals.ctx.restore();
+        }
+
+        if (en.type === 'ghost' || (en.isStatDisplay && !en.needsKill)) {
             // Ectoplasmic Wobble
             const time = Date.now() / 200;
             bounceY = Math.sin(time) * 5; // Float up and down
             sizeMod = Math.cos(time) * 2; // Pulse size slightly
 
-            // Translucency (Base 0.4 for spookier effect)
-            const baseAlpha = 0.4;
+            // Translucency (Base 0.8 for better visibility)
+            const baseAlpha = 0.8;
             Globals.ctx.globalAlpha = en.isDead ? (en.deathTimer / 30) * baseAlpha : baseAlpha;
             Globals.ctx.globalCompositeOperation = "screen"; // Additive glow
 
@@ -2526,7 +2752,38 @@ export function drawEnemies() {
 
         // DRAW HEALTH BAR, use ShowGhost health to draw the ghost
         // DRAW HEALTH BAR
-        if (Globals.gameData.showEnemyHealth !== false && !en.isDead && en.maxHp > 0 && en.hp <= en.maxHp) {
+
+        // STAT DISPLAY (Trophy Room)
+        // STAT DISPLAY (Trophy Room)
+        if (en.isStatDisplay) {
+            Globals.ctx.save();
+            Globals.ctx.fillStyle = "#f1c40f";
+            Globals.ctx.textAlign = "center";
+            Globals.ctx.font = "bold 14px monospace";
+            Globals.ctx.shadowColor = "black";
+            Globals.ctx.shadowBlur = 2;
+
+            if (en.displayInfo) {
+                Globals.ctx.font = "bold 10px monospace";
+                Globals.ctx.fillText(en.displayInfo.toUpperCase(), en.x, en.y - en.size - 10);
+                Globals.ctx.font = "bold 14px monospace";
+            }
+
+            // Calculate Max Kills based on type
+            let maxKills = 1000;
+            const mkc = Globals.gameData.maxKillCount;
+            if (typeof mkc === 'number') {
+                maxKills = mkc;
+            } else if (mkc) {
+                if (en.type === 'boss') maxKills = mkc.boss || 100;
+                else if (en.type === 'ghost') maxKills = mkc.ghost || 1;
+                else maxKills = mkc.normal || 1000;
+            }
+
+            Globals.ctx.fillText(`Kills: ${en.killCount} / ${maxKills}`, en.x, en.y + en.size + 20);
+            Globals.ctx.restore();
+            // Skip Health Bar
+        } else if (Globals.gameData.showEnemyHealth !== false && !en.isDead && en.maxHp > 0 && en.hp <= en.maxHp) {
             let skipDraw = false;
 
             // Ghost specific logic
@@ -2588,7 +2845,7 @@ export function drawEnemies() {
         }
 
         // DRAW EYES
-        if (en.type === 'ghost') {
+        if (en.type === 'ghost' || en.type === 'ghost_trophy') {
             // Large Black Ghost Eyes (Geometric)
             const eyeSize = en.size * 0.3; // BIG
             const eyeXOffset = en.size * 0.4;
@@ -2597,10 +2854,13 @@ export function drawEnemies() {
             // Calculate Look Vector
             const dx = Globals.player.x - en.x;
             const dy = Globals.player.y - en.y;
+
             const d = Math.hypot(dx, dy);
             let lx = 0, ly = 0;
             if (d > 0) { lx = (dx / d) * lookDist; ly = (dy / d) * lookDist; }
 
+            // Fix: Ensure eyes are drawn over the ghost glow (screen mode makes black invisible)
+            Globals.ctx.globalCompositeOperation = "source-over";
             Globals.ctx.fillStyle = "black";
 
             // Left Eye
@@ -2660,6 +2920,22 @@ export function drawEnemies() {
 
         Globals.ctx.restore();
     });
+
+    // TROPHY ROOM UI Overlay
+
+    if (Globals.roomData && (Globals.roomData.type === 'trophy' || Globals.roomData._type === 'trophy') && Globals.trophyCounts) {
+        const ctx = Globals.ctx;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px monospace';
+        ctx.shadowColor = 'black';
+        ctx.shadowBlur = 4;
+        ctx.fillText(`COLLECTION: ${Globals.trophyCounts.killed} / ${Globals.trophyCounts.total}`, Globals.canvas.width / 2, 80);
+        ctx.font = '12px monospace';
+        ctx.fillText("UNIQUE SPECIES ADDED TO MY COLLECTION", Globals.canvas.width / 2, 100);
+        ctx.restore();
+    }
 }
 // export function playerHit(en, invuln = false, knockback = false, shakescreen = false) {
 // Refactored for Solidity vs Invulnerability Separation

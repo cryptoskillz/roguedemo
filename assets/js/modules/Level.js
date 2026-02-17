@@ -124,11 +124,15 @@ export function generateLevel(length) {
 
     if (shopTmpl && Globals.gameData.shop && Globals.gameData.shop.active) {
         // Find candidates: Any room that is NOT Start and NOT Boss
-        // Priority: Dead Ends (1 neighbor) to ensure single door
+        // Priority: Dead Ends (1 neighbor) AND Distance > 1 from Start
         let candidates = fullMapCoords.filter(c => {
             if (c === "0,0" || c === Globals.bossCoord) return false;
 
             const [x, y] = c.split(',').map(Number);
+
+            // Prevent spawning next to start (locked door issue)
+            if (Math.abs(x) + Math.abs(y) <= 1) return false;
+
             let neighbors = 0;
             dirs.forEach(d => {
                 if (fullMapCoords.includes(`${x + d.dx},${y + d.dy}`)) neighbors++;
@@ -140,8 +144,13 @@ export function generateLevel(length) {
             shopCoord = candidates[Math.floor(Globals.random() * candidates.length)];
             log("Shop placed at (Dead End):", shopCoord);
         } else {
-            // Fallback: If no dead ends (unlikely), pick random valid
-            let backup = fullMapCoords.filter(c => c !== "0,0" && c !== Globals.bossCoord);
+            // Fallback: Pick random valid (Distance > 1)
+            let backup = fullMapCoords.filter(c => {
+                if (c === "0,0" || c === Globals.bossCoord) return false;
+                const [x, y] = c.split(',').map(Number);
+                return (Math.abs(x) + Math.abs(y) > 1);
+            });
+
             if (backup.length > 0) {
                 shopCoord = backup[Math.floor(Globals.random() * backup.length)];
                 log("Shop placed at (Random - No DeadEnd):", shopCoord);

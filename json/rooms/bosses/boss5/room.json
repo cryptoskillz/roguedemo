@@ -1,6 +1,6 @@
 {
-    "name": "Boss Room 5",
-    "description": "",
+    "name": "Boss Room 6",
+    "description": "The Swarm",
     "keyBonus": 1.0,
     "speedGoal": 10000,
     "item": {
@@ -23,20 +23,8 @@
         "special": []
     },
     "isBoss": true,
-    "enemies": [
-        {
-            "type": "thirdboss",
-            "variant": "normal",
-            "shape": "",
-            "mode": "normal",
-            "randomiseVariant": false,
-            "randomiseShape": false,
-            "randomiseColour": false,
-            "modifiers": {},
-            "count": 1,
-            "moveType": {}
-        }
-    ],
+    "boss": "json/enemies/bosses/boss5.json",
+    "enemies": [],
     "doors": {},
     "width": 800,
     "height": 600,
@@ -53,7 +41,7 @@
             "legendary": true
         }
     },
-    "nextLevel": "",
+    "nextLevel": "json/levels/6.json",
     "welcomeScreen": false,
-    "completedItMate": true
+    "completedItMate": false
 }

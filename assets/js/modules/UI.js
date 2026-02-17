@@ -1,6 +1,7 @@
 import { Globals } from './Globals.js';
 import { STATES, CONFIG, STORAGE_KEYS } from './Constants.js';
-import { drawPortal, drawSwitch } from './Game.js'
+import { drawPortal, drawSwitch } from './Game.js';
+import { introMusic } from './Audio.js';
 // Utils might be needed if logging
 import { log } from './Utils.js';
 
@@ -535,6 +536,8 @@ export function drawMinimap() {
             // Special Colors
             if (rx === 0 && ry === 0) color = "#f1c40f"; // Yellow for Start
             if (Globals.visitedRooms[coord].roomData.isBoss) color = "#c0392b"; // Dark Red for Boss
+            const rData = Globals.visitedRooms[coord].roomData;
+            if (rData.type === 'shop' || rData._type === 'shop' || rData.name?.toLowerCase().includes("shop")) color = "#9b59b6"; // Purple for Shop
 
             // --- GOLDEN PATH VISUALS ---
             if (!Globals.goldenPathFailed && Globals.goldenPath.includes(coord)) {
@@ -679,6 +682,18 @@ export function drawRoomIntro() {
 export function showCredits() {
     Globals.gameState = STATES.CREDITS;
 
+    // Play End Game Music
+    if (Globals.gameData.music) {
+        const endMusic = Globals.gameData.endGameMusic || 'assets/music/endgame.mp3';
+        if (!introMusic.src || !introMusic.src.includes(endMusic.split('/').pop())) {
+            introMusic.src = endMusic;
+            introMusic.play().catch(e => console.warn("Credits Music Error", e));
+            console.log("Playing Credits Music:", endMusic);
+        }
+    } else {
+        introMusic.pause();
+    }
+
     // Hide Game UI
     if (Globals.elements.ui) Globals.elements.ui.style.display = 'none';
 
@@ -818,20 +833,72 @@ export function showCredits() {
     document.addEventListener('keydown', closeCredits);
 }
 
-export function updateGameStats(statType) {
+export function updateGameStats(statType, data) {
     if (statType === 'kill') {
         Globals.killEnemyCount++;
         Globals.killEnemySessionCount++;
+        trackEnemyKill(data);
     }
     if (statType === 'bossKill') {
         Globals.killBossCount++;
         Globals.killBossSessionCount++;
+        trackEnemyKill(data);
     }
     if (statType === 'death') {
         Globals.playerDeathCount++;
         Globals.playerDeathSessionCount++;
     }
     saveGameStats();
+}
+
+function trackEnemyKill(en) {
+    if (!en) return;
+    let type = en.type || 'unknown';
+
+    // Fix: Treat specific variants as their own 'type' for Trophy Room purposes
+    const variant = en.variant || 'normal';
+    if (variant === 'turret' || variant === 'gunner') {
+        type = variant;
+    }
+
+    if (type === 'boss' && en.templateId) {
+        type = en.templateId;
+    }
+    const shape = en.shape || 'circle';
+
+    // Size bucket
+    let size = 'normal';
+    if (en.size) {
+        if (en.size < 30) size = 'small';
+        if (en.size > 60) size = 'large';
+        if (en.size > 100) size = 'huge';
+    }
+
+    // Helper to increment
+    const inc = (obj, key) => {
+        if (!obj[key]) obj[key] = 0;
+        obj[key]++;
+    };
+
+    // Session
+    if (!Globals.killStatsSession) Globals.killStatsSession = { types: {}, variants: {}, sizes: {}, combos: {} };
+    inc(Globals.killStatsSession.types, type);
+    inc(Globals.killStatsSession.variants, variant);
+    inc(Globals.killStatsSession.sizes, size);
+    if (!Globals.killStatsSession.combos) Globals.killStatsSession.combos = {};
+
+    // Track Unique Visual Combo
+    inc(Globals.killStatsSession.combos, `${type}_${variant}_${shape}`);
+
+    // Total
+    if (!Globals.killStatsTotal) Globals.killStatsTotal = { types: {}, variants: {}, sizes: {}, combos: {} };
+    inc(Globals.killStatsTotal.types, type);
+    inc(Globals.killStatsTotal.variants, variant);
+    inc(Globals.killStatsTotal.sizes, size);
+    if (!Globals.killStatsTotal.combos) Globals.killStatsTotal.combos = {};
+
+    // Track Unique Visual Combo
+    inc(Globals.killStatsTotal.combos, `${type}_${variant}_${shape}`);
 }
 
 export function getGameStats(won) {
@@ -852,7 +919,8 @@ export function saveGameStats() {
         perfectRooms: Globals.perfectRoomCount,
         speedyBonuses: Globals.speedyBonusCount,
         gameBeats: Globals.gameBeatCount,
-        ghostTime: Globals.ghostTimeSurvived
+        ghostTime: Globals.ghostTimeSurvived,
+        killStats: Globals.killStatsTotal
     };
     localStorage.setItem('rogue_stats', JSON.stringify(stats));
 }
@@ -869,6 +937,7 @@ export function loadGameStats() {
         Globals.speedyBonusCount = stats.speedyBonuses || 0;
         Globals.gameBeatCount = stats.gameBeats || 0;
         Globals.ghostTimeSurvived = stats.ghostTime || 0;
+        Globals.killStatsTotal = stats.killStats || { types: {}, variants: {}, sizes: {} };
 
         // Load Level Splits (Separate Key for array)
         const splits = localStorage.getItem('rogue_level_splits');
@@ -888,6 +957,7 @@ export function resetSessionStats() {
     Globals.speedyBonusSessionCount = 0;
     Globals.gameBeatSessionCount = 0;
     Globals.ghostTimeSessionSurvived = 0;
+    Globals.killStatsSession = { types: {}, variants: {}, sizes: {} };
     Globals.levelSplits = [];
 
     // Reset Bonus Streaks

@@ -2,7 +2,8 @@ import { Globals } from './Globals.js';
 import { log } from './Utils.js';
 
 // Global audio variable (exported for direct access if needed, but managing via helper is better)
-export let introMusic = new Audio('assets/music/tron.mp3');
+// Initialized empty, updated via Game.js initGame once gameData is loaded
+export let introMusic = new Audio();
 introMusic.loop = true;
 introMusic.volume = 0; // Start silent for fade-in
 Globals.introMusic = introMusic;

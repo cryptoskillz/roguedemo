@@ -120,11 +120,51 @@ export function renderDebugForm() {
         });
 
         createBtn("LOAD MATRIX ROOM", "#c0392b", () => {
-            const path = "json/rooms/special/matrix/room.json";
+            const path = "json/rooms/secret/matrix/room.json";
             log("Debug Loading Matrix Room:", path);
             if (Globals.gameData) Globals.gameData.startRoom = null;
             if (window.DEBUG_FLAGS) window.DEBUG_FLAGS.TEST_ROOM = true;
             if (Globals.loadRoom) Globals.loadRoom(true, path, true);
+        });
+
+        createBtn("SPAWN LOADOUT (Shotgun/Keys/Bombs)", "#e67e22", async () => {
+            console.log("Debug Spawn Button Clicked");
+            if (!Globals.player) {
+                console.error("Globals.player is undefined!");
+                return;
+            }
+
+            // 1. Inventory
+            if (!Globals.player.inventory) Globals.player.inventory = { keys: 0, bombs: 0, redShards: 0, greenShards: 0 };
+
+            console.log("Current Inventory (Before):", JSON.stringify(Globals.player.inventory));
+            Globals.player.inventory.keys = (Globals.player.inventory.keys || 0) + 5;
+            Globals.player.inventory.bombs = (Globals.player.inventory.bombs || 0) + 5;
+            Globals.player.inventory.redShards = 1000;
+            Globals.player.inventory.greenShards = 1000;
+            console.log("Updated Inventory (After):", Globals.player.inventory.keys, Globals.player.inventory.bombs);
+            log("Added 5 Keys & 5 Bombs");
+
+            // 2. Shotgun
+            try {
+                // Ensure gun type is updated for persistence/logic
+                Globals.player.gunType = 'shotgun';
+                if (Globals.gameData) Globals.gameData.gunType = 'shotgun';
+
+                console.log("Fetching Shotgun...");
+                const res = await fetch('json/rewards/items/guns/player/shotgun.json?t=' + Date.now());
+                if (res.ok) {
+                    const gunData = await res.json();
+                    Globals.gun = gunData;
+                    console.log("Shotgun Loaded:", gunData);
+                    log("Equipped Shotgun!");
+                } else {
+                    console.error("Failed to load shotgun json. Status:", res.status);
+                }
+            } catch (e) { console.error("Shotgun fetch error:", e); }
+
+            updateUI();
+            console.log("UI Updated called");
         });
 
         return;
@@ -411,14 +451,19 @@ export function renderDebugForm() {
             select.appendChild(opt);
         });
 
-        // Append Boss Rooms
-        const bosses = ['boss0', 'boss1', 'boss2', 'boss3', 'boss4', 'boss5'];
-        bosses.forEach(b => {
-            const opt = document.createElement('option');
-            opt.value = "bosses/" + b;
-            opt.innerText = b.toUpperCase();
-            select.appendChild(opt);
-        });
+        // Append Boss Rooms (Dynamic)
+        fetch('json/rooms/bosses/manifest.json')
+            .then(res => res.json())
+            .then(data => {
+                const list = data.rooms || data.items || [];
+                list.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = "bosses/" + b;
+                    opt.innerText = "BOSS: " + b.toUpperCase();
+                    select.appendChild(opt);
+                });
+            })
+            .catch(e => console.warn("No boss room manifest found:", e));
 
         // Append Shop Rooms (Dynamic)
         fetch('json/rooms/shops/manfiest.json')
@@ -434,6 +479,22 @@ export function renderDebugForm() {
                 }
             })
             .catch(e => console.warn("No shop manifest found", e));
+
+        // Append Secret Rooms (Dynamic)
+        fetch('json/rooms/secret/manifest.json')
+            .then(res => res.json())
+            .then(data => {
+                const list = data.items || data.rooms || [];
+                if (list.length > 0) {
+                    list.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = "secret/" + s;
+                        opt.innerText = "SECRET: " + s.toUpperCase();
+                        select.appendChild(opt);
+                    });
+                }
+            })
+            .catch(e => console.warn("No secret manifest found", e));
 
         const loadBtn = document.createElement('button');
         loadBtn.innerText = "GO TO ROOM";
