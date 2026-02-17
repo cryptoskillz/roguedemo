@@ -2468,6 +2468,37 @@ export function updateGhost() {
                 Globals.roomShrinkSize += 0.1; // Slow creep
             }
         }
+
+        // 3. GLANCE AT SECRET DOORS
+        // Check if there are any hidden doors in this room
+        const doors = Globals.roomData.doors || {};
+        const hiddenDoors = Object.entries(doors).filter(([dir, d]) => d.active && d.hidden);
+
+        if (hiddenDoors.length > 0) {
+            // Chance to glance
+            if (!ghost.glanceTimer) ghost.glanceTimer = Date.now() + 2000 + Math.random() * 3000;
+
+            if (Date.now() > ghost.glanceTimer) {
+                // Pick a target door
+                const [dir, targetDoor] = hiddenDoors[Math.floor(Math.random() * hiddenDoors.length)];
+
+                // Calculate target point
+                let tx = targetDoor.x ?? Globals.canvas.width / 2;
+                let ty = targetDoor.y ?? Globals.canvas.height / 2;
+                if (dir === 'top') ty = 0;
+                if (dir === 'bottom') ty = Globals.canvas.height;
+                if (dir === 'left') tx = 0;
+                if (dir === 'right') tx = Globals.canvas.width;
+
+                // Set Glance State
+                ghost.glanceTarget = { x: tx, y: ty };
+                ghost.glanceEndTime = Date.now() + 1000; // Look for 1s
+
+                // Reset Timer
+                ghost.glanceTimer = Date.now() + 3000 + Math.random() * 5000;
+                // log("Ghost glancing at secret door:", dir);
+            }
+        }
     } else {
         // Reset if ghost is gone
         if (Globals.roomShrinkSize > 0) {
@@ -2672,6 +2703,31 @@ export function drawEnemies() {
     Globals.enemies.forEach(en => {
         Globals.ctx.save();
 
+        // --- GLANCE LOGIC (Enhanced for Obviousness) ---
+        // Frequent glances: every 0.5s - 2.5s
+        if (!en.glanceTimer) en.glanceTimer = Date.now() + 500 + Math.random() * 2000;
+
+        if (Date.now() > en.glanceTimer) {
+            const doors = Globals.roomData.doors || {};
+            const hiddenDoors = Object.entries(doors).filter(([dir, d]) => d.active && d.hidden);
+
+            if (hiddenDoors.length > 0) {
+                const [dir, targetDoor] = hiddenDoors[Math.floor(Math.random() * hiddenDoors.length)];
+                let tx = targetDoor.x ?? Globals.canvas.width / 2;
+                let ty = targetDoor.y ?? Globals.canvas.height / 2;
+                if (dir === 'top') ty = 0;
+                if (dir === 'bottom') ty = Globals.canvas.height;
+                if (dir === 'left') tx = 0;
+                if (dir === 'right') tx = Globals.canvas.width;
+
+                en.glanceTarget = { x: tx, y: ty };
+                // Long Look: 2s
+                en.glanceEndTime = Date.now() + 2000;
+            }
+            // Short Cooldown: 1s - 3s
+            en.glanceTimer = Date.now() + 1000 + Math.random() * 2000;
+        }
+
         // GHOST EFFECTS
         let bounceY = 0;
         let sizeMod = 0;
@@ -2738,6 +2794,38 @@ export function drawEnemies() {
         drawEnemyShape(Globals.ctx, en, en.x, currentY, size);
         Globals.ctx.fill();
 
+        // RESTORED: Original Ghost Eyes (Large Black) - Now with Glance
+        if (en.type === 'ghost' || en.type === 'ghost_trophy') {
+            Globals.ctx.save(); // Save context for ghost eyes
+            Globals.ctx.globalCompositeOperation = "source-over"; // Reset blend mode
+            Globals.ctx.globalAlpha = 1.0; // Reset alpha to fully opaque
+            Globals.ctx.fillStyle = "black";
+
+            const eyeSize = en.size * 0.3;
+            const eyeXOffset = en.size * 0.4;
+            const lookDist = en.size * 0.15; // How far eyes track player
+
+            // Calculate Look Vector
+            const dx = Globals.player.x - en.x;
+            const dy = Globals.player.y - en.y;
+
+            const d = Math.hypot(dx, dy);
+            let lx = 0, ly = 0;
+            if (d > 0) { lx = (dx / d) * lookDist; ly = (dy / d) * lookDist; }
+
+            // Left Eye
+            Globals.ctx.beginPath();
+            Globals.ctx.arc(en.x - eyeXOffset + lx, en.y + bounceY + ly, eyeSize, 0, Math.PI * 2);
+            Globals.ctx.fill();
+
+            // Right Eye
+            Globals.ctx.beginPath();
+            Globals.ctx.arc(en.x + eyeXOffset + lx, en.y + bounceY + ly, eyeSize, 0, Math.PI * 2);
+            Globals.ctx.fill();
+
+            Globals.ctx.restore();
+        }
+
         // Draw Name (After Fill to avoid color bleed)
         if (Globals.gameData.showEnemyNames !== false && en.lore && en.lore.displayName && !en.isDead) {
             Globals.ctx.save(); // Isolate text styles
@@ -2791,7 +2879,7 @@ export function drawEnemies() {
                 // If globally disabled OR locally hidden (by lock)
                 if (Globals.gameData.showGhostHealth === false || en.hideHealth) {
                     skipDraw = true;
-                    // Trigger Speech if it happens during lock event? 
+                    // Trigger Speech if it happens during lock event?
                     // No, logic handles speech. Drawing just stops here.
                 }
             }
@@ -2842,45 +2930,23 @@ export function drawEnemies() {
 
             en.speech.timer--;
             Globals.ctx.restore();
-        }
-
-        // DRAW EYES
-        if (en.type === 'ghost' || en.type === 'ghost_trophy') {
-            // Large Black Ghost Eyes (Geometric)
-            const eyeSize = en.size * 0.3; // BIG
-            const eyeXOffset = en.size * 0.4;
-            const lookDist = en.size * 0.15; // How far eyes track player
-
-            // Calculate Look Vector
-            const dx = Globals.player.x - en.x;
-            const dy = Globals.player.y - en.y;
-
-            const d = Math.hypot(dx, dy);
-            let lx = 0, ly = 0;
-            if (d > 0) { lx = (dx / d) * lookDist; ly = (dy / d) * lookDist; }
-
-            // Fix: Ensure eyes are drawn over the ghost glow (screen mode makes black invisible)
-            Globals.ctx.globalCompositeOperation = "source-over";
-            Globals.ctx.fillStyle = "black";
-
-            // Left Eye
-            Globals.ctx.beginPath();
-            Globals.ctx.ellipse(en.x - eyeXOffset + lx, en.y + bounceY + ly, eyeSize, eyeSize * 1.2, 0, 0, Math.PI * 2);
-            Globals.ctx.fill();
-
-            // Right Eye
-            Globals.ctx.beginPath();
-            Globals.ctx.ellipse(en.x + eyeXOffset + lx, en.y + bounceY + ly, eyeSize, eyeSize * 1.2, 0, 0, Math.PI * 2);
-            Globals.ctx.fill();
-
             Globals.ctx.restore();
-            return; // Skip default text eyes
         }
+
+
+
+
+
 
         Globals.ctx.fillStyle = "white";
         Globals.ctx.textAlign = "center";
         Globals.ctx.textBaseline = "middle";
         Globals.ctx.font = `bold ${Math.max(10, en.size * 0.8)}px sans-serif`;
+
+        // SKIP TEXT EYES ON GHOST (It has its own eyes)
+        if (en.type === 'ghost' || en.type === 'ghost_trophy') {
+            return;
+        }
 
         // Ensure eye color contrasts with body
         // Simple check: if body is white/very light, use black eyes? 
@@ -2903,9 +2969,16 @@ export function drawEnemies() {
             eyes = "> <";
         }
 
-        // Calculate Eye Offset to look at player
-        const aimDx = Globals.player.x - en.x;
-        const aimDy = Globals.player.y - en.y;
+        // Calculate Eye Offset to look at player OR Glance Target
+        let aimDx = Globals.player.x - en.x;
+        let aimDy = Globals.player.y - en.y;
+
+        // GLANCE OVERRIDE
+        if (en.glanceTarget && Date.now() < en.glanceEndTime) {
+            aimDx = en.glanceTarget.x - en.x;
+            aimDy = en.glanceTarget.y - en.y;
+        }
+
         const aimDist = Math.hypot(aimDx, aimDy);
         const lookOffset = en.size * 0.3; // How far eyes move
         let eyeX = en.x;
@@ -3431,6 +3504,12 @@ export function updateMovementAndDoors(doors, roomLocked) {
                 } else if (collided && !hitMoveable) {
                     Globals.player.x -= dx * 5; // Knockback only if not pushing
                     Globals.player.x = Math.max(BOUNDARY + Globals.player.size, Math.min(Globals.canvas.width - BOUNDARY - Globals.player.size, Globals.player.x));
+                } else if (crossingLimit && !canPass && inDoorRange) {
+                    if (door.hidden) {
+                        // Ensure we snap back to limit to prevent slight seepage
+                        if (dx < 0) Globals.player.x = limit; // Left Wall
+                        if (dx > 0) Globals.player.x = limit; // Right Wall
+                    }
                 }
             } else {
                 const limit = dy < 0 ? BOUNDARY : Globals.canvas.height - BOUNDARY;

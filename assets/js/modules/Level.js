@@ -158,6 +158,53 @@ export function generateLevel(length) {
         }
     }
 
+    // Secret Room Placement Logic
+    const secretRoomTemplates = Globals.gameData.secrectrooms || [];
+    if (secretRoomTemplates.length > 0) {
+        secretRoomTemplates.forEach(templatePath => {
+            // Find candidates: Any room that is NOT Start, NOT Boss, NOT Shop
+            let candidates = fullMapCoords.filter(c => {
+                if (c === "0,0" || c === Globals.bossCoord || c === shopCoord) return false;
+
+                const [x, y] = c.split(',').map(Number);
+
+                // Allow spawning near start, but prefer distance > 1
+
+                // Must have at least one free spot neighboring it to place the secret room
+                let hasFreeNeighbor = false;
+                dirs.forEach(d => {
+                    const nx = x + d.dx;
+                    const ny = y + d.dy;
+                    if (!fullMapCoords.includes(`${nx},${ny}`)) {
+                        hasFreeNeighbor = true;
+                    }
+                });
+                return hasFreeNeighbor;
+            });
+
+            if (candidates.length > 0) {
+                // Pick a random host room
+                const hostCoord = candidates[Math.floor(Globals.random() * candidates.length)];
+                const [hx, hy] = hostCoord.split(',').map(Number);
+
+                // Find a free spot next to host
+                const freeSpots = dirs.filter(d => !fullMapCoords.includes(`${hx + d.dx},${hy + d.dy}`));
+
+                if (freeSpots.length > 0) {
+                    const move = freeSpots[Math.floor(Globals.random() * freeSpots.length)];
+                    const secretCoord = `${hx + move.dx},${hy + move.dy}`;
+
+                    fullMapCoords.push(secretCoord);
+                    log("Secret Room placed at:", secretCoord, "connected to", hostCoord);
+
+                    // Mark it for later template assignment
+                    Globals.secretRooms = Globals.secretRooms || {};
+                    Globals.secretRooms[secretCoord] = templatePath;
+                }
+            }
+        });
+    }
+
     fullMapCoords.forEach(coord => {
         let template;
         if (coord === "0,0") {
@@ -165,7 +212,22 @@ export function generateLevel(length) {
         } else if (coord === Globals.bossCoord) {
             template = bossTmpl;
         } else if (coord === shopCoord) {
-            template = shopTmpl;
+        } else if (Globals.secretRooms && Globals.secretRooms[coord]) {
+            // Secret Room Template
+            const tmplPath = Globals.secretRooms[coord];
+            // Try to find it in templates (assuming loaded by key)
+            // Keys in roomTemplates are usually "json/rooms/..." or just "room_name" if legacy
+            // The gameData.secrectrooms has full path "/json/rooms/..."
+            // We might need to strip leading slash or match strictly
+            const cleanPath = tmplPath.startsWith('/') ? tmplPath.substring(1) : tmplPath;
+
+            template = Globals.roomTemplates[cleanPath] || Globals.roomTemplates[tmplPath];
+            if (!template) {
+                // Try loose matching
+                const key = Object.keys(Globals.roomTemplates).find(k => k.includes(cleanPath) || cleanPath.includes(k));
+                if (key) template = Globals.roomTemplates[key];
+            }
+            if (!template) log("Missing Secret Template:", tmplPath);
         } else {
             // Random Normal Room
             const templates = Globals.roomTemplates;
@@ -196,6 +258,11 @@ export function generateLevel(length) {
             roomInstance.isBoss = true;
             roomInstance._type = 'boss';
         }
+        if (Globals.secretRooms && Globals.secretRooms[coord]) {
+            roomInstance.isSecret = true;
+            roomInstance._type = 'secret';
+        }
+
         Globals.levelMap[coord] = {
             roomData: roomInstance,
             // Start room is pre-cleared ONLY if it's NOT a boss room
@@ -241,6 +308,14 @@ export function generateLevel(length) {
                 if ((coord === shopCoord || neighborCoord === shopCoord) && shopCoord !== null) {
                     data.doors[d.name].locked = 1; // 1 = Key
                     data.doors[d.name].active = 1;
+                }
+
+                // SECRET ROOM LOGIC
+                if ((Globals.secretRooms && Globals.secretRooms[coord]) || (Globals.secretRooms && Globals.secretRooms[neighborCoord])) {
+                    // One of them is secret -> Hidden Door
+                    data.doors[d.name].locked = 1; // Locked (or just hidden?)
+                    data.doors[d.name].active = 1;
+                    data.doors[d.name].hidden = true; // Make it look like a wall
                 }
 
                 // Sync door coordinates if missing

@@ -2692,11 +2692,24 @@ export function drawDoors() {
     const roomLocked = isRoomLocked();
     const doors = Globals.roomData.doors || {};
     Object.entries(doors).forEach(([dir, door]) => {
-        if (!door.active || door.hidden) return;
+        if (!door.active) return;
 
         let color = "#222"; // default open
-        if (roomLocked && !door.forcedOpen) color = "#c0392b"; // red if locked by enemies (and not forced)
-        else if (door.locked) color = "#f1c40f"; // yellow if locked by key
+
+        if (door.hidden) {
+            // Hidden = Invisible (matches wall)
+            // We simply don't draw it, OR we draw it as a wall if needed. 
+            // But existing logic "continues" loop if !active. 
+            // If active=1 and hidden=1, we skip drawing the door rect?
+            // Actually, if we return, it looks like a gap?
+            // No, walls are drawn by room background. Doors are drawn ON TOP.
+            // So if we RETURN, we see the background/wall. Correct.
+            return;
+        } else if (roomLocked && !door.forcedOpen) {
+            color = "#c0392b"; // red if locked by enemies
+        } else if (door.locked) {
+            color = "#f1c40f"; // yellow if locked by key
+        }
 
         Globals.ctx.fillStyle = color;
         const dx = door.x ?? Globals.canvas.width / 2, dy = door.y ?? Globals.canvas.height / 2;
