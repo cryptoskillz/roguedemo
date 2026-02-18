@@ -2501,10 +2501,11 @@ export function updateRoomTransitions(doors, roomLocked) {
 
         // 4. Lock & Access Logic
         // Force conversion to number, default to 0
+        console.log(door)
         let lockVal = parseInt(door.locked, 10);
         if (isNaN(lockVal)) lockVal = 0;
 
-        console.log(`Door Check: ${dx},${dy} | Locked: ${door.locked} | Parsed: ${lockVal}`);
+        //console.log(`Door Check: ${dx},${dy} | Locked: ${door.locked} | Parsed: ${lockVal}`);
 
         let allowed = false;
         let promptY = Globals.player.y - 60;
@@ -2550,6 +2551,7 @@ export function updateRoomTransitions(doors, roomLocked) {
             // Unlocked (0)
             // Implicitly allow IF lockVal is 0. 
             // If it's some other weird number, Block it? 
+            // console.log("Door Unlocked:", lockVal);
             if (lockVal === 0) {
                 allowed = true;
             } else {

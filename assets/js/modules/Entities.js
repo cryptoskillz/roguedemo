@@ -1433,7 +1433,7 @@ export function updateUse() {
     const d = target.door;
 
     // unlock if locked and player has keys
-    if (d.locked) {
+    if (d.locked && d.locked === 1) {
         if (Globals.player.inventory?.keys > 0) {
             Globals.player.inventory.keys--;
             if (Globals.elements.keys) Globals.elements.keys.innerText = Globals.player.inventory.keys;
