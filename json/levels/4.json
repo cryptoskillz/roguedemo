@@ -19,7 +19,7 @@
     },
     "shop": {
         "active": true,
-        "room": "rooms/shops/shop_1/room.json"
+        "room": "json/rooms/shops/shop_1/room.json"
     },
     "availablerooms": [
         "json/rooms/normal/3_easy_room_1/room.json",
