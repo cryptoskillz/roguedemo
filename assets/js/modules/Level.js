@@ -455,32 +455,33 @@ export function generateLevel(length) {
                 if (coord === Globals.trophyCoord) {
                     // Only allow connections to: Host, Home, Matrix
                     // Host connection is HIDDEN by default (unless revealed)
-                    // Home/Matrix connections are VISIBLE
+                    // Home/Matrix connections are VISIBLE but LOCKED with special keys
                     let allowed = false;
                     let hidden = true;
+                    let locked = 0; // Default unlocked
 
                     // Connected to Host?
-                    // We don't store "host" directly, but we know Trophy was placed next to it.
-                    // The "neighborCoord" is the host if it's NOT home or matrix.
-                    // Actually, simpler: Is neighbor Home or Matrix?
-                    if (neighborCoord === Globals.homeCoord || neighborCoord === Globals.matrixCoord) {
+                    if (neighborCoord === Globals.homeCoord) {
                         allowed = true;
                         hidden = false;
+                        locked = 2; // HOUSE KEY
+                    } else if (neighborCoord === Globals.matrixCoord) {
+                        allowed = true;
+                        hidden = false;
+                        locked = 3; // MATRIX KEY
                     } else {
                         // Must be the host (or a random neighbor we shouldn't connect to?)
-                        // We only want to connect to the ONE host we spawned from.
-                        // But for now, let's assume any non-special neighbor is the host (or a valid secret passage)
-                        // If we want STRICT strict, we'd need to store the host coord.
                         // For now: Default secret behavior (Hidden)
                         allowed = true; // It's a secret door
                         hidden = true;
+                        locked = 0;
                     }
 
                     if (allowed) {
-                        data.doors[d.name].locked = 0;
+                        data.doors[d.name].locked = locked;
                         data.doors[d.name].active = 1;
                         data.doors[d.name].hidden = hidden;
-                        data.doors[d.name].forcedOpen = true;
+                        data.doors[d.name].forcedOpen = (locked === 0 && !hidden); // Only force open if unlocked and visible? No, let keys handle it.
                     } else {
                         data.doors[d.name].active = 0; // Block random neighbors
                     }
@@ -489,7 +490,10 @@ export function generateLevel(length) {
                 } else if (coord === Globals.homeCoord || coord === Globals.matrixCoord) {
                     // STRICT: Only connect to Trophy Room
                     if (neighborCoord === Globals.trophyCoord) {
-                        data.doors[d.name].locked = 0;
+                        data.doors[d.name].locked = (coord === Globals.homeCoord) ? 2 : 3; // Lock from inside too? Or just open? 
+                        // Usually keys unlock both sides. Let's keep it locked so they need key to exit too? 
+                        // Or maybe just exit is free? "You can check out any time you like..."
+                        // Let's make it symmetric for now.
                         data.doors[d.name].active = 1;
                         data.doors[d.name].hidden = false; // Always visible from inside
                     } else {

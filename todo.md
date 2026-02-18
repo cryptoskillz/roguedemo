@@ -9,26 +9,27 @@ Entities.js:385 Uncaught ReferenceError: ghostSpawned is not defined
     at update (Game.js:2023:5)
     at Game.js:2333:35
 
-    make matrix and trophy same colour as trophy
+    enter the trophy room now does not require a bomb it unlocks as soon as you kill the enemy
+    should have to press the space key to enter these rooms (maybe)
+    matrix key is very quick message "needs matrix key"
     design home room
     add matrix room with matrix key
     add home room with home key
+    ghost should not go into martix or home room
+    matrix and home room should have a door exit the way you came in
     ghost wont go into boss room
-            
+
+    upgrade room     
 
     shop room
         shop can spawm a locked door as the only way to the boss there should always be a keysless way to the boss if we not we should spawn them a key in the start room as a hint its a hard level, save that key
     can we store google font locally to make it work offline
-    load music from room json is it exists when you leave that room go back to the old
-    music
+
     live portals should be purple used ones should be green (when you spawn them from debug)
     look into json compressors 
-    seret room
-        secret rooms should be an unlock
-        secret rooms dont show on the mini map
+
     add level 6 maze level (World 7-4) 
     gun turret requrie its x y back (if it spawns off screen move it until it is on screen)
-    remove the matrix att in room and use id instead
     add speech attr to enemy, used for bosses, enter, die
     if ghost / enemy speech is at top of screen you cant read it so make it show below the enemy
     unlock spawns is slow after boss kill

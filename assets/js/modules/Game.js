@@ -2473,17 +2473,59 @@ export function updateRoomTransitions(doors, roomLocked) {
     const doorW = 50; // Half-width tolerance (Total 100px)
     const shrink = Globals.roomShrinkSize || 0;
 
+    // Check Keys Helper
+    const checkKey = (door) => {
+        if (!door.locked) return true;
+
+        // Locked 2 = Home Key
+        if (door.locked === 2) {
+            if (Globals.player.inventory.houseKey) return true;
+            spawnFloatingText(Globals.player.x, Globals.player.y - 40, "Need House Key!", "#ff0000");
+            return false;
+        }
+        // Locked 3 = Matrix Key
+        if (door.locked === 3) {
+            if (Globals.player.inventory.matrixKey) return true;
+            spawnFloatingText(Globals.player.x, Globals.player.y - 40, "Need Matrix Key!", "#ff0000");
+            return false;
+        }
+        // Standard Key (1) - Only open if NOT secret exit behaving oddly, but usually secret exits are 0.
+        // If it's a standard locked door:
+        return false;
+    };
+
     // Allow transition if room is unlocked OR if the specific door is forced open (red door blown) OR if it's a secret exit
     // Left Door - Require Push Left (A/ArrowLeft)
     if (Globals.player.x < triggerDist + shrink && doors.left?.active) {
         const doorY = doors.left.y !== undefined ? doors.left.y : Globals.canvas.height / 2;
         if (Math.abs(Globals.player.y - doorY) < doorW) {
             // Check keys first
-            const hasKey = (Globals.keys['KeyA'] || Globals.keys['ArrowLeft']);
-            const notLocked = (!doors.left.locked || isSecretExit);
-            const notRoomLocked = (!roomLocked || doors.left.forcedOpen || isSecretExit);
+            const hasKeyInput = (Globals.keys['KeyA'] || Globals.keys['ArrowLeft']);
+            const hasSpecialKey = checkKey(doors.left);
 
-            if (hasKey && notLocked && notRoomLocked) {
+            // Standard Lock logic (1) check
+            const hasStandardKey = (doors.left.locked === 1 && Globals.player.inventory.keys > 0);
+
+            // Final Unlock Check
+            let unlocked = !doors.left.locked || doors.left.forcedOpen || isSecretExit;
+
+            // Override for special locks (2/3) -> strictly controlled by checkKey
+            if (doors.left.locked === 2 || doors.left.locked === 3) {
+                unlocked = hasSpecialKey;
+                // isSecretExit does NOT bypass these
+            } else if (doors.left.locked === 1 && hasStandardKey) {
+                // Standard key usage handled in changeRoom usually, or here?
+                // Usually standard doors auto-open if you have key? 
+                // Logic below "notLocked" implies it.
+                unlocked = true;
+            }
+
+            if (hasKeyInput && unlocked && (!roomLocked || doors.left.forcedOpen || isSecretExit)) {
+                // Consume Standard Key if used
+                if (doors.left.locked === 1 && !doors.left.forcedOpen && !isSecretExit) {
+                    // We let changeRoom handle key consumption via keyWasUsed logic if needed, 
+                    // but here we just pass through. 
+                }
                 changeRoom(-1, 0);
             }
         }
@@ -2492,11 +2534,20 @@ export function updateRoomTransitions(doors, roomLocked) {
     else if (Globals.player.x > Globals.canvas.width - triggerDist - shrink && doors.right?.active) {
         const doorY = doors.right.y !== undefined ? doors.right.y : Globals.canvas.height / 2;
         if (Math.abs(Globals.player.y - doorY) < doorW) {
-            const hasKey = (Globals.keys['KeyD'] || Globals.keys['ArrowRight']);
-            const notLocked = (!doors.right.locked || isSecretExit);
-            const notRoomLocked = (!roomLocked || doors.right.forcedOpen || isSecretExit);
+            const hasKeyInput = (Globals.keys['KeyD'] || Globals.keys['ArrowRight']);
 
-            if (hasKey && notLocked && notRoomLocked) {
+            const hasSpecialKey = checkKey(doors.right);
+            const hasStandardKey = (doors.right.locked === 1 && Globals.player.inventory.keys > 0);
+
+            let unlocked = !doors.right.locked || doors.right.forcedOpen || isSecretExit;
+
+            if (doors.right.locked === 2 || doors.right.locked === 3) {
+                unlocked = hasSpecialKey;
+            } else if (doors.right.locked === 1 && hasStandardKey) {
+                unlocked = true;
+            }
+
+            if (hasKeyInput && unlocked && (!roomLocked || doors.right.forcedOpen || isSecretExit)) {
                 changeRoom(1, 0);
             }
         }
@@ -2505,11 +2556,20 @@ export function updateRoomTransitions(doors, roomLocked) {
     else if (Globals.player.y < triggerDist + shrink && doors.top?.active) {
         const doorX = doors.top.x !== undefined ? doors.top.x : Globals.canvas.width / 2;
         if (Math.abs(Globals.player.x - doorX) < doorW) {
-            const hasKey = (Globals.keys['KeyW'] || Globals.keys['ArrowUp']);
-            const notLocked = (!doors.top.locked || isSecretExit);
-            const notRoomLocked = (!roomLocked || doors.top.forcedOpen || isSecretExit);
+            const hasKeyInput = (Globals.keys['KeyW'] || Globals.keys['ArrowUp']);
 
-            if (hasKey && notLocked && notRoomLocked) {
+            const hasSpecialKey = checkKey(doors.top);
+            const hasStandardKey = (doors.top.locked === 1 && Globals.player.inventory.keys > 0);
+
+            let unlocked = !doors.top.locked || doors.top.forcedOpen || isSecretExit;
+
+            if (doors.top.locked === 2 || doors.top.locked === 3) {
+                unlocked = hasSpecialKey;
+            } else if (doors.top.locked === 1 && hasStandardKey) {
+                unlocked = true;
+            }
+
+            if (hasKeyInput && unlocked && (!roomLocked || doors.top.forcedOpen || isSecretExit)) {
                 changeRoom(0, -1);
             }
         }
@@ -2518,11 +2578,20 @@ export function updateRoomTransitions(doors, roomLocked) {
     else if (Globals.player.y > Globals.canvas.height - triggerDist - shrink && doors.bottom?.active) {
         const doorX = doors.bottom.x !== undefined ? doors.bottom.x : Globals.canvas.width / 2;
         if (Math.abs(Globals.player.x - doorX) < doorW) {
-            const hasKey = (Globals.keys['KeyS'] || Globals.keys['ArrowDown']);
-            const notLocked = (!doors.bottom.locked || isSecretExit);
-            const notRoomLocked = (!roomLocked || doors.bottom.forcedOpen || isSecretExit);
+            const hasKeyInput = (Globals.keys['KeyS'] || Globals.keys['ArrowDown']);
 
-            if (hasKey && notLocked && notRoomLocked) {
+            const hasSpecialKey = checkKey(doors.bottom);
+            const hasStandardKey = (doors.bottom.locked === 1 && Globals.player.inventory.keys > 0);
+
+            let unlocked = !doors.bottom.locked || doors.bottom.forcedOpen || isSecretExit;
+
+            if (doors.bottom.locked === 2 || doors.bottom.locked === 3) {
+                unlocked = hasSpecialKey;
+            } else if (doors.bottom.locked === 1 && hasStandardKey) {
+                unlocked = true;
+            }
+
+            if (hasKeyInput && unlocked && (!roomLocked || doors.bottom.forcedOpen || isSecretExit)) {
                 changeRoom(0, 1);
             }
         }

@@ -41,8 +41,8 @@
     "gunType": "",
     "inventory": {
         "keys": 0,
-        "houseKey": false,
-        "matrixKey": false,
+        "houseKey": true,
+        "matrixKey": true,
         "bombs": 0,
         "greenShards": 50,
         "redShards": 0,
