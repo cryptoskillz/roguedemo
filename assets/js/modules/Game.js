@@ -2515,23 +2515,15 @@ export function updateRoomTransitions(doors, roomLocked) {
             if (Globals.player.inventory.houseKey) {
                 // Interaction Required
                 spawnFloatingText(Globals.player.x, promptY, "Press SPACE to open Home Room", "#fff", 2);
-                if (Globals.keys['Space']) {
-                    console.log("Home Key Used");
-                    Globals.keys['Space'] = false; // Consume input
-                    allowed = true;
-                }
+
             } else {
                 spawnFloatingText(Globals.player.x, promptY, "Need House Key!", "#ff0000", 2);
             }
         } else if (lockVal === 3) { // Matrix Key
             if (Globals.player.inventory.matrixKey) {
                 spawnFloatingText(Globals.player.x, promptY, "Press SPACE to open Matrix Room", "#fff", 2);
-                console.log("Matrix Key Usedww");
-                if (Globals.keys['Space']) {
-                    console.log("Matrix Key Used");
-                    Globals.keys['Space'] = false; // Consume input
-                    allowed = true;
-                }
+
+
             } else {
                 spawnFloatingText(Globals.player.x, promptY, "Need Matrix Key!", "#ff0000", 2);
             }
@@ -2539,10 +2531,8 @@ export function updateRoomTransitions(doors, roomLocked) {
             // Interaction Required (Unified Logic)
             if (Globals.player.inventory.keys > 0) {
                 spawnFloatingText(Globals.player.x, promptY, "Press SPACE", "#fff", 2);
-                if (Globals.keys['Space']) {
-                    Globals.keys['Space'] = false; // Consume input
-                    allowed = true;
-                }
+
+
             } else if (door.forcedOpen || isSecretExit) {
                 // Allow passing through standard locked door if it's forced open or we are exiting secret room
                 allowed = true;
