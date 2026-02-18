@@ -8,11 +8,12 @@ Entities.js:385 Uncaught ReferenceError: ghostSpawned is not defined
     at updateRoomTransitions (Game.js:2496:17)
     at update (Game.js:2023:5)
     at Game.js:2333:35
-    
-        add matrix room with matrix key
-        add home room with home key
 
-        ghost wont go into boss room
+    make matrix and trophy same colour as trophy
+    design home room
+    add matrix room with matrix key
+    add home room with home key
+    ghost wont go into boss room
             
 
     shop room

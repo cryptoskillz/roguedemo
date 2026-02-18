@@ -450,25 +450,74 @@ export function generateLevel(length) {
                     data.doors[d.name].active = 1;
                 }
 
-                // SECRET ROOM LOGIC
-                if ((Globals.secretRooms && Globals.secretRooms[coord])) {
-                    // Current room IS secret -> Exit door should be visible/unlocked
+                // SECRET / SPECIAL ROOM LOGIC
+                // 1. Trophy Room Logic
+                if (coord === Globals.trophyCoord) {
+                    // Only allow connections to: Host, Home, Matrix
+                    // Host connection is HIDDEN by default (unless revealed)
+                    // Home/Matrix connections are VISIBLE
+                    let allowed = false;
+                    let hidden = true;
+
+                    // Connected to Host?
+                    // We don't store "host" directly, but we know Trophy was placed next to it.
+                    // The "neighborCoord" is the host if it's NOT home or matrix.
+                    // Actually, simpler: Is neighbor Home or Matrix?
+                    if (neighborCoord === Globals.homeCoord || neighborCoord === Globals.matrixCoord) {
+                        allowed = true;
+                        hidden = false;
+                    } else {
+                        // Must be the host (or a random neighbor we shouldn't connect to?)
+                        // We only want to connect to the ONE host we spawned from.
+                        // But for now, let's assume any non-special neighbor is the host (or a valid secret passage)
+                        // If we want STRICT strict, we'd need to store the host coord.
+                        // For now: Default secret behavior (Hidden)
+                        allowed = true; // It's a secret door
+                        hidden = true;
+                    }
+
+                    if (allowed) {
+                        data.doors[d.name].locked = 0;
+                        data.doors[d.name].active = 1;
+                        data.doors[d.name].hidden = hidden;
+                        data.doors[d.name].forcedOpen = true;
+                    } else {
+                        data.doors[d.name].active = 0; // Block random neighbors
+                    }
+
+                    // 2. Home / Matrix Logic
+                } else if (coord === Globals.homeCoord || coord === Globals.matrixCoord) {
+                    // STRICT: Only connect to Trophy Room
+                    if (neighborCoord === Globals.trophyCoord) {
+                        data.doors[d.name].locked = 0;
+                        data.doors[d.name].active = 1;
+                        data.doors[d.name].hidden = false; // Always visible from inside
+                    } else {
+                        data.doors[d.name].active = 0; // Solid wall to everyone else
+                    }
+
+                    // 3. Standard Room connecting TO a Special Room
+                } else if (neighborCoord === Globals.trophyCoord) {
+                    // I am the Host (or random neighbor). Secret Door to Trophy.
+                    data.doors[d.name].locked = 1; // 1? No, usually 0 but hidden.
+                    data.doors[d.name].active = 1;
+                    data.doors[d.name].hidden = true;
+                } else if (neighborCoord === Globals.homeCoord || neighborCoord === Globals.matrixCoord) {
+                    // I am a random neighbor of Home/Matrix. I should NOT see a door.
+                    data.doors[d.name].active = 0;
+
+                    // 4. Generic Secret Room (Legacy)
+                } else if ((Globals.secretRooms && Globals.secretRooms[coord])) {
+                    // ... existing generic logic if needed ...
                     data.doors[d.name].locked = 0;
                     data.doors[d.name].active = 1;
                     data.doors[d.name].hidden = false;
-                    data.doors[d.name].forcedOpen = true; // Ensure users can ALWAYS leave
+                    data.doors[d.name].forcedOpen = true;
                 } else if ((Globals.secretRooms && Globals.secretRooms[neighborCoord])) {
-                    // Neighbor is secret
-                    // DEFAULT: Hidden/Locked
-                    let hidden = true;
-                    // EXCEPTION: Visible if it's a Hub connection (Trophy -> Home/Matrix)
-                    if (coord === Globals.trophyCoord && (neighborCoord === Globals.homeCoord || neighborCoord === Globals.matrixCoord)) {
-                        hidden = false;
-                    }
-
+                    // Neighbor is generic secret
                     data.doors[d.name].locked = 1;
                     data.doors[d.name].active = 1;
-                    data.doors[d.name].hidden = hidden;
+                    data.doors[d.name].hidden = true;
                 }
 
                 // Sync door coordinates if missing

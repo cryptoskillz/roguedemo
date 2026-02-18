@@ -538,7 +538,7 @@ export function drawMinimap() {
             if (Globals.visitedRooms[coord].roomData.isBoss) color = "#c0392b"; // Dark Red for Boss
             const rData = Globals.visitedRooms[coord].roomData;
             if (rData.type === 'shop' || rData._type === 'shop' || rData.name?.toLowerCase().includes("shop")) color = "#9b59b6"; // Purple for Shop
-            if (rData.type === 'trophy' || rData._type === 'trophy' || rData.name?.toLowerCase().includes("trophy")) color = "#e67e22"; // Orange/Gold for Trophy Room
+            if (rData.type === 'trophy' || rData._type === 'trophy' || rData.type === 'matrix' || rData._type === 'matrix' || rData.type === 'home' || rData._type === 'home' || rData.name?.toLowerCase().includes("trophy")) color = "#e67e22"; // Orange/Gold for Trophy Room
 
             // --- GOLDEN PATH VISUALS ---
             if (!Globals.goldenPathFailed && Globals.goldenPath.includes(coord)) {
