@@ -212,6 +212,8 @@ export function generateLevel(length) {
         } else if (coord === Globals.bossCoord) {
             template = bossTmpl;
         } else if (coord === shopCoord) {
+            template = shopTmpl;
+            log("Generating Shop at:", coord);
         } else if (Globals.secretRooms && Globals.secretRooms[coord]) {
             // Secret Room Template
             const tmplPath = Globals.secretRooms[coord];
@@ -229,30 +231,42 @@ export function generateLevel(length) {
             }
             if (!template) log("Missing Secret Template:", tmplPath);
         } else {
-            // Random Normal Room
             const templates = Globals.roomTemplates;
             const keys = Object.keys(templates).sort().filter(k => {
                 const tmpl = templates[k];
                 // Exclude explicit Start/Boss/Shop/Secret templates
-                if (tmpl === startTmpl) return false;
-                if (tmpl === bossTmpl) return false;
-                if (tmpl === shopTmpl) return false;
-                if (tmpl._type && tmpl._type !== 'normal') return false; // Strict: Only undefined or 'normal'
+                if (tmpl === startTmpl) { console.log("Filter Skip:", k, "Matches Start"); return false; }
+                if (tmpl === bossTmpl) { console.log("Filter Skip:", k, "Matches Boss"); return false; }
+                if (tmpl === shopTmpl) { console.log("Filter Skip:", k, "Matches Shop"); return false; }
+                if (tmpl._type && tmpl._type !== 'normal') { console.log("Filter Skip:", k, "Non-Normal Type:", tmpl._type); return false; } // Strict: Only undefined or 'normal'
+                console.log("Filter Keep:", k);
                 return true;
             });
 
             if (keys.length > 0) {
-                const randomKey = keys[Math.floor(Globals.random() * keys.length)];
+                const rnd = Globals.random();
+                const idx = Math.floor(rnd * keys.length);
+                const randomKey = keys[idx];
                 template = templates[randomKey];
+
+                if (!template) {
+                    console.error(`CRITICAL: Template Selection Failed! Rnd: ${rnd}, Idx: ${idx}/${keys.length}, Key: ${randomKey}, Template: ${template}`);
+                    console.log("Keys Available:", keys);
+                }
             } else {
+                console.warn(`No Normal Room Keys allowed for filter! Fallback to Start Room.`);
                 template = startTmpl; // Last resort
             }
         }
 
         // Check if template exists
         if (!template) {
-            console.error(`Missing template for coord: ${coord}. Looking for:`, Globals.secretRooms[coord]);
-            console.warn("Available Templates:", Object.keys(Globals.roomTemplates));
+            if (Globals.secretRooms && Globals.secretRooms[coord]) {
+                console.error(`Missing SECRET template for coord: ${coord}. Path:`, Globals.secretRooms[coord]);
+            } else {
+                console.error(`Missing NORMAL template for coord: ${coord}.`);
+            }
+            console.warn("Available Templates Keys:", Object.keys(Globals.roomTemplates));
             template = startTmpl || { width: 800, height: 600, name: "Empty Error Room", doors: {} };
         }
 

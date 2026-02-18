@@ -2449,49 +2449,85 @@ export function updateRoomTransitions(doors, roomLocked) {
 
     // Constraint for center alignment
     // Only allow transition if player is roughly in front of the door
+    // Constraint for center alignment
+    // Only allow transition if player is roughly in front of the door
     const doorW = 50; // Half-width tolerance (Total 100px)
     const shrink = Globals.roomShrinkSize || 0;
 
-    // Allow transition if room is unlocked OR if the specific door is forced open (red door blown)
+    // Check if we are in a Trophy Room or Secret Room (Force Unlock logic)
+    const isSecretExit = (Globals.roomData.type === 'trophy' || Globals.roomData._type === 'trophy' || Globals.roomData.isSecret);
+
+    // Increase trigger distance for Trophy Rooms to bypass potential enemy blocking
+    const triggerDist = isSecretExit ? t + 100 : t; // Huge 150px threshold for Trophy Room!
+
+    // Allow transition if room is unlocked OR if the specific door is forced open (red door blown) OR if it's a secret exit
     // Left Door - Require Push Left (A/ArrowLeft)
-    if (Globals.player.x < t + shrink && doors.left?.active) {
+    if (Globals.player.x < triggerDist + shrink && doors.left?.active) {
         const doorY = doors.left.y !== undefined ? doors.left.y : Globals.canvas.height / 2;
         if (Math.abs(Globals.player.y - doorY) < doorW) {
-            if ((Globals.keys['KeyA'] || Globals.keys['ArrowLeft']) && !doors.left.locked && (!roomLocked || doors.left.forcedOpen)) changeRoom(-1, 0);
-            else log("Left Door Blocked: Key/Lock/Room");
+            // Check keys first
+            const hasKey = (Globals.keys['KeyA'] || Globals.keys['ArrowLeft']);
+            const notLocked = (!doors.left.locked || isSecretExit);
+            const notRoomLocked = (!roomLocked || doors.left.forcedOpen || isSecretExit);
+
+            if (hasKey && notLocked && notRoomLocked) {
+                changeRoom(-1, 0);
+            }
         }
     }
     // Right Door - Require Push Right (D/ArrowRight)
-    else if (Globals.player.x > Globals.canvas.width - t - shrink && doors.right?.active) {
+    else if (Globals.player.x > Globals.canvas.width - triggerDist - shrink && doors.right?.active) {
         const doorY = doors.right.y !== undefined ? doors.right.y : Globals.canvas.height / 2;
         if (Math.abs(Globals.player.y - doorY) < doorW) {
-            if ((Globals.keys['KeyD'] || Globals.keys['ArrowRight']) && !doors.right.locked && (!roomLocked || doors.right.forcedOpen)) changeRoom(1, 0);
-            else log("Right Door Blocked: Key/Lock/Room");
+            const hasKey = (Globals.keys['KeyD'] || Globals.keys['ArrowRight']);
+            const notLocked = (!doors.right.locked || isSecretExit);
+            const notRoomLocked = (!roomLocked || doors.right.forcedOpen || isSecretExit);
+
+            if (hasKey && notLocked && notRoomLocked) {
+                changeRoom(1, 0);
+            }
         }
     }
     // Top Door - Require Push Up (W/ArrowUp)
-    else if (Globals.player.y < t + shrink && doors.top?.active) {
+    else if (Globals.player.y < triggerDist + shrink && doors.top?.active) {
         const doorX = doors.top.x !== undefined ? doors.top.x : Globals.canvas.width / 2;
         if (Math.abs(Globals.player.x - doorX) < doorW) {
-            if ((Globals.keys['KeyW'] || Globals.keys['ArrowUp']) && !doors.top.locked && (!roomLocked || doors.top.forcedOpen)) changeRoom(0, -1);
-            else log("Top Door Blocked: Key/Lock/Room");
+            const hasKey = (Globals.keys['KeyW'] || Globals.keys['ArrowUp']);
+            const notLocked = (!doors.top.locked || isSecretExit);
+            const notRoomLocked = (!roomLocked || doors.top.forcedOpen || isSecretExit);
+
+            if (hasKey && notLocked && notRoomLocked) {
+                changeRoom(0, -1);
+            }
         }
     }
     // Bottom Door - Require Push Down (S/ArrowDown)
-    else if (Globals.player.y > Globals.canvas.height - t - shrink && doors.bottom?.active) {
+    else if (Globals.player.y > Globals.canvas.height - triggerDist - shrink && doors.bottom?.active) {
         const doorX = doors.bottom.x !== undefined ? doors.bottom.x : Globals.canvas.width / 2;
         if (Math.abs(Globals.player.x - doorX) < doorW) {
-            if ((Globals.keys['KeyS'] || Globals.keys['ArrowDown']) && !doors.bottom.locked && (!roomLocked || doors.bottom.forcedOpen)) changeRoom(0, 1);
-            else log("Bottom Door Blocked: Key/Lock/Room");
+            const hasKey = (Globals.keys['KeyS'] || Globals.keys['ArrowDown']);
+            const notLocked = (!doors.bottom.locked || isSecretExit);
+            const notRoomLocked = (!roomLocked || doors.bottom.forcedOpen || isSecretExit);
+
+            if (hasKey && notLocked && notRoomLocked) {
+                changeRoom(0, 1);
+            }
         }
     }
 }
 
 export function isRoomLocked() {
+    // Trophy Rooms are NEVER locked, regardless of enemies (trophies) inside
+    // Add logging to verify this is called
+    if (Globals.roomData.type === 'trophy' || Globals.roomData._type === 'trophy' || Globals.roomData.isSecret) {
+        // console.log("isRoomLocked: False (Trophy/Secret Override)"); // Too spammy? Maybe occasional?
+        return false;
+    }
+
     const aliveEnemies = Globals.enemies.filter(en => !en.isDead && !en.indestructible);
 
     // 1. Any normal enemy -> LOCK
-    const nonGhostEnemies = aliveEnemies.filter(en => en.type !== 'ghost');
+    const nonGhostEnemies = aliveEnemies.filter(en => en.type !== 'ghost' && en.type !== 'ghost_trophy');
     if (nonGhostEnemies.length > 0) return true;
 
     // 2. Ghost enemy -> LOCK only if it has triggered the lock
@@ -2760,6 +2796,20 @@ export function drawDoors() {
         if (dir === 'bottom') Globals.ctx.fillRect(dx - DOOR_SIZE / 2, Globals.canvas.height - DOOR_THICKNESS - s, DOOR_SIZE, DOOR_THICKNESS);
         if (dir === 'left') Globals.ctx.fillRect(0 + s, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
         if (dir === 'right') Globals.ctx.fillRect(Globals.canvas.width - DOOR_THICKNESS - s, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
+
+        // DEBUG: Draw Hitbox Overlay
+        if (true) { // Force enable for debugging
+            Globals.ctx.save();
+            Globals.ctx.strokeStyle = "magenta";
+            Globals.ctx.lineWidth = 2;
+            const doorW = 50; // Match Game.js updateRoomTransitions default
+
+            if (dir === 'top') Globals.ctx.strokeRect(dx - doorW, 0, doorW * 2, 50);
+            if (dir === 'bottom') Globals.ctx.strokeRect(dx - doorW, Globals.canvas.height - 50, doorW * 2, 50);
+            if (dir === 'left') Globals.ctx.strokeRect(0, dy - doorW, 50, doorW * 2);
+            if (dir === 'right') Globals.ctx.strokeRect(Globals.canvas.width - 50, dy - doorW, 50, doorW * 2);
+            Globals.ctx.restore();
+        }
     });
 }
 

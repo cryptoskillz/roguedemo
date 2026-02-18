@@ -17,6 +17,6 @@
         ""
     ],
     "secrectrooms": [
-        "rooms/secret/trophy/room.json"
+        "json/rooms/secret/trophy/room.json"
     ]
 }

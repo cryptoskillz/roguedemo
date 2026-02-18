@@ -1574,7 +1574,8 @@ export function updateBombsPhysics() {
                             // ghostSpawned = false; // Reset Ghost Timer
 
                             // Check if visited before
-                            const coord = `${player.roomX},${player.roomY}`;
+                            // Check if visited before
+                            const coord = `${Globals.player.roomX},${Globals.player.roomY}`;
                             b.exploding = true;
                             b.explosionStartAt = Date.now();
                             b.vx = 0; b.vy = 0;
