@@ -1,7 +1,7 @@
 {
     "type": "boss",
-    "name": "The 6th boss!",
-    "description": "The big bad.",
+    "name": "The Final Boss!",
+    "description": "The big badder.",
     "hp": 20,
     "alwaysAngry": false,
     "angryAfterHit": 0.1,

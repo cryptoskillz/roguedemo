@@ -1,6 +1,6 @@
 {
     "type": "boss",
-    "name": "The Guardian!",
+    "name": "The Guardian (Boss 5)!",
     "description": "The big bad.",
     "hp": 20,
     "alwaysAngry": false,

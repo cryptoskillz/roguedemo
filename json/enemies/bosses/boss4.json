@@ -1,7 +1,7 @@
 {
     "type": "boss",
-    "name": "The fourth Boss",
-    "description": "He doesn't like it up him!",
+    "name": "The third Boss",
+    "description": "grr!",
     "hp": 20,
     "alwaysAngry": false,
     "angryAfterHit": 0.1,

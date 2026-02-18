@@ -1,7 +1,7 @@
 {
     "type": "boss",
-    "name": "The Guardian!",
-    "description": "The big bad.",
+    "name": "The First Boss Brother!",
+    "description": "He kind of likes it up him",
     "hp": 300,
     "alwaysAngry": false,
     "angryAfterHit": 0.1,

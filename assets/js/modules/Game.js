@@ -2441,7 +2441,7 @@ export function updateRoomTransitions(doors, roomLocked) {
     const isSecretExit = (Globals.roomData.type === 'trophy' || Globals.roomData._type === 'trophy' || Globals.roomData.isSecret);
 
     // Increase trigger distance for Trophy Rooms to bypass potential enemy blocking
-    const triggerDist = isSecretExit ? t + 100 : t; // Huge 150px threshold for Trophy Room!
+    const triggerDist = t; // Reset to default size as requested
 
     // PREVENT INSTANT BACK-TRANSITION
     // Wait for 500ms after room start before allowing another transition
@@ -2791,7 +2791,8 @@ export function drawDoors() {
         if (dir === 'right') Globals.ctx.fillRect(Globals.canvas.width - DOOR_THICKNESS - s, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
 
         // DEBUG: Draw Hitbox Overlay
-        if (true) { // Force enable for debugging
+        const dit = false
+        if (dit) { // Force enable for debugging
             Globals.ctx.save();
             Globals.ctx.strokeStyle = "magenta";
             Globals.ctx.lineWidth = 2;
@@ -2803,6 +2804,7 @@ export function drawDoors() {
             if (dir === 'right') Globals.ctx.strokeRect(Globals.canvas.width - 50, dy - doorW, 50, doorW * 2);
             Globals.ctx.restore();
         }
+
     });
 }
 
