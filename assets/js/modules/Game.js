@@ -2500,15 +2500,18 @@ export function updateRoomTransitions(doors, roomLocked) {
         if (!hasKeyInput) return;
 
         // 4. Lock & Access Logic
-        const lockVal = parseInt(door.locked || 0, 10);
+        // Force conversion to number, default to 0
+        let lockVal = parseInt(door.locked, 10);
+        if (isNaN(lockVal)) lockVal = 0;
+
+        console.log(`Door Check: ${dx},${dy} | Locked: ${door.locked} | Parsed: ${lockVal}`);
+
         let allowed = false;
-        let msg = "";
         let promptY = Globals.player.y - 60;
-        if (door.x == 400) promptY = Globals.player.y + 60;
-        console.log(lockVal);
+        if (door.x == 400) promptY = Globals.player.y + 60; // Adjust for Top/Bottom doors
+
         // STRICT HIERARCHY: Specific Locks override generic "Unlocked" status
         if (lockVal === 2) { // Home Key
-            console.log("Home Key", Globals.player.inventory.houseKey);
             if (Globals.player.inventory.houseKey) {
                 // Interaction Required
                 spawnFloatingText(Globals.player.x, promptY, "Press SPACE", "#fff", 2);
@@ -2517,7 +2520,6 @@ export function updateRoomTransitions(doors, roomLocked) {
                     allowed = true;
                 }
             } else {
-                console.log("Need House Key!");
                 spawnFloatingText(Globals.player.x, promptY, "Need House Key!", "#ff0000", 2);
             }
         } else if (lockVal === 3) { // Matrix Key
@@ -2531,9 +2533,8 @@ export function updateRoomTransitions(doors, roomLocked) {
                 spawnFloatingText(Globals.player.x, promptY, "Need Matrix Key!", "#ff0000", 2);
             }
         } else if (lockVal === 1) { // Standard Key
-            // Auto-open if key exists OR if implicit unlock conditions met
+            // Interaction Required (Unified Logic)
             if (Globals.player.inventory.keys > 0) {
-
                 spawnFloatingText(Globals.player.x, promptY, "Press SPACE", "#fff", 2);
                 if (Globals.keys['Space']) {
                     Globals.keys['Space'] = false; // Consume input
@@ -2547,8 +2548,14 @@ export function updateRoomTransitions(doors, roomLocked) {
             }
         } else {
             // Unlocked (0)
-            console.log('pressed space at matrix doorss')
-            allowed = true;
+            // Implicitly allow IF lockVal is 0. 
+            // If it's some other weird number, Block it? 
+            if (lockVal === 0) {
+                allowed = true;
+            } else {
+                console.warn("Unknown Lock Value Blocked:", lockVal);
+                allowed = false;
+            }
         }
 
         // 5. Execution
