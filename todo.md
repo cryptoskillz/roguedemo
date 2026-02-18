@@ -8,7 +8,6 @@ new room.json format
 
         ghost wont go into boss room
             
-"shopRoom": "rooms/shops/shop_1/room.json" <-- who not json ?
 
     shop room
         shop can spawm a locked door as the only way to the boss there should always be a keysless way to the boss if we not we should spawn them a key in the start room as a hint its a hard level, save that key

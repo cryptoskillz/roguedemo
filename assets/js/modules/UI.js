@@ -538,6 +538,7 @@ export function drawMinimap() {
             if (Globals.visitedRooms[coord].roomData.isBoss) color = "#c0392b"; // Dark Red for Boss
             const rData = Globals.visitedRooms[coord].roomData;
             if (rData.type === 'shop' || rData._type === 'shop' || rData.name?.toLowerCase().includes("shop")) color = "#9b59b6"; // Purple for Shop
+            if (rData.type === 'trophy' || rData._type === 'trophy' || rData.name?.toLowerCase().includes("trophy")) color = "#e67e22"; // Orange/Gold for Trophy Room
 
             // --- GOLDEN PATH VISUALS ---
             if (!Globals.goldenPathFailed && Globals.goldenPath.includes(coord)) {
@@ -554,10 +555,10 @@ export function drawMinimap() {
             const dData = Globals.visitedRooms[coord].roomData.doors;
             if (dData) {
                 Globals.mctx.fillStyle = "#000";
-                if (dData.top && dData.top.active) Globals.mctx.fillRect(dx - 1, dy - roomSize / 2, 2, 2);
-                if (dData.bottom && dData.bottom.active) Globals.mctx.fillRect(dx - 1, dy + roomSize / 2 - 2, 2, 2);
-                if (dData.left && dData.left.active) Globals.mctx.fillRect(dx - roomSize / 2, dy - 1, 2, 2);
-                if (dData.right && dData.right.active) Globals.mctx.fillRect(dx + roomSize / 2 - 2, dy - 1, 2, 2);
+                if (dData.top && dData.top.active && !dData.top.hidden) Globals.mctx.fillRect(dx - 1, dy - roomSize / 2, 2, 2);
+                if (dData.bottom && dData.bottom.active && !dData.bottom.hidden) Globals.mctx.fillRect(dx - 1, dy + roomSize / 2 - 2, 2, 2);
+                if (dData.left && dData.left.active && !dData.left.hidden) Globals.mctx.fillRect(dx - roomSize / 2, dy - 1, 2, 2);
+                if (dData.right && dData.right.active && !dData.right.hidden) Globals.mctx.fillRect(dx + roomSize / 2 - 2, dy - 1, 2, 2);
             }
         }
     }
