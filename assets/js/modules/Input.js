@@ -3,6 +3,7 @@ import { STATES, DEBUG_FLAGS } from './Constants.js';
 import { updateWelcomeScreen } from './UI.js';
 import { updateDebugEditor, renderDebugForm } from './Debug.js';
 import { Globals as G } from './Globals.js'; // Short alias if needed
+import { log } from './Utils.js';
 
 export function setupInput(callbacks) {
     // Callbacks: { restartGame, goToWelcome, goContinue }

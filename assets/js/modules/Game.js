@@ -1782,7 +1782,14 @@ export function changeRoom(dx, dy) {
 
         // GHOST FOLLOW LOGIC
         // If ghost was chasing and follow is on, fast-forward the timer so he appears immediately
-        if (shouldFollow && !(Globals.player.roomX === 0 && Globals.player.roomY === 0) && !Globals.roomData.isBoss && Globals.roomData.type !== 'shop') {
+        // EXCLUDE: Start, Boss, Shop, Home, Matrix
+        const isExcluded = Globals.player.roomX === 0 && Globals.player.roomY === 0 ||
+            Globals.roomData.isBoss ||
+            Globals.roomData.type === 'shop' ||
+            Globals.roomData._type === 'home' ||
+            Globals.roomData._type === 'matrix';
+
+        if (shouldFollow && !isExcluded) {
             log("The Ghost follows you...");
             // Trigger time = desired spawn time
             // roomStartTime = Now - (ConfigTime - TravelTime)
@@ -2530,6 +2537,7 @@ export function updateRoomTransitions(doors, roomLocked) {
         } else if (lockVal === 1) { // Standard Key
             // Interaction Required (Unified Logic)
             if (Globals.player.inventory.keys > 0) {
+                log("Press SPACE to open door");
                 spawnFloatingText(Globals.player.x, promptY, "Press SPACE", "#fff", 2);
 
 
@@ -2857,17 +2865,21 @@ export function drawDoors() {
         if (dir === 'right') Globals.ctx.fillRect(Globals.canvas.width - DOOR_THICKNESS - s, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
 
         // DEBUG: Draw Hitbox Overlay
-        const dit = false
-        if (dit) { // Force enable for debugging
+        const dit = true; // Enabled per user request
+        if (dit) {
             Globals.ctx.save();
             Globals.ctx.strokeStyle = "magenta";
             Globals.ctx.lineWidth = 2;
-            const doorW = 50; // Match Game.js updateRoomTransitions default
+            const doorRangeW = DOOR_SIZE; // +/- DOOR_SIZE from center = 2*DOOR_SIZE width
+            const doorRangeH = 45; // BOUNDARY (20) + TOLERANCE (25)
+            //show if debug is active
 
-            if (dir === 'top') Globals.ctx.strokeRect(dx - doorW, 0, doorW * 2, 50);
-            if (dir === 'bottom') Globals.ctx.strokeRect(dx - doorW, Globals.canvas.height - 50, doorW * 2, 50);
-            if (dir === 'left') Globals.ctx.strokeRect(0, dy - doorW, 50, doorW * 2);
-            if (dir === 'right') Globals.ctx.strokeRect(Globals.canvas.width - 50, dy - doorW, 50, doorW * 2);
+            if (DEBUG_FLAGS.WINDOW) {
+                if (dir === 'top') Globals.ctx.strokeRect(dx - doorRangeW, 0, doorRangeW * 2, doorRangeH);
+                if (dir === 'bottom') Globals.ctx.strokeRect(dx - doorRangeW, Globals.canvas.height - doorRangeH, doorRangeW * 2, doorRangeH);
+                if (dir === 'left') Globals.ctx.strokeRect(0, dy - doorRangeW, doorRangeH, doorRangeW * 2);
+                if (dir === 'right') Globals.ctx.strokeRect(Globals.canvas.width - doorRangeH, dy - doorRangeW, doorRangeH, doorRangeW * 2);
+            }
             Globals.ctx.restore();
         }
 

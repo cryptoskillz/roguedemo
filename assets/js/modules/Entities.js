@@ -4544,12 +4544,20 @@ export function drawPlayer() {
             // Update lastShoot if actively pressing keys (failsafe if updateShooting lags)
             Globals.player.lastShootX = shootX;
             Globals.player.lastShootY = shootY;
-        } else if (Globals.player.lastShootX || Globals.player.lastShootY) {
-            // Use Last Shot Direction
-            aimAngle = Math.atan2(Globals.player.lastShootY, Globals.player.lastShootX);
-        } else if (Globals.player.lastMoveX || Globals.player.lastMoveY) {
-            // Fallback to Movement
+        }
+        // FIX: Prioritize MOVEMENT direction if not actively shooting. 
+        // User requesting: "if you are moving and not shooting he should be facing the way he is moving"
+        else if (Globals.player.lastMoveX || Globals.player.lastMoveY) {
             aimAngle = Math.atan2(Globals.player.lastMoveY, Globals.player.lastMoveX);
+        }
+        // Fallback to last shoot direction only if no movement? Or maybe just remove this fallback entirely
+        // to strictly follow movement. But let's keep it as a last resort if stationary?
+        // Actually, if stationary (lastMoveX=0), we want to face last move direction usually.
+        // The above 'else if' covers "lastMove". 
+        // So we just need to ensure we don't accidentally use 'lastShoot' when moving.
+        else if (Globals.player.lastShootX || Globals.player.lastShootY) {
+            // Use Last Shot Direction only if no movement data (e.g. start of game? or purely stationary shooting?)
+            aimAngle = Math.atan2(Globals.player.lastShootY, Globals.player.lastShootX);
         }
         drawBarrel(aimAngle);
 
