@@ -2,6 +2,8 @@ DONT DO ANY OF THESE TASKS AI
 133262
 
 # Bugs & Fixes
+- change words in the atm to be more relasitic
+- only allow the max withdraw to be max green shards
 - bed will let you sleep and you restore your health but you lose a random amount of keys and bombs
 - show intro only once the first time you enter a room
 - stars and pentagons do not have the ghost skirt

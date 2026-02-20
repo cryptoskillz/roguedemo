@@ -2508,6 +2508,17 @@ export function drawHomeRoomObjects() {
     Globals.ctx.arc(px - 25, py - 5, 4, 0, Math.PI);
     Globals.ctx.stroke();
 
+    // Proximity Prompt
+    const pbDist = Math.hypot(Globals.player.x - px, Globals.player.y - py);
+    if (pbDist < 60) {
+        Globals.ctx.fillStyle = "white";
+        Globals.ctx.font = "14px monospace";
+        Globals.ctx.textAlign = "center";
+        // Globals.ctx.fillText("Press Space to open bank", px, py - 40);
+        spawnFloatingText(Globals.player.x, Globals.player.y - 40, "Press Space to open bank", "white");
+
+    }
+
     Globals.ctx.restore();
 }
 

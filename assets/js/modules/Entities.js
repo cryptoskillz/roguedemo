@@ -1377,7 +1377,6 @@ export function updateUse() {
     if (Globals.roomData.type === 'home' || Globals.roomData._type === 'home') {
         const pbDist = Math.hypot(Globals.player.x - 100, Globals.player.y - 320);
         if (pbDist < 60) {
-            spawnFloatingText(Globals.player.x, Globals.player.y - 40, "Press Space to open bank", "white");
             // Open Bank UI
             if (Globals.elements.bankModal) {
                 let bankedShards = parseInt(localStorage.getItem('piggy_bank_balance') || '0');
@@ -3573,8 +3572,9 @@ export function updateMovementAndDoors(doors, roomLocked) {
                     const distTable = Math.hypot(nextX - 200, Globals.player.y - 200);
                     const tableCheck = distTable < 45 + size;
                     const tvCheck = nextX + size > 260 && nextX - size < 380 && Globals.player.y + size > -20 && Globals.player.y - size < 60;
-
-                    if (bedCheck || tableCheck || tvCheck) {
+                    //check piggy bank
+                    const pbCheck = nextX + size > 50 && nextX - size < 130 && Globals.player.y + size > 50 && Globals.player.y - size < 190;
+                    if (bedCheck || tableCheck || tvCheck || pbCheck) {
                         collided = true;
                     }
                 }
