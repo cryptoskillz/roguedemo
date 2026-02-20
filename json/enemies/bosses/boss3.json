@@ -2,7 +2,7 @@
     "type": "boss",
     "name": "The First Boss Brother!",
     "description": "He kind of likes it up him",
-    "hp": 300,
+    "hp": 30,
     "alwaysAngry": false,
     "angryAfterHit": 0.1,
     "angryTime": 5000,

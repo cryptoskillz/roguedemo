@@ -1384,21 +1384,25 @@ export function updateUse() {
     }
 
     // Helper: are we close enough to a door?
+    // FIX: Increased tolerance from +5 to +25 because collision logic stops player movement
+    // slightly outside the boundary (based on speed/step size).
+    const TOLERANCE = 25;
+
     const inRangeTop = (door) => {
         const doorX = door.x !== undefined ? door.x : Globals.canvas.width / 2;
-        return Globals.player.y <= BOUNDARY + 5 && Globals.player.x > doorX - DOOR_SIZE && Globals.player.x < doorX + DOOR_SIZE;
+        return Globals.player.y <= BOUNDARY + TOLERANCE && Globals.player.x > doorX - DOOR_SIZE && Globals.player.x < doorX + DOOR_SIZE;
     };
     const inRangeBottom = (door) => {
         const doorX = door.x !== undefined ? door.x : Globals.canvas.width / 2;
-        return Globals.player.y >= Globals.canvas.height - BOUNDARY - 5 && Globals.player.x > doorX - DOOR_SIZE && Globals.player.x < doorX + DOOR_SIZE;
+        return Globals.player.y >= Globals.canvas.height - BOUNDARY - TOLERANCE && Globals.player.x > doorX - DOOR_SIZE && Globals.player.x < doorX + DOOR_SIZE;
     };
     const inRangeLeft = (door) => {
         const doorY = door.y !== undefined ? door.y : Globals.canvas.height / 2;
-        return Globals.player.x <= BOUNDARY + 5 && Globals.player.y > doorY - DOOR_SIZE && Globals.player.y < doorY + DOOR_SIZE;
+        return Globals.player.x <= BOUNDARY + TOLERANCE && Globals.player.y > doorY - DOOR_SIZE && Globals.player.y < doorY + DOOR_SIZE;
     };
     const inRangeRight = (door) => {
         const doorY = door.y !== undefined ? door.y : Globals.canvas.height / 2;
-        return Globals.player.x >= Globals.canvas.width - BOUNDARY - 5 && Globals.player.y > doorY - DOOR_SIZE && Globals.player.y < doorY + DOOR_SIZE;
+        return Globals.player.x >= Globals.canvas.width - BOUNDARY - TOLERANCE && Globals.player.y > doorY - DOOR_SIZE && Globals.player.y < doorY + DOOR_SIZE;
     };
 
     // Prefer the door the player is "facing" (lastMoveX/lastMoveY), fall back to any nearby door.
@@ -1408,6 +1412,15 @@ export function updateUse() {
     if (doors.left?.active) candidates.push({ dir: "left", door: doors.left, inRange: inRangeLeft });
     if (doors.right?.active) candidates.push({ dir: "right", door: doors.right, inRange: inRangeRight });
 
+    // DEBUG: Log candidates and player position
+    console.log(`updateUse: Space Pressed. Player: (${Globals.player.x.toFixed(1)}, ${Globals.player.y.toFixed(1)}) BOUNDARY: ${BOUNDARY} TOLERANCE: ${TOLERANCE}`);
+    candidates.forEach(c => {
+        const doorX = c.door.x !== undefined ? c.door.x : Globals.canvas.width / 2;
+        const doorY = c.door.y !== undefined ? c.door.y : Globals.canvas.height / 2;
+        const inRange = c.inRange(c.door);
+        console.log(`  Checking ${c.dir}: Active=${c.door.active}, Locked=${c.door.locked}, InRange=${inRange} (Door Post: ${doorX}, ${doorY}) (DistX: ${(Globals.player.x - doorX).toFixed(1)})`);
+    })
+
     const facingDir =
         Globals.player.lastMoveY === -1 ? "top" :
             Globals.player.lastMoveY === 1 ? "bottom" :
@@ -1415,6 +1428,9 @@ export function updateUse() {
                     Globals.player.lastMoveX === 1 ? "right" : null;
 
     let target = null;
+
+    // DEBUG: Log Facing
+    console.log(`  Facing: ${facingDir} (LastMove: ${Globals.player.lastMoveX}, ${Globals.player.lastMoveY})`);
 
     // 1) facing door if in range
     if (facingDir) {
@@ -1427,14 +1443,21 @@ export function updateUse() {
         target = candidates.find(c => c.inRange(c.door)) || null;
     }
 
-    if (!target) return; // nothing to use right now
+    if (!target) {
+        console.log("  No target found in range.");
+        return;
+    }
 
-    // --- "Use" behavior for doors (for now) ---
+    console.log(`  Target Acquired: ${target.dir} (Locked: ${target.door.locked})`);
+
     const d = target.door;
 
     // unlock if locked and player has keys
     if (d.locked && d.locked == 1) {
-        if (Globals.player.inventory?.keys > 0) {
+        const keyCount = Globals.player.inventory?.keys || 0;
+        console.log(`  Attempting Type 1 Unlock. Keys: ${keyCount}`);
+
+        if (keyCount > 0) {
             Globals.player.inventory.keys--;
             if (Globals.elements.keys) Globals.elements.keys.innerText = Globals.player.inventory.keys;
             d.locked = 0;
@@ -5040,9 +5063,11 @@ export function updateItems() {
             // WEAPONS REQUIRE SPACE ONLY (No Heat/Bump)
             // Use Globals.keys safely
             if ((Globals.keys && Globals.keys['Space'])) {
-                console.log("Entities.js Consumed SPACE for item:", item);
-                if (Globals.keys) Globals.keys['Space'] = false; // Consume input
-                pickupItem(item, i);
+                // Only consume input if pickup succeeded
+                if (pickupItem(item, i)) {
+                    // console.log("Entities.js Consumed SPACE for item:", item);
+                    if (Globals.keys) Globals.keys['Space'] = false; // Consume input
+                }
             }
         } else {
             // Decay Heat when away

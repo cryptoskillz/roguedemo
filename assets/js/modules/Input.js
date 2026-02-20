@@ -16,6 +16,11 @@ export function setupInput(callbacks) {
         // Update Key State
         Globals.keys[e.code] = true;
 
+        // Debug Log for key input
+        if (e.code === 'Space') {
+            console.log("Input.js: SPACE key DOWN");
+        }
+
         // Debug Toggle
         if (e.code === 'Backquote') {
             const panel = Globals.elements.debugPanel;
