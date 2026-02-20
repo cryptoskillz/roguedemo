@@ -135,7 +135,7 @@
     "greenShards": true,
     "ghost": {
         "spawn": false,
-        "roomGhostTimer": 1000000,
+        "roomGhostTimer": 20000,
         "roomFollow": true
     },
     "room": {

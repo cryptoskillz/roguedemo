@@ -2281,6 +2281,7 @@ export async function draw() {
     drawDoors()
     drawBossSwitch() // Draw switch underneath entities
     drawStartRoomObjects(); // New: Draw start room specific floor items
+    drawHomeRoomObjects();
     drawSwitches();
     drawPortal(); // Draw portal on floor
     drawPlayer()
@@ -2425,6 +2426,50 @@ export function drawStartRoomObjects() {
     if (Globals.roomData.name == "The Beginning" && Globals.player.roomX === 0 && Globals.player.roomY === 0) {
 
     }
+}
+
+export function drawHomeRoomObjects() {
+    if (Globals.roomData.type !== 'home' && Globals.roomData._type !== 'home') return;
+
+    Globals.ctx.save();
+
+    // Draw Bed (Top Left)
+    Globals.ctx.fillStyle = "#34495e"; // Bed Frame
+    Globals.ctx.fillRect(50, 50, 80, 140);
+    Globals.ctx.fillStyle = "#ecf0f1"; // Mattress/Sheets
+    Globals.ctx.fillRect(55, 80, 70, 105);
+    Globals.ctx.fillStyle = "#bdc3c7"; // Pillow
+    Globals.ctx.fillRect(60, 55, 60, 20);
+
+    // Draw Table (Center)
+    Globals.ctx.fillStyle = "#8e44ad"; // Table top
+    Globals.ctx.beginPath();
+    Globals.ctx.arc(200, 200, 45, 0, Math.PI * 2);
+    Globals.ctx.fill();
+    Globals.ctx.lineWidth = 4;
+    Globals.ctx.strokeStyle = "#9b59b6";
+    Globals.ctx.stroke();
+
+    // Draw TV (Top Right)
+    Globals.ctx.fillStyle = "#2c3e50"; // TV Stand
+    Globals.ctx.fillRect(270, 40, 100, 20);
+    Globals.ctx.fillStyle = "#34495e"; // TV Border
+    Globals.ctx.fillRect(280, 30, 80, 10);
+    Globals.ctx.fillRect(260, -20, 120, 60);
+    Globals.ctx.fillStyle = "#111"; // Screen
+    Globals.ctx.fillRect(265, -15, 110, 50);
+
+    // TV Static/Glow
+    Globals.ctx.fillStyle = "rgba(41, 128, 185, 0.4)";
+    Globals.ctx.fillRect(265, -15, 110, 50);
+    if (Math.random() > 0.8) {
+        Globals.ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+        for (let i = 0; i < 5; i++) {
+            Globals.ctx.fillRect(265, -15 + Math.random() * 45, 110, 2);
+        }
+    }
+
+    Globals.ctx.restore();
 }
 
 export function updateMusicToggle() {
@@ -3096,10 +3141,6 @@ export async function newRun(targetLevel = null) {
     if (seedInput) seedInput.value = "";
 
     // 2. Call initGame as if it's a restart (to skip welcome) but with the NEW seed already set?
-    // Wait, initGame(true) RE-SETS seed to Globals.seed. 
-    // So if we set Globals.seed then call initGame(true), it should work!
-    // If targetLevel is passed, use it (and use logic to restart AT that level)
-
     await initGame(true, targetLevel);
 }
 Globals.newRun = newRun;
@@ -3154,27 +3195,6 @@ export function goContinue() {
 Globals.handleUnlocks = handleUnlocks;
 Globals.gameOver = gameOver; // Assign for circular dependency fix
 Globals.spawnEnemy = (type, x, y, overrides = {}) => {
-    // Import dynamically or use the one we imported?
-    // We imported spawnEnemies from Entities.js.
-    // Entities.spawnEnemies(count, type, x, y) signature?
-    // Let's check Entities.js signature.
-    // spawnEnemies(amount, type) -> random pos
-    // We want specific pos. 
-    // Entities.js likely has "spawnEnemy(type, x, y)" or similar helper?
-    // If not, we might need to add one or use a hack.
-    // Looking at Entities.js...
-
-    // For now, let's assume we can reuse spawnEnemies but we need to pass x,y.
-    // If spawnEnemies doesn't support x,y, we should add support or export a single spawn function.
-    // Let's check Entities.js content first.
-    // Wait, I can't check it inside this replace block.
-    // I will assume I need to export a helper from Entities and attach it here.
-    // OR, I can just attach it here if I have access to the class/function.
-
-    // Actually, looking at imports in Game.js:
-    // import { spawnEnemies ... } from './Entities.js';
-
-    // I'll attach a wrapper here.
     import('./Entities.js').then(m => {
         m.spawnEnemyAt(type, x, y, overrides);
     });
