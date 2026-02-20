@@ -3484,7 +3484,7 @@ export function bankDeposit(amountStr) {
         if (Globals.elements.bankVaultVal) Globals.elements.bankVaultVal.innerText = bankedShards;
 
         if (window.SFX && SFX.coin) window.SFX.coin();
-        console.log(`Deposited ${depositAmt} green shards. Total: ${bankedShards}`);
+        log(`Deposited ${depositAmt} green shards. Total: ${bankedShards}`);
     } else {
         if (window.SFX && SFX.cantPickup) window.SFX.cantPickup();
     }
@@ -3499,8 +3499,21 @@ export function bankWithdraw(amountStr) {
     let bankedShards = parseInt(localStorage.getItem('piggy_bank_balance') || '0');
 
     if (bankedShards > 0) {
-        // Cap withdraw amount to what is actually in the bank
-        const withdrawAmt = Math.min(amount, bankedShards);
+        // Calculate the player's max capacity (usually 100 unless upgraded)
+        const maxCapacity = Globals.player.inventory.maxGreenShards || Globals.player.maxGreenShards || 100;
+
+        // Calculate how much room the player actually has
+        const spaceAvailable = maxCapacity - Globals.player.inventory.greenShards;
+
+        if (spaceAvailable <= 0) {
+            document.getElementById('bankMessage').innerText = "Inventory full!";
+            if (window.SFX && SFX.cantPickup) window.SFX.cantPickup();
+            return;
+        }
+
+        // Cap withdraw amount to MIN of (requested amount, bank balance, available space)
+        const withdrawAmt = Math.min(amount, bankedShards, spaceAvailable);
+        document.getElementById('bankMessage').innerText = ""; // Clear message on success
 
         Globals.player.inventory.greenShards += withdrawAmt;
         bankedShards -= withdrawAmt;
@@ -3511,10 +3524,11 @@ export function bankWithdraw(amountStr) {
         if (Globals.elements.bankVaultVal) Globals.elements.bankVaultVal.innerText = bankedShards;
 
         // Save inventory so player actually has them
+
         localStorage.setItem('currency_green', Globals.player.inventory.greenShards);
 
         if (window.SFX && SFX.coin) window.SFX.coin();
-        console.log(`Withdrew ${withdrawAmt} green shards from Piggy Bank.`);
+        log(`Withdrew ${withdrawAmt} green shards from Piggy Bank.`);
     } else {
         if (window.SFX && SFX.cantPickup) window.SFX.cantPickup();
     }

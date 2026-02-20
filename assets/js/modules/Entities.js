@@ -3572,8 +3572,8 @@ export function updateMovementAndDoors(doors, roomLocked) {
                     const distTable = Math.hypot(nextX - 200, Globals.player.y - 200);
                     const tableCheck = distTable < 45 + size;
                     const tvCheck = nextX + size > 260 && nextX - size < 380 && Globals.player.y + size > -20 && Globals.player.y - size < 60;
-                    //check piggy bank
-                    const pbCheck = nextX + size > 50 && nextX - size < 130 && Globals.player.y + size > 50 && Globals.player.y - size < 190;
+                    //check piggy bank at (100, 320)
+                    const pbCheck = nextX + size > 75 && nextX - size < 125 && Globals.player.y + size > 300 && Globals.player.y - size < 340;
                     if (bedCheck || tableCheck || tvCheck || pbCheck) {
                         collided = true;
                     }
@@ -3624,12 +3624,13 @@ export function updateMovementAndDoors(doors, roomLocked) {
                 if (Globals.roomData.type === 'home' || Globals.roomData._type === 'home') {
                     const size = Globals.player.size;
                     const bedCheck = Globals.player.x + size > 50 && Globals.player.x - size < 130 && nextY + size > 50 && nextY - size < 190;
-                    // Circle collision for table at 200, 200, radius 45
                     const distTable = Math.hypot(Globals.player.x - 200, nextY - 200);
                     const tableCheck = distTable < 45 + size;
                     const tvCheck = Globals.player.x + size > 260 && Globals.player.x - size < 380 && nextY + size > -20 && nextY - size < 60;
+                    // Piggy Bank collision box (100, 320)
+                    const pbCheck = Globals.player.x + size > 75 && Globals.player.x - size < 125 && nextY + size > 300 && nextY - size < 340;
 
-                    if (bedCheck || tableCheck || tvCheck) {
+                    if (bedCheck || tableCheck || tvCheck || pbCheck) {
                         collided = true;
                     }
                 }
