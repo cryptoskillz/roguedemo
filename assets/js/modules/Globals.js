@@ -5,6 +5,7 @@ export const Globals = {
     mapCanvas: null,
     mctx: null,
     statsPanel: null,
+    usedBed: false,
 
     randomGreenMinCount: 1,
     randomGreenMaxCount: 100,

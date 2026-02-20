@@ -2507,16 +2507,26 @@ export function drawHomeRoomObjects() {
         Globals.ctx.fillStyle = "white";
         Globals.ctx.font = "14px monospace";
         Globals.ctx.textAlign = "center";
-        // Globals.ctx.fillText("Press Space to open bank", px, py - 40);
-        spawnFloatingText(Globals.player.x, Globals.player.y - 40, "Press Space to open bank", "white", 5);
+        Globals.ctx.fillText("Press Space to open bank", px, py - 40);
     }
-    //do it for all bed sides not just left
-    const bedDist = Math.hypot(Globals.player.x - 90, Globals.player.y - 120);
-    if (bedDist < 60) {
-        if (Globals.player.hp == Globals.player.maxHp)
-            spawnFloatingText(Globals.player.x, Globals.player.y - 40, "Player well rested", "red", 10);
-        else
-            spawnFloatingText(Globals.player.x, Globals.player.y - 40, "Press Space to sleep", "white", 5);
+
+    // Bed is x:50-130, y:50-190. Expand box by ~30px for interaction
+    const nearBed = Globals.player.x > 20 && Globals.player.x < 160 && Globals.player.y > 20 && Globals.player.y < 220;
+
+    if (nearBed) {
+        Globals.ctx.fillStyle = "white";
+        Globals.ctx.font = "14px monospace";
+        Globals.ctx.textAlign = "center";
+
+        if (Globals.usedBed) {
+            Globals.ctx.fillStyle = "red";
+            Globals.ctx.fillText("Already rested today", 90, 40);
+        } else if (Globals.player.hp >= Globals.player.maxHp) {
+            Globals.ctx.fillStyle = "red";
+            Globals.ctx.fillText("Player well rested", 90, 40);
+        } else {
+            Globals.ctx.fillText("Press Space to sleep", 90, 40);
+        }
     }
 
     Globals.ctx.restore();

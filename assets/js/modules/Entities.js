@@ -1390,10 +1390,12 @@ export function updateUse() {
             return; // Interaction complete
         }
 
-        // Bed Interaction
-        const bedDist = Math.hypot(Globals.player.x - 90, Globals.player.y - 120);
-        if (bedDist < 60) {
-            if (Globals.player.hp < Globals.player.maxHp) {
+        // Bed is x:50-130, y:50-190. Expand box by ~30px for interaction
+        const nearBed = Globals.player.x > 20 && Globals.player.x < 160 && Globals.player.y > 20 && Globals.player.y < 220;
+        if (nearBed) {
+            if (Globals.usedBed) {
+                spawnFloatingText(Globals.player.x, Globals.player.y - 50, "Already rested today!", "white", 2);
+            } else if (Globals.player.hp < Globals.player.maxHp) {
                 Globals.player.hp = Globals.player.maxHp;
 
                 const keysLost = Math.min(Globals.player.inventory.keys, Math.floor(Math.random() * 3) + 1);
@@ -1401,6 +1403,8 @@ export function updateUse() {
 
                 const bombsLost = Math.min(Globals.player.inventory.bombs, Math.floor(Math.random() * 3) + 1);
                 Globals.player.inventory.bombs -= bombsLost;
+
+                Globals.usedBed = true;
 
                 if (window.SFX && SFX.powerup) SFX.powerup();
                 spawnFloatingText(Globals.player.x, Globals.player.y - 50, `Rested! Lost ${keysLost} Keys & ${bombsLost} Bombs`, "lightgreen", 5);
@@ -3628,7 +3632,6 @@ export function updateMovementAndDoors(doors, roomLocked) {
                 if (!collided && (!crossingLimit || (inDoorRange && canPass))) {
                     Globals.player.x = nextX;
                 } else if (collided && !hitMoveable) {
-                    Globals.player.x -= dx * 5; // Knockback only if not pushing
                     Globals.player.x = Math.max(BOUNDARY + Globals.player.size, Math.min(Globals.canvas.width - BOUNDARY - Globals.player.size, Globals.player.x));
                 } else if (crossingLimit && !canPass && inDoorRange) {
                     if (door.hidden) {
@@ -3689,7 +3692,6 @@ export function updateMovementAndDoors(doors, roomLocked) {
                 if (!collided && (!crossingLimit || (inDoorRange && canPass))) {
                     Globals.player.y = nextY;
                 } else if (collided && !hitMoveable) {
-                    Globals.player.y -= dy * 5; // Knockback only if not pushing
                     Globals.player.y = Math.max(BOUNDARY + Globals.player.size + shrink, Math.min(Globals.canvas.height - BOUNDARY - Globals.player.size - shrink, Globals.player.y));
                 }
             }
