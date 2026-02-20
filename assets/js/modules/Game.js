@@ -1742,8 +1742,9 @@ export function changeRoom(dx, dy) {
 
         }
         //only show intro if it is the first time 
-        if (Globals.visitedRooms[nextCoord])
+        if (!Globals.visitedRooms[nextCoord]) {
             Globals.roomIntroEndTime = Globals.roomData.showIntro ? (Date.now() + 2000) : 0;
+        }
         Globals.visitedRooms[nextCoord] = nextEntry; // Add to visited for minimap
 
         Globals.elements.roomName.innerText = Globals.roomData.name || "Unknown Room";
