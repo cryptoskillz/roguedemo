@@ -44,7 +44,7 @@
         "houseKey": true,
         "matrixKey": true,
         "bombs": 0,
-        "greenShards": 50,
+        "greenShards": 0,
         "redShards": 0,
         "maxKeys": 3,
         "maxBombs": 5,

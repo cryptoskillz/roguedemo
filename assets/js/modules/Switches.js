@@ -37,6 +37,12 @@ export function spawnSwitches(roomData) {
             increment = 0;
         }
 
+        let amountSpent = 0;
+        if (cfg.action === 'upgrade' && cfg.modify && cfg.modify.attr) {
+            const saved = localStorage.getItem(`upgrade_amountSpent_${cfg.modify.attr}`);
+            if (saved !== null) amountSpent = parseInt(saved);
+        }
+
         Globals.switches.push({
             x: cfg.x,
             y: cfg.y,
@@ -48,7 +54,14 @@ export function spawnSwitches(roomData) {
             colour: cfg.colour || cfg.color || null, // Store custom color
             state: 'idle', // idle, active
             cooldown: 0,
-            isPressed: false
+            isPressed: false,
+            // Upgrade stuff
+            defaultCost: cfg.defaultCost || 1000,
+            amountSpent: amountSpent,
+            maxAllowed: cfg.maxAllowed || 99,
+            item: cfg.item || null,
+            modify: cfg.modify || null,
+            name: cfg.name || ''
         });
     });
 }
@@ -79,6 +92,11 @@ export function updateSwitches() {
 }
 
 function activateSwitch(s) {
+    if (s.action === 'upgrade') {
+        handleUpgradeSwitch(s);
+        return;
+    }
+
     // Check Cost
     if (s.rerollCost > 0) {
         const cost = s.rerollCost;
@@ -209,6 +227,121 @@ function rerollShop(s) {
     }
 }
 
+function handleUpgradeSwitch(s) {
+    // 1. Check if maxed
+    if (s.modify && s.modify.attr) {
+        let currentVal = Globals.player;
+        const parts = s.modify.attr.split('.');
+        for (let p of parts) {
+            if (currentVal[p] !== undefined) currentVal = currentVal[p];
+            else { currentVal = 0; break; }
+        }
+        if (currentVal >= s.maxAllowed) {
+            spawnFloatingText(s.x, s.y - 20, "MAX LEVEL REACHED", "#95a5a6");
+            s.cooldown = 60;
+            if (SFX && SFX.cantDoIt) SFX.cantDoIt();
+            return;
+        }
+    }
+
+    // 2. Define payment (1/10th of defaultCost)
+    let payment = Math.max(1, Math.floor(s.defaultCost / 10));
+
+    // Find player's shards
+    const shardType = s.shard || 'red';
+    const inventoryKey = shardType === 'red' ? 'redShards' : 'greenShards';
+    let currentShards = Globals.player.inventory[inventoryKey] || 0;
+
+    // Cap payment by how much they actually HAVE and what's left to pay
+    let remainingToPay = s.defaultCost - s.amountSpent;
+    payment = Math.min(payment, remainingToPay);
+
+    if (currentShards < payment && currentShards > 0) {
+        payment = currentShards; // Let them pay what they have
+    }
+
+    if (currentShards <= 0 || payment <= 0) {
+        spawnFloatingText(s.x, s.y, `Need ${shardType.toUpperCase()} Shards!`, "#e74c3c");
+        s.cooldown = 60;
+        if (SFX && SFX.cantDoIt) SFX.cantDoIt();
+        return;
+    }
+
+    // Deduct
+    Globals.player.inventory[inventoryKey] -= payment;
+    s.amountSpent += payment;
+
+    // Also deduct from permanent banked currency
+    const bankKey = `currency_${shardType}`;
+    let bankedCurrency = parseInt(localStorage.getItem(bankKey) || '0');
+    bankedCurrency = Math.max(0, bankedCurrency - payment);
+    localStorage.setItem(bankKey, bankedCurrency);
+
+    const floatColor = shardType === 'red' ? '#e74c3c' : '#2ecc71';
+    spawnFloatingText(s.x, s.y - 10, "-" + payment, floatColor);
+
+    // Save
+    if (s.modify && s.modify.attr) {
+        localStorage.setItem(`upgrade_amountSpent_${s.modify.attr}`, s.amountSpent);
+    }
+
+    s.state = 'active';
+    s.cooldown = 15; // Fast tick when stepping
+    if (SFX && SFX.doorUnlocked) SFX.doorUnlocked();
+
+    // 3. Check if condition met to drop item
+    if (s.amountSpent >= s.defaultCost) {
+        s.amountSpent = 0;
+        if (s.modify && s.modify.attr) {
+            localStorage.setItem(`upgrade_amountSpent_${s.modify.attr}`, 0);
+
+            // Apply permanent stat bonus via array
+            let upgrades = [];
+            try {
+                upgrades = JSON.parse(localStorage.getItem('game_upgrades') || '[]');
+            } catch (e) {
+                upgrades = [];
+            }
+
+            upgrades.push({
+                type: s.modify.type || 'player',
+                attr: s.modify.attr,
+                value: parseFloat(s.modify.amount) || 1
+            });
+
+            localStorage.setItem('game_upgrades', JSON.stringify(upgrades));
+            log("Added permanent upgrade to array:", upgrades[upgrades.length - 1]);
+        }
+
+        spawnFloatingText(s.x, s.y - 30, "UPGRADE COMPLETE!", "#f1c40f");
+        if (SFX && SFX.purchase) SFX.purchase(); // Assuming purchase SFX exists
+
+        // Spawn Item
+        if (s.item) {
+            const path = s.item.startsWith('/') ? s.item : `/${s.item}`;
+            fetch(`${path}?t=${Date.now()}`)
+                .then(r => r.json())
+                .then(data => {
+                    data.location = s.item;
+                    Globals.groundItems.push({
+                        x: s.x,
+                        y: s.y + 60,
+                        data: data,
+                        roomX: Globals.player.roomX,
+                        roomY: Globals.player.roomY,
+                        vx: 0, vy: 0,
+                        solid: true, moveable: true, friction: 0.9, size: 15,
+                        floatOffset: Math.random() * 100
+                    });
+                })
+                .catch(e => console.error("Upgrade item fetch failed", e));
+        }
+
+        // Apply visual cooldown so it doesn't instantly retrigger while they pick it up
+        s.cooldown = 120;
+    }
+}
+
 export function drawSwitches() {
     const ctx = Globals.ctx;
     ctx.save();
@@ -246,11 +379,31 @@ export function drawSwitches() {
         ctx.textAlign = "center";
 
         let label = s.action === 'shop' ? "REROLL" : "SWITCH";
-        if (s.rerollCost > 0) {
-            // Updated Label as per Step 1480 logic
+        let isUpgrade = s.action === 'upgrade';
+        let isMaxed = false;
+
+        if (isUpgrade && s.modify && s.modify.attr) {
+            label = s.name;
+            let currentVal = Globals.player;
+            const parts = s.modify.attr.split('.');
+            for (let p of parts) {
+                if (currentVal[p] !== undefined) currentVal = currentVal[p];
+                else { currentVal = 0; break; }
+            }
+            if (currentVal >= s.maxAllowed) {
+                isMaxed = true;
+                label = "MAXED";
+            }
+        } else if (s.rerollCost > 0 && !isUpgrade) {
             label += ` (${s.rerollCost} Shards)`;
         }
-        ctx.fillText(label, x, y + size / 2 + 15);
+
+        if (isUpgrade && !isMaxed) {
+            ctx.fillText(label, x, y + size / 2 + 10);
+            ctx.fillText(`${s.amountSpent}/${s.defaultCost}`, x, y + size / 2 + 20);
+        } else {
+            ctx.fillText(label, x, y + size / 2 + 15);
+        }
     });
     ctx.restore();
 }

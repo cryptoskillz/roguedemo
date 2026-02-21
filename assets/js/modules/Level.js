@@ -105,6 +105,29 @@ export function generateLevel(length) {
     const startTmpl = findStartTemplate();
     const bossTmpl = findBossTemplate();
 
+    // Upgrade Room Logic
+    let upgradeCoord = null;
+    let upgradeTmpl = null;
+
+    if (Globals.isUpgradeUnlocked && Globals.gameData.upgradeRoom && typeof Globals.gameData.upgradeRoom === 'object' && Globals.gameData.upgradeRoom.room) {
+        const tmplPath = Globals.gameData.upgradeRoom.room;
+        const cleanPath = tmplPath.startsWith('/') ? tmplPath.substring(1) : tmplPath;
+        upgradeTmpl = Globals.roomTemplates[cleanPath] || Globals.roomTemplates[tmplPath];
+        if (!upgradeTmpl) {
+            const key = Object.keys(Globals.roomTemplates).find(k => k.includes(cleanPath) || cleanPath.includes(k));
+            if (key) upgradeTmpl = Globals.roomTemplates[key];
+        }
+        if (upgradeTmpl) {
+            upgradeCoord = "-1,0";
+            if (!fullMapCoords.includes(upgradeCoord)) {
+                fullMapCoords.push(upgradeCoord);
+            }
+            log("Upgrade Room forced to left of start:", upgradeCoord);
+        } else {
+            log("Missing Upgrade Room Template:", tmplPath);
+        }
+    }
+
     // Shop Placement Logic
     const findShopTemplate = () => {
         const templates = Globals.roomTemplates;
@@ -128,7 +151,7 @@ export function generateLevel(length) {
         // Find candidates: Any room that is NOT Start and NOT Boss
         // Priority: Dead Ends (1 neighbor) AND Distance > 1 from Start
         let candidates = fullMapCoords.filter(c => {
-            if (c === "0,0" || c === Globals.bossCoord) return false;
+            if (c === "0,0" || c === Globals.bossCoord || c === upgradeCoord) return false;
 
             const [x, y] = c.split(',').map(Number);
 
@@ -148,7 +171,7 @@ export function generateLevel(length) {
         } else {
             // Fallback: Pick random valid (Distance > 1)
             let backup = fullMapCoords.filter(c => {
-                if (c === "0,0" || c === Globals.bossCoord) return false;
+                if (c === "0,0" || c === Globals.bossCoord || c === upgradeCoord) return false;
                 const [x, y] = c.split(',').map(Number);
                 return (Math.abs(x) + Math.abs(y) > 1);
             });
@@ -170,7 +193,7 @@ export function generateLevel(length) {
 
         // Find best candidate for trophy room (limit distance to not be too close to start)
         const candidates = fullMapCoords.filter(c => {
-            if (c === "0,0" || c === Globals.bossCoord || c === shopCoord) return false;
+            if (c === "0,0" || c === Globals.bossCoord || c === shopCoord || c === upgradeCoord) return false;
             const [hx, hy] = c.split(',').map(Number);
 
             // 1. Can we place Trophy Room HERE? (Host needs >= 1 free neighbor)
@@ -277,7 +300,7 @@ export function generateLevel(length) {
             // ... (rest of legacy logic)
             // Find candidates: Any room that is NOT Start, NOT Boss, NOT Shop
             let candidates = fullMapCoords.filter(c => {
-                if (c === "0,0" || c === Globals.bossCoord || c === shopCoord) return false;
+                if (c === "0,0" || c === Globals.bossCoord || c === shopCoord || c === upgradeCoord) return false;
 
                 const [x, y] = c.split(',').map(Number);
 
@@ -322,6 +345,9 @@ export function generateLevel(length) {
         let template;
         if (coord === "0,0") {
             template = startTmpl;
+        } else if (coord === upgradeCoord) {
+            template = upgradeTmpl;
+            log("Generating Upgrade Room at:", coord);
         } else if (coord === Globals.bossCoord) {
             template = bossTmpl;
         } else if (coord === shopCoord) {
@@ -351,6 +377,7 @@ export function generateLevel(length) {
                 if (tmpl === startTmpl) { log("Filter Skip:", k, "Matches Start"); return false; }
                 if (tmpl === bossTmpl) { log("Filter Skip:", k, "Matches Boss"); return false; }
                 if (tmpl === shopTmpl) { log("Filter Skip:", k, "Matches Shop"); return false; }
+                if (upgradeTmpl && tmpl === upgradeTmpl) { log("Filter Skip:", k, "Matches Upgrade"); return false; }
                 if (tmpl._type && tmpl._type !== 'normal') { log("Filter Skip:", k, "Non-Normal Type:", tmpl._type); return false; } // Strict: Only undefined or 'normal'
                 log("Filter Keep:", k);
                 return true;

@@ -54,11 +54,10 @@ export const STORAGE_KEYS = {
     SESSION_WIPE: [
         'rogue_player_state',
         'rogue_transition',
-        'current_gun',
-        'current_bomb',
-        'current_gun_config',
-        'current_bomb_config',
         'rogue_current_level'
+        // NOTE: Weapons (current_gun_config, etc.) are explicitly excluded here. 
+        // Game.js `initGame()` handles weapon wiping separately via the `isRestart` flag 
+        // so that returning to the Main Menu or using debug teleport keys doesn't wipe active loadouts!
     ],
     HARD_RESET: [
         'rogue_player_state',

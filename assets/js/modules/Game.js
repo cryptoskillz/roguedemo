@@ -78,10 +78,8 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     }
 
     // FIX: Enforce Base State on Fresh Run (Reload/Restart)
-    const isDebug = Globals.gameData && Globals.gameData.debug && Globals.gameData.debug.windowEnabled === true;
-    if (!keepStats && !isDebug) {
-        resetWeaponState();
-    }
+    // Removed redundant resetWeaponState here. Weapon wiping is strictly handled by
+    // newRun, restartGame, or the isRestart block further down.
 
     // KILL ZOMBIE AUDIO (Fix for duplicate music glitch)
     // If a legacy window.introMusic exists and is playing, stop it.
@@ -134,11 +132,15 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
     // Preserved Stats for Next Level
     let savedPlayerStats = null;
+    let savedGun = null;
+    let savedBomb = null;
     log(`initGame called. isRestart=${isRestart}, keepStats=${keepStats}, player.bombType=${Globals.player ? Globals.player.bombType : 'null'}`);
 
     if (keepStats && Globals.player) {
         // Deep Clone to preserve ALL properties (items, modifiers, etc.)
         savedPlayerStats = JSON.parse(JSON.stringify(Globals.player));
+        savedGun = localStorage.getItem('current_gun');
+        savedBomb = localStorage.getItem('current_bomb');
 
         // Remove volatile runtime state
         delete savedPlayerStats.x;
@@ -149,6 +151,12 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         delete savedPlayerStats.roomY;
         delete savedPlayerStats.invulnUntil;
         delete savedPlayerStats.frozen;
+
+        // FIXED: If preserving stats but player is DEAD (restarting from game over), revive them.
+        if (savedPlayerStats.hp <= 0) {
+            savedPlayerStats.hp = savedPlayerStats.maxHp || 3;
+            log("Revived Player HP for kept-stats restart");
+        }
 
         log("Saved Complete Player State");
     }
@@ -230,17 +238,17 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         } catch (e) { }
 
         // LOAD SAVED WEAPONS OVERRIDE
-        const savedGun = localStorage.getItem('current_gun');
-        const savedBomb = localStorage.getItem('current_bomb');
-        if (savedGun) {
-            if (!gData) gData = {};
-            gData.gunType = savedGun;
-            log("Restored Gun: " + savedGun);
-        }
-        if (savedBomb) {
-            if (!gData) gData = {};
-            gData.bombType = savedBomb;
-            log("Restored Bomb: " + savedBomb);
+        if (keepStats) {
+            if (savedGun) {
+                if (!gData) gData = {};
+                gData.gunType = savedGun;
+                log("Restored Gun: " + savedGun);
+            }
+            if (savedBomb) {
+                if (!gData) gData = {};
+                gData.bombType = savedBomb;
+                log("Restored Bomb: " + savedBomb);
+            }
         }
 
         // APPLY SAVED UNLOCK OVERRIDES (Moved here to affect startLevel)
@@ -265,15 +273,11 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             console.error("Failed to apply saved unlocks", e);
         }
 
-        // 2. Apply Permanent Unlocks to Default Loadout (Fix for Fresh Load/Refresh)
-        if (!gData.gunType && gData.unlocked_peashooter) {
-            gData.gunType = 'peashooter';
-            log("Applying Unlocked Peashooter to Loadout");
-        }
-        if (!gData.bombType && gData.unlocked_bomb_normal) {
-            gData.bombType = 'normal';
-            log("Applying Unlocked Normal Bomb to Loadout");
-        }
+        // --- CAPTURE UPGRADE ROOM UNLOCK STATE ---
+        // Save the global toggle before level configs overwrite the 'upgradeRoom' property with object definitions
+        Globals.isUpgradeUnlocked = gData.upgradeRoom === true ||
+            JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]').includes('upgradeRoom') ||
+            (JSON.parse(localStorage.getItem('game_unlocks') || '{}')['game.json']?.upgradeRoom === true);
 
         // 3. Load Level Specific Data
         const storedLevel = localStorage.getItem('rogue_current_level');
@@ -683,8 +687,18 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         // Restore Stats if kept
         if (savedPlayerStats) {
             log("Restoring Full Player State");
+
+            // PREVENT DEEP-MERGE FROM OVERWRITING INTENTIONAL 'NULL' LOADOUTS
+            // To ensure Level 1 (no items) to Level 2 (no items) stays empty:
+            const wasGunless = savedPlayerStats.gunType === null || savedPlayerStats.gunType === "";
+            const wasBombless = savedPlayerStats.bombType === null || savedPlayerStats.bombType === "";
+
             // Use Deep Merge to ensure version compatibility (New keys in defaults are kept)
             deepMerge(Globals.player, savedPlayerStats);
+
+            // Re-assert emptiness if the deepMerge accidentally populated from 'availablePlayers' default
+            if (wasGunless) Globals.player.gunType = null;
+            if (wasBombless) Globals.player.bombType = null;
 
             if (savedPlayerStats.perfectStreak !== undefined) {
                 Globals.perfectStreak = savedPlayerStats.perfectStreak;
@@ -713,32 +727,63 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             Globals.player.bombType = Globals.gameData.bombType;
         }
 
+        // --- Apply Permanent Upgrades ---
+        if (!savedPlayerStats) {
+            const bonusMaxHp = parseFloat(localStorage.getItem('upgrade_permanent_maxHp') || '0');
+            if (bonusMaxHp > 0) {
+                Globals.player.maxHp = (Globals.player.maxHp || 3) + bonusMaxHp;
+                Globals.player.hp = Globals.player.maxHp;
+                log("Applied permanent maxHp bonus:", bonusMaxHp);
+            }
+
+            const bonusKeys = parseFloat(localStorage.getItem('upgrade_permanent_keys') || '0');
+            if (bonusKeys > 0) {
+                if (!Globals.player.inventory) Globals.player.inventory = {};
+                Globals.player.inventory.maxKeys = (Globals.player.inventory.maxKeys || 5) + bonusKeys;
+                Globals.player.inventory.keys = (Globals.player.inventory.keys || 0) + bonusKeys;
+                log("Applied permanent keys bonus:", bonusKeys);
+            }
+
+            const bonusSpeed = parseFloat(localStorage.getItem('upgrade_permanent_speed') || '0');
+            if (bonusSpeed > 0) {
+                Globals.player.speed += bonusSpeed;
+                log("Applied permanent speed bonus:", bonusSpeed);
+            }
+        }
+
         // Load player specific assets
         let fetchedGun = null;
         let fetchedBomb = null;
 
         try {
             if (Globals.player.gunType) {
-                const gunUrl = `/json/rewards/items/guns/player/${Globals.player.gunType}.json?t=` + Date.now();
-                const gRes = await fetch(gunUrl);
-                if (gRes.ok) {
-                    fetchedGun = await gRes.json();
-                    if (fetchedGun.location) {
-                        let loc = fetchedGun.location;
-                        if (loc.startsWith('items/')) loc = 'rewards/' + loc;
-                        const realRes = await fetch(`${JSON_PATHS.ROOT}${loc}?t=` + Date.now());
-                        if (realRes.ok) fetchedGun = await realRes.json();
-                    }
-                } else console.error("Gun fetch failed:", gRes.status, gRes.statusText);
+                // FIRST: Check cache for runtime upgrades during current run
+                const cachedGunData = localStorage.getItem('current_gun_config');
+                if (cachedGunData) {
+                    fetchedGun = JSON.parse(cachedGunData);
+                    log("Loaded Gun from LocalStorage Cache (Preserving Modifiers)");
+                } else {
+                    const gunUrl = `/json/rewards/items/guns/player/${Globals.player.gunType}.json?t=` + Date.now();
+                    const gRes = await fetch(gunUrl);
+                    if (gRes.ok) {
+                        fetchedGun = await gRes.json();
+                        if (fetchedGun.location) {
+                            let loc = fetchedGun.location;
+                            if (loc.startsWith('items/')) loc = 'rewards/' + loc;
+                            const realRes = await fetch(`${JSON_PATHS.ROOT}${loc}?t=` + Date.now());
+                            if (realRes.ok) fetchedGun = await realRes.json();
+                        }
+                    } else console.error("Gun fetch failed:", gRes.status, gRes.statusText);
+                }
             } else {
                 log("No player.gunType defined, skipping initial fetch.");
             }
         } catch (e) { console.error("Gun fetch error:", e); }
 
-        if (!fetchedGun && !savedPlayerStats) {
-            log("Attempting fallback to 'peashooter'...");
+        if (!fetchedGun && !savedPlayerStats && Globals.player.gunType) {
+            log(`Attempting fallback to '${Globals.player.gunType}'...`);
             try {
-                const res = await fetch(`/json/rewards/items/guns/player/peashooter.json?t=` + Date.now());
+                const res = await fetch(`/json/rewards/items/guns/player/${Globals.player.gunType}.json?t=` + Date.now());
                 if (res.ok) {
                     fetchedGun = await res.json();
                     if (fetchedGun.location) {
@@ -748,25 +793,35 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
                         const realRes = await fetch(`${JSON_PATHS.ROOT}${loc}?t=` + Date.now());
                         if (realRes.ok) fetchedGun = await realRes.json();
                     }
-                    player.gunType = 'peashooter'; // Update player state
+                    Globals.player.gunType = Globals.player.gunType; // Update player state
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.error("Failed fallback load for gun:", Globals.player.gunType, e);
+            }
         }
 
         const bombUrl = Globals.player.bombType ? `/json/rewards/items/bombs/${Globals.player.bombType}.json?t=` + Date.now() : null;
         if (bombUrl) {
             try {
-                const bRes = await fetch(bombUrl);
-                if (bRes.ok) {
-                    fetchedBomb = await bRes.json();
-                    if (fetchedBomb.location) {
-                        let loc = fetchedBomb.location;
-                        if (loc.startsWith('items/')) loc = 'rewards/' + loc;
-                        const realRes = await fetch(`${JSON_PATHS.ROOT}${loc}?t=` + Date.now());
-                        if (realRes.ok) fetchedBomb = await realRes.json();
+                const cachedBombData = localStorage.getItem('current_bomb_config');
+                if (cachedBombData) {
+                    fetchedBomb = JSON.parse(cachedBombData);
+                    log("Loaded Bomb from LocalStorage Cache");
+                } else {
+                    const bRes = await fetch(bombUrl);
+                    if (bRes.ok) {
+                        fetchedBomb = await bRes.json();
+                        if (fetchedBomb.location) {
+                            let loc = fetchedBomb.location;
+                            if (loc.startsWith('items/')) loc = 'rewards/' + loc;
+                            const realRes = await fetch(`${JSON_PATHS.ROOT}${loc}?t=` + Date.now());
+                            if (realRes.ok) fetchedBomb = await realRes.json();
+                        }
                     }
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.error("Failed fallback load for bomb:", Globals.player.bombType, e);
+            }
         }
 
         if (!fetchedGun) {
@@ -783,11 +838,13 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         if (!savedPlayerStats && !isRestart) {
             if (!localStorage.getItem('base_gun') && Globals.player.gunType) {
                 localStorage.setItem('base_gun', Globals.player.gunType);
-                log("Saved Base Gun:", Globals.player.gunType);
+                localStorage.setItem('base_gun_config', JSON.stringify(Globals.gun));
+                log("Saved Base Gun & Config:", Globals.player.gunType);
             }
             if (!localStorage.getItem('base_bomb') && Globals.player.bombType) {
                 localStorage.setItem('base_bomb', Globals.player.bombType);
-                log("Saved Base Bomb:", Globals.player.bombType);
+                localStorage.setItem('base_bomb_config', JSON.stringify(Globals.bomb));
+                log("Saved Base Bomb & Config:", Globals.player.bombType);
             }
         }
 
@@ -964,6 +1021,11 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         // C. Shop Room
         if (Globals.gameData.shop && Globals.gameData.shop.active && Globals.gameData.shop.room) {
             roomProtos.push(loadRoomFile(Globals.gameData.shop.room, 'shop'));
+        }
+
+        // D. Upgrade Room
+        if (Globals.isUpgradeUnlocked && Globals.gameData.upgradeRoom && typeof Globals.gameData.upgradeRoom === 'object' && Globals.gameData.upgradeRoom.room) {
+            roomProtos.push(loadRoomFile(Globals.gameData.upgradeRoom.room, 'upgrade'));
         }
 
         // WAIT FOR ALL TEMPLATES TO LOAD BEFORE GENERATING LEVEL
@@ -1221,15 +1283,47 @@ export async function startGame(keepState = false) {
             Globals.player.inventory.redShards = parseInt(storedRed);
             Globals.player.redShards = parseInt(storedRed); // Sync legacy too
         }
+
+        // --- Apply Permanent Upgrades ---
+        let upgrades = [];
+        try {
+            upgrades = JSON.parse(localStorage.getItem('game_upgrades') || '[]');
+        } catch (e) {
+            console.error("Failed to parse game_upgrades", e);
+        }
+
+        upgrades.forEach(u => {
+            if (u.type === 'player' && u.attr) {
+                const parts = u.attr.split('.');
+                let current = Globals.player;
+                for (let i = 0; i < parts.length - 1; i++) {
+                    if (current[parts[i]] === undefined) current[parts[i]] = {};
+                    current = current[parts[i]];
+                }
+                const last = parts[parts.length - 1];
+                current[last] = (parseFloat(current[last]) || 0) + (parseFloat(u.value) || 1);
+
+                // Special linking syncs
+                if (u.attr === 'maxHp') {
+                    Globals.player.hp = Globals.player.maxHp;
+                }
+                // Sync actual keys to maxKeys if maxKeys is upgraded
+                if (u.attr === 'inventory.maxKeys') {
+                    Globals.player.inventory.keys = (Globals.player.inventory.keys || 0) + (parseFloat(u.value) || 1);
+                }
+
+                log(`Applied permanent upgrade JSON: ${u.attr} +${u.value || 1}`);
+            }
+        });
     }
 
     // Async Load Assets then Start
     // Async Load Assets then Start
     (async () => {
         try {
-            // FIXED: Only fetch weapons if NOT preserving state. 
+            // FIXED: Fetch weapons if NOT preserving state OR if Globals.gun was lost from RAM
             // If keepState is true, 'gun' and 'bomb' globals retain their runtime modifications (upgrades).
-            if (!keepState) {
+            if (!keepState || !Globals.gun || Object.keys(Globals.gun).length === 0) {
                 const [gData, bData] = await Promise.all([
                     (async () => {
                         try {
@@ -1270,7 +1364,7 @@ export async function startGame(keepState = false) {
                 Globals.gun = gData;
                 Globals.bomb = bData;
             } else {
-                log("Keeping existing Weapon State (Gun/Bomb globals preserved)");
+                log("Keeping existing Weapon State (Gun/Bomb globals preserved in RAM)");
             }
 
             if (loadingEl) loadingEl.style.display = 'none'; // Hide loading when done
@@ -3162,7 +3256,11 @@ export async function restartGame(keepItems = false, targetLevel = null) {
             ? Globals.gameData.showDebugWindow
             : (Globals.gameData.debug && Globals.gameData.debug.windowEnabled === true)
     );
-    if (!keepItems && !isDebug) resetWeaponState();
+
+    // If restarting game and not explicitly asked to keep items, reset weapons manually.
+    if (!keepItems) {
+        resetWeaponState();
+    }
 
     // Trigger "Cool Teleport Effect" (Glitch Shake)
     Globals.screenShake.power = 20;
@@ -3176,10 +3274,9 @@ export async function restartGame(keepItems = false, targetLevel = null) {
 }
 Globals.restartGame = restartGame;
 
-export async function newRun(targetLevel = null) {
+export async function newRun(targetLevel = null, keepWeapons = false) {
 
     log("Starting New Run (Fresh Seed)");
-    resetWeaponState();
     // Generate new seed manually here before calling init (as init handles restart specially)
     // Actually, calling initGame(false) treats it as a "New Game" which generates a random seed!
     // BUT initGame(false) shows the Welcome Screen by default (shouldAutoStart check).
@@ -3200,13 +3297,12 @@ export async function newRun(targetLevel = null) {
     if (seedInput) seedInput.value = "";
 
     // 2. Call initGame as if it's a restart (to skip welcome) but with the NEW seed already set?
-    await initGame(true, targetLevel);
+    await initGame(true, targetLevel, keepWeapons);
 }
 Globals.newRun = newRun;
 
 export function goToWelcome() {
     saveGameStats();
-    resetWeaponState();
     initGame(false);
 }
 Globals.goToWelcome = goToWelcome;
@@ -3287,103 +3383,104 @@ export async function handleUnlocks(unlockKeys) {
 
 
 export async function showNextUnlock() {
-    const unlockEl = document.getElementById('unlock-overlay');
-    if (Globals.unlockQueue.length === 0) {
-        // All Done -> Proceed to Victory
-        unlockEl.style.display = 'none';
-        Globals.isUnlocking = false;
-        Globals.keys = {}; // Clear inputs to prevent stuck movement after modal closes
+    return new Promise(async (resolve) => {
+        const unlockEl = document.getElementById('unlock-overlay');
+        if (Globals.unlockQueue.length === 0) {
+            // All Done -> Proceed to Victory
+            unlockEl.style.display = 'none';
+            Globals.isUnlocking = false;
+            Globals.keys = {}; // Clear inputs to prevent stuck movement after modal closes
 
-        // Final Win State
-        handleLevelComplete();
-        return;
-    }
-
-    const key = Globals.unlockQueue.shift();
-    // Try to fetch unlock data
-    try {
-        // Handle "victory" specially or just ignore if file missing (user deleted it)
-        // If file is missing, fetch throws or returns 404
-        const res = await fetch(`json/rewards/unlocks/${key}.json?t=${Date.now()}`);
-        if (res.ok) {
-            const data = await res.json();
-
-            // Save Persistent Override (if applicable)
-            if (data.json && data.attr && data.value !== undefined) {
-                saveUnlockOverride(data.json, data.attr, data.value);
-            }
-
-            // SPECIAL: Instant Music Play
-            if (key === 'music') {
-                log("Music Unlocked! Playing immediately...");
-                Globals.musicMuted = false;
-                localStorage.setItem('music_muted', 'false');
-                // Ensure music is enabled in gameData too so toggle works
-                Globals.gameData.music = true;
-
-                if (introMusic) {
-                    if (introMusic.paused) fadeIn(introMusic, 5000);
-                }
-            }
-
-            // CHECK HISTORY: Skip if already unlocked
-            const history = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
-            if (history.includes(key)) {
-                log(`Skipping already unlocked: ${key}`);
-                showNextUnlock();
-                return;
-            }
-
-            // Add to history now (or after OK? better now to prevent loop if crash)
-            history.push(key);
-            localStorage.setItem('game_unlocked_ids', JSON.stringify(history));
-
-            // Render
-            unlockEl.innerHTML = `
-                <h1 style="color: gold; text-shadow: 0 0 10px gold;">UNLOCKED!</h1>
-                <h2 style="font-size: 2em; margin: 20px;">${data.name || key}</h2>
-                
-                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Game Info</p>
-                <div style="color: #ccc; font-family: monospace; text-align: left; display: inline-block; margin: 0 auto;">
-                     <p>Seed: <span style="color: #95a5a6">${Globals.seed || 'Unknown'}</span></p>
-                </div>
-
-                <p style="font-size: 1.2em; color: #aaa;">${data.description || "You have unlocked a new feature!"}</p>
-                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
-                <p style="color: #ccc;">Cryptoskillz</p>
-                <div style="margin-top: 40px; padding: 10px 20px; border: 2px solid white; cursor: pointer; display: inline-block;" id="unlock-ok-btn">
-                    CONTINUE (Enter)
-                </div>
-            `;
-            unlockEl.style.display = 'flex';
-
-            // SFX??
-            if (window.SFX && SFX.coin) SFX.coin(); // Reuse coin sound for now
-
-            // Handler for click/key
-            const proceed = () => {
-                window.removeEventListener('keydown', keyHandler);
-                document.getElementById('unlock-ok-btn').removeEventListener('click', proceed);
-                showNextUnlock(); // Recursion for next item
-            };
-
-            const keyHandler = (e) => {
-                if (e.code === 'Enter' || e.code === 'Space') {
-                    proceed();
-                }
-            };
-
-            document.getElementById('unlock-ok-btn').addEventListener('click', proceed);
-            window.addEventListener('keydown', keyHandler);
-
-        } else {
-            console.warn(`Unlock file not found for: ${key}`);
-            showNextUnlock(); // Skip if not found
+            resolve();
+            return;
         }
-    } catch (e) {
-        console.warn(`Failed to load unlock: ${key}`, e);
-        showNextUnlock(); // Skip on error
-    }
+
+        const key = Globals.unlockQueue.shift();
+        // Try to fetch unlock data
+        try {
+            // Handle "victory" specially or just ignore if file missing (user deleted it)
+            // If file is missing, fetch throws or returns 404
+            const res = await fetch(`json/rewards/unlocks/${key}.json?t=${Date.now()}`);
+            if (res.ok) {
+                const data = await res.json();
+
+                // Save Persistent Override (if applicable)
+                if (data.json && data.attr && data.value !== undefined) {
+                    saveUnlockOverride(data.json, data.attr, data.value);
+                }
+
+                // SPECIAL: Instant Music Play
+                if (key === 'music') {
+                    log("Music Unlocked! Playing immediately...");
+                    Globals.musicMuted = false;
+                    localStorage.setItem('music_muted', 'false');
+                    // Ensure music is enabled in gameData too so toggle works
+                    Globals.gameData.music = true;
+
+                    if (introMusic) {
+                        if (introMusic.paused) fadeIn(introMusic, 5000);
+                    }
+                }
+
+                // CHECK HISTORY: Skip if already unlocked
+                const history = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+                if (history.includes(key)) {
+                    log(`Skipping already unlocked: ${key}`);
+                    showNextUnlock().then(resolve);
+                    return;
+                }
+
+                // Add to history now (or after OK? better now to prevent loop if crash)
+                history.push(key);
+                localStorage.setItem('game_unlocked_ids', JSON.stringify(history));
+
+                // Render
+                unlockEl.innerHTML = `
+                    <h1 style="color: gold; text-shadow: 0 0 10px gold;">UNLOCKED!</h1>
+                    <h2 style="font-size: 2em; margin: 20px;">${data.name || key}</h2>
+                    
+                    <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Game Info</p>
+                    <div style="color: #ccc; font-family: monospace; text-align: left; display: inline-block; margin: 0 auto;">
+                         <p>Seed: <span style="color: #95a5a6">${Globals.seed || 'Unknown'}</span></p>
+                    </div>
+
+                    <p style="font-size: 1.2em; color: #aaa;">${data.description || "You have unlocked a new feature!"}</p>
+                    <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
+                    <p style="color: #ccc;">Cryptoskillz</p>
+                    <div style="margin-top: 40px; padding: 10px 20px; border: 2px solid white; cursor: pointer; display: inline-block;" id="unlock-ok-btn">
+                        CONTINUE (Enter)
+                    </div>
+                `;
+                unlockEl.style.display = 'flex';
+
+                // SFX??
+                if (window.SFX && SFX.coin) SFX.coin(); // Reuse coin sound for now
+
+                // Handler for click/key
+                const proceed = () => {
+                    window.removeEventListener('keydown', keyHandler);
+                    document.getElementById('unlock-ok-btn').removeEventListener('click', proceed);
+                    showNextUnlock().then(resolve); // Recursion for next item
+                };
+
+                const keyHandler = (e) => {
+                    if (e.code === 'Enter' || e.code === 'Space') {
+                        proceed();
+                    }
+                };
+
+                document.getElementById('unlock-ok-btn').addEventListener('click', proceed);
+                window.addEventListener('keydown', keyHandler);
+
+            } else {
+                console.warn(`Unlock file not found for: ${key}`);
+                showNextUnlock().then(resolve); // Skip if not found
+            }
+        } catch (e) {
+            console.warn(`Failed to load unlock: ${key}`, e);
+            showNextUnlock().then(resolve); // Skip on error
+        }
+    });
 }
 
 export function saveUnlockOverride(file, attr, value) {
@@ -3432,6 +3529,13 @@ export function confirmNewGame() {
     // Clear Persistence to ensure fresh start
     // Clear Persistence to ensure fresh start (Hard Reset)
     STORAGE_KEYS.HARD_RESET.forEach(key => localStorage.removeItem(key));
+
+    // Clear Permanent Upgrades array and Payment Progress
+    localStorage.removeItem('game_upgrades');
+    const keysToRemove = Object.keys(localStorage).filter(k =>
+        k.startsWith('upgrade_permanent_') || k.startsWith('upgrade_amountSpent_')
+    );
+    keysToRemove.forEach(k => localStorage.removeItem(k));
 
     location.reload();
 }

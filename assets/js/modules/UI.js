@@ -190,7 +190,7 @@ export async function updateUI() {
     }
 
     // Gun & Ammo
-    const gunName = Globals.player.gunType || "Default";
+    const gunName = Globals.player.gunType || "Peashooter";
     if (Globals.elements.gun) Globals.elements.gun.innerText = gunName.toUpperCase();
 
     let ammoText = "INF";
@@ -215,9 +215,9 @@ export async function updateUI() {
 
     // Shards
     const redShards = Globals.player.inventory.redShards || 0;
-    const maxRed = Globals.player.maxRedShards || 500;
+    const maxRed = Globals.player.inventory.maxRedShards || 500;
     const greenShards = Globals.player.inventory.greenShards || 0;
-    const maxGreen = Globals.player.maxGreenShards || 100;
+    const maxGreen = Globals.player.inventory.maxGreenShards || 100;
     const redEl = document.getElementById('red-shards');
     const greenEl = document.getElementById('green-shards');
 

@@ -1,0 +1,129 @@
+{
+    "name": "Upgrade Room",
+    "description": "Lets get swol!",
+    "type": "shop",
+    "showIntro": true,
+    "hardness": 0,
+    "doors": {
+        "top": {
+            "locked": 0,
+            "active": 0,
+            "secret": false
+        },
+        "bottom": {
+            "locked": 0,
+            "active": 0,
+            "secret": false
+        },
+        "left": {
+            "locked": 0,
+            "active": 0,
+            "secret": false
+        },
+        "right": {
+            "locked": 0,
+            "active": 0,
+            "secret": false
+        }
+    },
+    "switches": {
+        "switch 1": {
+            "name": "Max Health +1",
+            "shard": "red",
+            "colour": "#008000",
+            "size": 40,
+            "count": 1,
+            "defaultCost": 1000,
+            "amountSpent": 0,
+            "maxAllowed": 99,
+            "item": "/json/rewards/items/modifiers/player/addMaxhp.json",
+            "modify": {
+                "type": "player",
+                "attr": "maxHp"
+            },
+            "x": 50,
+            "y": 50,
+            "action": "upgrade"
+        },
+        "switch 2": {
+            "name": "Max Key +1",
+            "shard": "red",
+            "colour": "#FF0000",
+            "size": 40,
+            "count": 1,
+            "defaultCost": 1000,
+            "amountSpent": 0,
+            "maxAllowed": 99,
+            "item": "/json/rewards/items/inventory/addmaxkey.json",
+            "modify": {
+                "type": "player",
+                "attr": "inventory.maxKeys",
+                "amount": 1
+            },
+            "x": 200,
+            "y": 50,
+            "action": "upgrade"
+        },
+        "switch 3": {
+            "name": "Max Bomb +1",
+            "shard": "red",
+            "colour": "#FF0000",
+            "size": 40,
+            "count": 1,
+            "defaultCost": 1000,
+            "amountSpent": 0,
+            "maxAllowed": 99,
+            "item": "/json/rewards/items/inventory/addmaxbomb.json",
+            "modify": {
+                "type": "player",
+                "attr": "inventory.maxBombs",
+                "amount": 1
+            },
+            "x": 350,
+            "y": 50,
+            "action": "upgrade"
+        },
+        "switch 4": {
+            "name": "Max Green Shards +100",
+            "shard": "red",
+            "colour": "#FF0000",
+            "size": 40,
+            "count": 1,
+            "defaultCost": 1000,
+            "amountSpent": 0,
+            "maxAllowed": 9999,
+            "item": "/json/rewards/items/inventory/addmaxgreenshards.json",
+            "modify": {
+                "type": "player",
+                "attr": "inventory.maxGreenShards",
+                "amount": 100
+            },
+            "x": 500,
+            "y": 50,
+            "action": "upgrade"
+        },
+        "switch 5": {
+            "name": "Max Red Shards +100",
+            "shard": "red",
+            "colour": "#FF0000",
+            "size": 40,
+            "count": 1,
+            "defaultCost": 1000,
+            "amountSpent": 0,
+            "maxAllowed": 9999,
+            "item": "/json/rewards/items/inventory/addmaxredshards.json",
+            "modify": {
+                "type": "player",
+                "attr": "inventory.maxRedShards",
+                "amount": 100
+            },
+            "x": 650,
+            "y": 50,
+            "action": "upgrade"
+        }
+    },
+    "chests": {},
+    "width": 800,
+    "height": 600,
+    "enemies": []
+}

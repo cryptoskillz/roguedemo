@@ -2287,19 +2287,7 @@ export function updatePortal() {
                     Globals.portal.finished = true; // Prevent re-scrap
 
                     // EXPLICITLY TRIGGER COMPLETION (Don't wait for re-collision)
-                    const roomUnlocks = Globals.roomData.unlocks || [];
-                    const foundUnlocks = Globals.foundUnlocks || [];
-                    const allUnlocks = [...roomUnlocks, ...foundUnlocks];
-
-                    // Determine if we have any unlocks to process
-                    // Filter duplicates? handleUnlocks calls showNextUnlock which checks history, so duplicates are fine but maybe cleaner to unique.
-                    const uniqueUnlocks = [...new Set(allUnlocks)];
-
-                    if (uniqueUnlocks.length > 0) {
-                        Globals.handleUnlocks(uniqueUnlocks);
-                    } else {
-                        handleLevelComplete();
-                    }
+                    handleLevelComplete();
                 }, 1500);
                 return;
             } else {
@@ -2311,11 +2299,7 @@ export function updatePortal() {
         if (Globals.portal.scrapping) return; // Wait
 
         // WIN GAME
-        if (Globals.roomData.unlocks && Globals.roomData.unlocks.length > 0) {
-            Globals.handleUnlocks(Globals.roomData.unlocks);
-        } else {
-            handleLevelComplete();
-        }
+        handleLevelComplete();
     }
 }
 
@@ -3997,8 +3981,11 @@ export async function pickupItem(item, index) {
                 Globals.player.ammo = 999;
             }
 
-            if (location.includes("/")) {
-                const parts = location.split('/');
+            // FIXED: If the ground item lacked a location, but the fetched config has one, use the config's location!
+            const saveLocation = config.location || location || "";
+
+            if (saveLocation.includes("/")) {
+                const parts = saveLocation.split('/');
                 const filename = parts[parts.length - 1].replace(".json", "");
                 Globals.player.gunType = filename;
                 Globals.player.gunType = filename;
@@ -4013,7 +4000,7 @@ export async function pickupItem(item, index) {
                     // 2. Always update Current
                     localStorage.setItem('current_gun', filename);
                     localStorage.setItem('current_gun_config', JSON.stringify(config));
-                } catch (e) { }
+                } catch (e) { console.error("Gun save failed:", e); }
             }
             log(`Equipped Gun: ${config.name}`);
             spawnFloatingText(Globals.player.x, Globals.player.y - 30, config.name.toUpperCase(), config.colour || "gold");
@@ -4063,8 +4050,11 @@ export async function pickupItem(item, index) {
             }
 
             Globals.bomb = config;
-            if (location.includes("/")) {
-                const parts = location.split('/');
+            // FIXED: If the ground item lacked a location, but the fetched config has one, use the config's location!
+            const saveLocation = config.location || location || "";
+
+            if (saveLocation.includes("/")) {
+                const parts = saveLocation.split('/');
                 const filename = parts[parts.length - 1].replace(".json", "");
                 Globals.player.bombType = filename;
                 Globals.player.bombType = filename;
@@ -4117,14 +4107,16 @@ export async function pickupItem(item, index) {
                     localStorage.setItem('current_gun_config', JSON.stringify(Globals.gun));
                 }
             }
-            else if (target === 'player') {
+            else if (target === 'player' || target.startsWith('player.')) {
                 // Apply to Globals.player
                 if (data.modifiers) {
                     let applied = false;
+                    const baseTarget = target === 'player' ? '' : target.substring(7) + '.'; // e.g. "inventory."
+
                     for (const key in data.modifiers) {
                         let val = data.modifiers[key];
                         // Map 'bombs' shorthand to 'inventory.bombs'
-                        let targetKey = key;
+                        let targetKey = baseTarget + key;
                         if (targetKey === 'bombs') targetKey = 'inventory.bombs';
 
                         let isRelative = false;
@@ -4143,7 +4135,10 @@ export async function pickupItem(item, index) {
                             let current = Globals.player;
                             let valid = true;
                             for (let i = 0; i < parts.length - 1; i++) {
-                                if (current[parts[i]] === undefined) { valid = false; break; }
+                                // Initialize intermediate object paths if they don't exist
+                                if (current[parts[i]] === undefined) {
+                                    current[parts[i]] = {};
+                                }
                                 current = current[parts[i]];
                             }
                             if (valid) {
@@ -4554,6 +4549,8 @@ export function spawnRoomRewards(dropConfig, label = null) {
                     const res = await fetch(`${url}?t=${Date.now()}`);
                     if (res.ok) {
                         const itemData = await res.json();
+                        // Inject location property for special drops so pickupItem can save it!
+                        if (!itemData.location) itemData.location = url;
                         // Spawn Logic
                         let dropX = (Globals.canvas.width / 2) + (Math.random() - 0.5) * 50;
                         let dropY = (Globals.canvas.height / 2) + (Math.random() - 0.5) * 50;

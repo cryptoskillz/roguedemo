@@ -166,8 +166,8 @@ export function handleGlobalInputs(callbacks) {
         if (Globals.ghostSpawned) return;
         Globals.gameState = STATES.START;
         if (callbacks.newRun) {
-            log("Calling newRun('levels/4.json')...");
-            callbacks.newRun('levels/4.json').catch(err => console.error("newRun failed:", err));
+            log("Calling newRun('levels/4.json', true)...");
+            callbacks.newRun('levels/4.json', true).catch(err => console.error("newRun failed:", err));
             return true;
         }
     }
@@ -179,8 +179,8 @@ export function handleGlobalInputs(callbacks) {
         if (Globals.ghostSpawned) return;
         if (Globals.gameState === STATES.PLAY || Globals.gameState === STATES.GAMEOVER || Globals.gameState === STATES.WIN || Globals.gameState === STATES.GAMEMENU || Globals.gameState === STATES.START || Globals.ghostKilled) {
             if (callbacks.newRun) {
-                log("Calling newRun...");
-                callbacks.newRun().catch(err => console.error("newRun failed:", err));
+                log("Calling newRun(null, true)...");
+                callbacks.newRun(null, true).catch(err => console.error("newRun failed:", err));
                 return true;
             }
         }

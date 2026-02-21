@@ -1,0 +1,23 @@
+{
+    "name": "Max Keys+1",
+    "description": "Increases max keys by 1",
+    "purchasable": {
+        "active": true,
+        "purchaseType": "greenshards",
+        "cost": 50
+    },
+    "location": "rewards/items/inventory/addmaxkey.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "modify": "player.inventory",
+    "modifiers": {
+        "maxKeys": "+1"
+    },
+    "rarity": "uncommon"
+}

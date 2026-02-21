@@ -1,0 +1,23 @@
+{
+    "name": "Max Green Shards+100",
+    "description": "Increases max Green Shards by 100",
+    "purchasable": {
+        "active": true,
+        "purchaseType": "greenshards",
+        "cost": 50
+    },
+    "location": "rewards/items/inventory/addmaxgreenshards.json",
+    "type": "modifier",
+    "starter": false,
+    "special": false,
+    "consumed": true,
+    "unlocked": {
+        "active": false,
+        "modifyType": "session"
+    },
+    "modify": "player.inventory",
+    "modifiers": {
+        "maxGreenShards": "+100"
+    },
+    "rarity": "uncommon"
+}

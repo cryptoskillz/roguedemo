@@ -2,10 +2,8 @@ DONT DO ANY OF THESE TASKS AI
 133262
 
 # Bugs & Fixes
-- player freezes when go through a portal
 - use portalWarning; if its true do a check that looks for items in the room and if there it brings up a modal that says "Are you sure you want to enter the portal?". If you do enter a portal with items in the room you get bonus red shards
 - Unlock spawns are slow after a boss kill.
-- Turret goes the way you last fired. This should only happen when firing; if moving/not shooting, revert to pointing the way you're moving.
 - Unblock drops that have already been locked.
 - Don't spawn the same unlock twice.
 - Give red shards if there are no unlocks left.

@@ -1,0 +1,11 @@
+{
+    "name": "Upgrade Room",
+    "description": "Unlocks Upgrade Room",
+    "unlock": "upgradeRoom",
+    "json": "game.json",
+    "attr": "upgradeRoom",
+    "value": true,
+    "spawnable": true,
+    "hasItem": false,
+    "instantTrigger": false
+}

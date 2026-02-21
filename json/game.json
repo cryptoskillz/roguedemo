@@ -108,6 +108,7 @@
     },
     "secretRooms": true,
     "shops": false,
+    "upgradeRoom": false,
     "music": false,
     "pause": false,
     "items": true,
