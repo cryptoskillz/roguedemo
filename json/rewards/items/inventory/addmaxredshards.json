@@ -1,12 +1,12 @@
 {
-    "name": "Max Keys+1",
-    "description": "Increases max keys by 1",
+    "name": "Max Red Shards+100",
+    "description": "Increases red shards by 100",
     "purchasable": {
         "active": true,
         "purchaseType": "greenshards",
         "cost": 50
     },
-    "location": "rewards/items/inventory/addmaxkey.json",
+    "location": "rewards/items/inventory/addmaxredshards.json",
     "type": "modifier",
     "starter": false,
     "special": false,
@@ -17,7 +17,7 @@
     },
     "modify": "player.inventory",
     "modifiers": {
-        "maxKeys": "+1"
+        "maxRedShards": "+100"
     },
     "rarity": "uncommon"
 }

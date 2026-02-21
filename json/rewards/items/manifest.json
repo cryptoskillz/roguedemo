@@ -43,6 +43,9 @@
         "inventory/add3keys",
         "inventory/add5keys",
         "inventory/addmaxkey",
+        "inventory/addmaxbomb",
+        "inventory/addmaxgreenshards",
+        "inventory/addmaxredshards",
         "modifiers/player/add3dglasses"
     ]
 }

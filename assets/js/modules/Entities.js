@@ -4135,7 +4135,10 @@ export async function pickupItem(item, index) {
                             let current = Globals.player;
                             let valid = true;
                             for (let i = 0; i < parts.length - 1; i++) {
-                                if (current[parts[i]] === undefined) { valid = false; break; }
+                                // Initialize intermediate object paths if they don't exist
+                                if (current[parts[i]] === undefined) {
+                                    current[parts[i]] = {};
+                                }
                                 current = current[parts[i]];
                             }
                             if (valid) {
