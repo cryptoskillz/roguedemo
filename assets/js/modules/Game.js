@@ -275,6 +275,12 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             log("Applying Unlocked Normal Bomb to Loadout");
         }
 
+        // --- CAPTURE UPGRADE ROOM UNLOCK STATE ---
+        // Save the global toggle before level configs overwrite the 'upgradeRoom' property with object definitions
+        Globals.isUpgradeUnlocked = gData.upgradeRoom === true ||
+            JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]').includes('upgradeRoom') ||
+            (JSON.parse(localStorage.getItem('game_unlocks') || '{}')['game.json']?.upgradeRoom === true);
+
         // 3. Load Level Specific Data
         const storedLevel = localStorage.getItem('rogue_current_level');
         let levelFile = nextLevel;
@@ -967,7 +973,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         }
 
         // D. Upgrade Room
-        if (Globals.gameData.upgradeRoom && Globals.gameData.upgradeRoom.active && Globals.gameData.upgradeRoom.room) {
+        if (Globals.isUpgradeUnlocked && Globals.gameData.upgradeRoom && typeof Globals.gameData.upgradeRoom === 'object' && Globals.gameData.upgradeRoom.room) {
             roomProtos.push(loadRoomFile(Globals.gameData.upgradeRoom.room, 'upgrade'));
         }
 
@@ -3292,103 +3298,104 @@ export async function handleUnlocks(unlockKeys) {
 
 
 export async function showNextUnlock() {
-    const unlockEl = document.getElementById('unlock-overlay');
-    if (Globals.unlockQueue.length === 0) {
-        // All Done -> Proceed to Victory
-        unlockEl.style.display = 'none';
-        Globals.isUnlocking = false;
-        Globals.keys = {}; // Clear inputs to prevent stuck movement after modal closes
+    return new Promise(async (resolve) => {
+        const unlockEl = document.getElementById('unlock-overlay');
+        if (Globals.unlockQueue.length === 0) {
+            // All Done -> Proceed to Victory
+            unlockEl.style.display = 'none';
+            Globals.isUnlocking = false;
+            Globals.keys = {}; // Clear inputs to prevent stuck movement after modal closes
 
-        // Final Win State
-        handleLevelComplete();
-        return;
-    }
-
-    const key = Globals.unlockQueue.shift();
-    // Try to fetch unlock data
-    try {
-        // Handle "victory" specially or just ignore if file missing (user deleted it)
-        // If file is missing, fetch throws or returns 404
-        const res = await fetch(`json/rewards/unlocks/${key}.json?t=${Date.now()}`);
-        if (res.ok) {
-            const data = await res.json();
-
-            // Save Persistent Override (if applicable)
-            if (data.json && data.attr && data.value !== undefined) {
-                saveUnlockOverride(data.json, data.attr, data.value);
-            }
-
-            // SPECIAL: Instant Music Play
-            if (key === 'music') {
-                log("Music Unlocked! Playing immediately...");
-                Globals.musicMuted = false;
-                localStorage.setItem('music_muted', 'false');
-                // Ensure music is enabled in gameData too so toggle works
-                Globals.gameData.music = true;
-
-                if (introMusic) {
-                    if (introMusic.paused) fadeIn(introMusic, 5000);
-                }
-            }
-
-            // CHECK HISTORY: Skip if already unlocked
-            const history = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
-            if (history.includes(key)) {
-                log(`Skipping already unlocked: ${key}`);
-                showNextUnlock();
-                return;
-            }
-
-            // Add to history now (or after OK? better now to prevent loop if crash)
-            history.push(key);
-            localStorage.setItem('game_unlocked_ids', JSON.stringify(history));
-
-            // Render
-            unlockEl.innerHTML = `
-                <h1 style="color: gold; text-shadow: 0 0 10px gold;">UNLOCKED!</h1>
-                <h2 style="font-size: 2em; margin: 20px;">${data.name || key}</h2>
-                
-                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Game Info</p>
-                <div style="color: #ccc; font-family: monospace; text-align: left; display: inline-block; margin: 0 auto;">
-                     <p>Seed: <span style="color: #95a5a6">${Globals.seed || 'Unknown'}</span></p>
-                </div>
-
-                <p style="font-size: 1.2em; color: #aaa;">${data.description || "You have unlocked a new feature!"}</p>
-                <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
-                <p style="color: #ccc;">Cryptoskillz</p>
-                <div style="margin-top: 40px; padding: 10px 20px; border: 2px solid white; cursor: pointer; display: inline-block;" id="unlock-ok-btn">
-                    CONTINUE (Enter)
-                </div>
-            `;
-            unlockEl.style.display = 'flex';
-
-            // SFX??
-            if (window.SFX && SFX.coin) SFX.coin(); // Reuse coin sound for now
-
-            // Handler for click/key
-            const proceed = () => {
-                window.removeEventListener('keydown', keyHandler);
-                document.getElementById('unlock-ok-btn').removeEventListener('click', proceed);
-                showNextUnlock(); // Recursion for next item
-            };
-
-            const keyHandler = (e) => {
-                if (e.code === 'Enter' || e.code === 'Space') {
-                    proceed();
-                }
-            };
-
-            document.getElementById('unlock-ok-btn').addEventListener('click', proceed);
-            window.addEventListener('keydown', keyHandler);
-
-        } else {
-            console.warn(`Unlock file not found for: ${key}`);
-            showNextUnlock(); // Skip if not found
+            resolve();
+            return;
         }
-    } catch (e) {
-        console.warn(`Failed to load unlock: ${key}`, e);
-        showNextUnlock(); // Skip on error
-    }
+
+        const key = Globals.unlockQueue.shift();
+        // Try to fetch unlock data
+        try {
+            // Handle "victory" specially or just ignore if file missing (user deleted it)
+            // If file is missing, fetch throws or returns 404
+            const res = await fetch(`json/rewards/unlocks/${key}.json?t=${Date.now()}`);
+            if (res.ok) {
+                const data = await res.json();
+
+                // Save Persistent Override (if applicable)
+                if (data.json && data.attr && data.value !== undefined) {
+                    saveUnlockOverride(data.json, data.attr, data.value);
+                }
+
+                // SPECIAL: Instant Music Play
+                if (key === 'music') {
+                    log("Music Unlocked! Playing immediately...");
+                    Globals.musicMuted = false;
+                    localStorage.setItem('music_muted', 'false');
+                    // Ensure music is enabled in gameData too so toggle works
+                    Globals.gameData.music = true;
+
+                    if (introMusic) {
+                        if (introMusic.paused) fadeIn(introMusic, 5000);
+                    }
+                }
+
+                // CHECK HISTORY: Skip if already unlocked
+                const history = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+                if (history.includes(key)) {
+                    log(`Skipping already unlocked: ${key}`);
+                    showNextUnlock().then(resolve);
+                    return;
+                }
+
+                // Add to history now (or after OK? better now to prevent loop if crash)
+                history.push(key);
+                localStorage.setItem('game_unlocked_ids', JSON.stringify(history));
+
+                // Render
+                unlockEl.innerHTML = `
+                    <h1 style="color: gold; text-shadow: 0 0 10px gold;">UNLOCKED!</h1>
+                    <h2 style="font-size: 2em; margin: 20px;">${data.name || key}</h2>
+                    
+                    <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Game Info</p>
+                    <div style="color: #ccc; font-family: monospace; text-align: left; display: inline-block; margin: 0 auto;">
+                         <p>Seed: <span style="color: #95a5a6">${Globals.seed || 'Unknown'}</span></p>
+                    </div>
+
+                    <p style="font-size: 1.2em; color: #aaa;">${data.description || "You have unlocked a new feature!"}</p>
+                    <p style="font-size: 1.5em; margin: 20px 0; color: #3498db;">Design & Code</p>
+                    <p style="color: #ccc;">Cryptoskillz</p>
+                    <div style="margin-top: 40px; padding: 10px 20px; border: 2px solid white; cursor: pointer; display: inline-block;" id="unlock-ok-btn">
+                        CONTINUE (Enter)
+                    </div>
+                `;
+                unlockEl.style.display = 'flex';
+
+                // SFX??
+                if (window.SFX && SFX.coin) SFX.coin(); // Reuse coin sound for now
+
+                // Handler for click/key
+                const proceed = () => {
+                    window.removeEventListener('keydown', keyHandler);
+                    document.getElementById('unlock-ok-btn').removeEventListener('click', proceed);
+                    showNextUnlock().then(resolve); // Recursion for next item
+                };
+
+                const keyHandler = (e) => {
+                    if (e.code === 'Enter' || e.code === 'Space') {
+                        proceed();
+                    }
+                };
+
+                document.getElementById('unlock-ok-btn').addEventListener('click', proceed);
+                window.addEventListener('keydown', keyHandler);
+
+            } else {
+                console.warn(`Unlock file not found for: ${key}`);
+                showNextUnlock().then(resolve); // Skip if not found
+            }
+        } catch (e) {
+            console.warn(`Failed to load unlock: ${key}`, e);
+            showNextUnlock().then(resolve); // Skip on error
+        }
+    });
 }
 
 export function saveUnlockOverride(file, attr, value) {

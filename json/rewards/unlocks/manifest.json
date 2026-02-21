@@ -29,6 +29,7 @@
         "game/rooms/startlevel2",
         "game/rooms/startlevel3",
         "game/rooms/startlevel4",
+        "game/rooms/upgrade",
         "game/visual/minimap",
         "game/visual/statsPanel",
         "game/visual/text",

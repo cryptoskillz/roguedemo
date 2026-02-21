@@ -108,8 +108,9 @@ export function generateLevel(length) {
     // Upgrade Room Logic
     let upgradeCoord = null;
     let upgradeTmpl = null;
-    if (Globals.gameData.upgradeRoom && Globals.gameData.upgradeRoom.active) {
-        const tmplPath = Globals.gameData.upgradeRoom.room || "json/rooms/special/upgrade/room.json";
+
+    if (Globals.isUpgradeUnlocked && Globals.gameData.upgradeRoom && typeof Globals.gameData.upgradeRoom === 'object' && Globals.gameData.upgradeRoom.room) {
+        const tmplPath = Globals.gameData.upgradeRoom.room;
         const cleanPath = tmplPath.startsWith('/') ? tmplPath.substring(1) : tmplPath;
         upgradeTmpl = Globals.roomTemplates[cleanPath] || Globals.roomTemplates[tmplPath];
         if (!upgradeTmpl) {

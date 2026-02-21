@@ -20,9 +20,7 @@
             "count": 1,
             "dropChance": 0.5
         },
-        "special": [
-            "json/rewards/unlocks/game/rooms/upgrade.json"
-        ]
+        "special": []
     },
     "boss": "json/enemies/bosses/boss4.json",
     "isBoss": true,
@@ -30,7 +28,9 @@
     "doors": {},
     "width": 800,
     "height": 600,
-    "unlocks": [],
+    "unlocks": [
+        "/game/rooms/upgrade"
+    ],
     "unlockItem": {
         "active": false,
         "count": 1,

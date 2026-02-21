@@ -2287,19 +2287,7 @@ export function updatePortal() {
                     Globals.portal.finished = true; // Prevent re-scrap
 
                     // EXPLICITLY TRIGGER COMPLETION (Don't wait for re-collision)
-                    const roomUnlocks = Globals.roomData.unlocks || [];
-                    const foundUnlocks = Globals.foundUnlocks || [];
-                    const allUnlocks = [...roomUnlocks, ...foundUnlocks];
-
-                    // Determine if we have any unlocks to process
-                    // Filter duplicates? handleUnlocks calls showNextUnlock which checks history, so duplicates are fine but maybe cleaner to unique.
-                    const uniqueUnlocks = [...new Set(allUnlocks)];
-
-                    if (uniqueUnlocks.length > 0) {
-                        Globals.handleUnlocks(uniqueUnlocks);
-                    } else {
-                        handleLevelComplete();
-                    }
+                    handleLevelComplete();
                 }, 1500);
                 return;
             } else {
@@ -2311,11 +2299,7 @@ export function updatePortal() {
         if (Globals.portal.scrapping) return; // Wait
 
         // WIN GAME
-        if (Globals.roomData.unlocks && Globals.roomData.unlocks.length > 0) {
-            Globals.handleUnlocks(Globals.roomData.unlocks);
-        } else {
-            handleLevelComplete();
-        }
+        handleLevelComplete();
     }
 }
 

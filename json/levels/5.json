@@ -22,7 +22,6 @@
         "room": "json/rooms/shops/shop_1/room.json"
     },
     "upgradeRoom": {
-        "active": true,
         "room": "json/rooms/special/upgrade/room.json"
     },
     "availablerooms": [
