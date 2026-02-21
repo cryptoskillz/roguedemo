@@ -2,7 +2,6 @@ DONT DO ANY OF THESE TASKS AI
 133262
 
 # Bugs & Fixes
-- restart kills you instantly
 - only show upgrade room is display stat is set
 - use portalWarning; if its true do a check that looks for items in the room and if there it brings up a modal that says "Are you sure you want to enter the portal?". If you do enter a portal with items in the room you get bonus red shards
 - Unlock spawns are slow after a boss kill.

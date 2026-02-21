@@ -28,34 +28,41 @@
     },
     "switches": {
         "switch 1": {
-            "name": "Health",
+            "name": "Max Health +1",
             "shard": "red",
             "colour": "#008000",
             "size": 40,
             "count": 1,
-            "defaultCost": 1,
+            "defaultCost": 1000,
+            "amountSpent": 0,
+            "maxAllowed": 99,
+            "item": "/json/rewards/items/modifiers/player/addMaxhp.json",
+            "modify": {
+                "type": "player",
+                "attr": "maxHp"
+            },
             "x": 50,
             "y": 50,
-            "action": "upgrade",
-            "reroll": {
-                "cost": 5,
-                "incrementCost": 1
-            }
+            "action": "upgrade"
         },
         "switch 2": {
-            "name": "switch",
+            "name": "Max Key +1",
             "shard": "red",
             "colour": "#FF0000",
             "size": 40,
             "count": 1,
-            "defaultCost": 100,
+            "defaultCost": 1000,
+            "amountSpent": 0,
+            "maxAllowed": 99,
+            "item": "/json/rewards/items/modifiers/player/addMaxhp.json",
+            "modify": {
+                "type": "player",
+                "attr": "keys",
+                "amount": 1
+            },
             "x": 200,
             "y": 50,
-            "action": "upgrade",
-            "reroll": {
-                "cost": 5,
-                "incrementCost": 0.1
-            }
+            "action": "upgrade"
         }
     },
     "chests": {},
