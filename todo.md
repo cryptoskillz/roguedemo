@@ -2,13 +2,12 @@ DONT DO ANY OF THESE TASKS AI
 133262
 
 # Bugs & Fixes
-- Enemies spawn outside the room if they are very big.
+- You can move bombs into other bombs that are solid.
 - Shield shows when you go into the portal.
 - Bomb goes blue when you leave a room and re-enter.
 - Bomb radius shouldn't hit you instantly; add wave speed so you can run from the blast wave.
 - Bomb drop icon has a big 'B'.
 - Level transition fix: Last screen shows a little before going to the welcome screen on levels 0, 1, 2, and 5.
-- You can move bombs into other bombs that are solid.
 - If you press 0 or 9, it should update the debug buttons to on/off.
 - Chained explosions should blow in sequence, not all at the same time.
 - Leaving a room with a remote bomb prevents detonation with the space bar.
@@ -88,6 +87,7 @@ DONT DO ANY OF THESE TASKS AI
 - Defeating Ghost: Buy ghost trap (10k red shards) -> Catch ghost (5 seconds) -> take to portal room to let out -> he dies. Upgrade trap timer.
 
 # Enemies & NPCs
+- Enemies spawn outside the room if they are very big.
 - Add stay angry when hit feature
 - Add Shopkeeper NPC.
 - Boss speech events (entry & death).
