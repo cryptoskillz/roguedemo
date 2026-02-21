@@ -17,7 +17,6 @@ DONT DO ANY OF THESE TASKS AI
 
 
 # Rooms & Levels
-- if only shards are left in a room when you enter the portal dont display the modal just collect the shards
 - All rooms should have a number of switches that have to be stood on for x seconds to open the door, so we can do a pacafist run.
 - **Level Sequences**:
   - **Level 6**: Golden path maze level (World 7-4). Room name followed by "deja vu".

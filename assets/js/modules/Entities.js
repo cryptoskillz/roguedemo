@@ -2287,19 +2287,33 @@ export function updatePortal() {
         // Check for Warning Feature
         if (Globals.gameData.portalWarning && Globals.groundItems.length > 0) {
 
-            // Only fire once if they are standing on it
-            if (!Globals.portal.warningActive) {
-                Globals.portal.warningActive = true;
-
-                // Pause input manually
-                Globals.inputDisabled = true;
-
-                // Pop Modal (via Global window export)
-                if (window.showPortalWarningModal) {
-                    window.showPortalWarningModal(Globals.groundItems.length);
+            // Auto-collect shards and evaluate if any real items remain
+            const realItems = [];
+            for (let i = Globals.groundItems.length - 1; i >= 0; i--) {
+                const item = Globals.groundItems[i];
+                if (item.data && item.data.type === 'shard') {
+                    // Auto-collect the shard
+                    pickupItem(item, "You");
+                    Globals.groundItems.splice(i, 1);
+                } else {
+                    realItems.push(item);
                 }
             }
-            return;
+
+            // Only fire modal if REAL items (not just shards) are left
+            if (realItems.length > 0) {
+                if (!Globals.portal.warningActive) {
+                    Globals.portal.warningActive = true;
+                    // Pause input manually
+                    Globals.inputDisabled = true;
+
+                    // Pop Modal (via Global window export)
+                    if (window.showPortalWarningModal) {
+                        window.showPortalWarningModal(realItems.length);
+                    }
+                }
+                return;
+            }
         }
 
         // WIN GAME (Default Transition)
