@@ -1713,8 +1713,53 @@ export function updateBombsPhysics() {
                 }
             }
 
-        }
+            // Bomb vs Bomb Collision (Solid only)
+            if (b.solid) {
+                // To avoid checking the same pair twice, we just check against the rest of the array
+                // We'll iterate manually since this is inside a forEach
+                for (let j = 0; j < Globals.bombs.length; j++) {
+                    const b2 = Globals.bombs[j];
+                    if (b === b2 || !b2.solid || b2.exploding) continue;
 
+                    const dx = b.x - b2.x;
+                    const dy = b.y - b2.y;
+                    const dist = Math.hypot(dx, dy);
+                    const r1 = b.baseR || 15;
+                    const r2 = b2.baseR || 15;
+                    const minDist = r1 + r2;
+
+                    if (dist < minDist && dist > 0) {
+                        const overlap = minDist - dist;
+                        const nx = dx / dist;
+                        const ny = dy / dist;
+
+                        // Push both bombs apart equally (assuming similar mass for simplicity)
+                        b.x += nx * (overlap / 2);
+                        b.y += ny * (overlap / 2);
+                        b2.x -= nx * (overlap / 2);
+                        b2.y -= ny * (overlap / 2);
+
+                        // Basic elastic bounce
+                        const vxDiff = b.vx - b2.vx;
+                        const vyDiff = b.vy - b2.vy;
+                        const dot = vxDiff * nx + vyDiff * ny;
+
+                        if (dot < 0) { // Only bounce if moving towards each other
+                            const m1 = b.physics?.mass || 1.5;
+                            const m2 = b2.physics?.mass || 1.5;
+                            const res = Math.min(b.physics?.restitution || 0.5, b2.physics?.restitution || 0.5);
+
+                            const impulse = -(1 + res) * dot / ((1 / m1) + (1 / m2));
+
+                            b.vx += (impulse / m1) * nx;
+                            b.vy += (impulse / m1) * ny;
+                            b2.vx -= (impulse / m2) * nx;
+                            b2.vy -= (impulse / m2) * ny;
+                        }
+                    }
+                }
+            }
+        }
     });
 }
 

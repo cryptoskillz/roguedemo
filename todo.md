@@ -9,7 +9,7 @@ DONT DO ANY OF THESE TASKS AI
 - if you click escape in portal modal the unlock is gone when you go back
 - unlocks already dropped are being dropped again
 - speedy timer, ghost health unlocks etc not showing instantly
-- You can move bombs into other bombs that are solid.
+- [x] You can move bombs into other bombs that are solid.
 - red bomb drops with a large B
 - Bomb goes blue when you leave a room and re-enter.
 - Bomb radius shouldn't hit you instantly; add wave speed so you can run from the blast wave.

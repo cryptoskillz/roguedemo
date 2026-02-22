@@ -41,7 +41,7 @@
     "doors": {
         "openLockedDoors": false,
         "openRedDoors": true,
-        "openSecretRooms": false
+        "openSecretRooms": true
     },
     "canInteract": {
         "active": false,
