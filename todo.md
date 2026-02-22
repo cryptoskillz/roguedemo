@@ -2,7 +2,8 @@ DONT DO ANY OF THESE TASKS AI
 133262
 
 # Bugs & Fixes
-- no doors on level 0
+- hard refresh alert is no longer waiting for confirmation
+- check if you go to the next level with the correct gun, bomb, keys etc
 - if you click escape in portal modal the unlock is gone when you go back
 - unlocks already dropped are being dropped again
 - speedy timer, ghost health unlocks etc not showing instantly
@@ -17,6 +18,10 @@ DONT DO ANY OF THESE TASKS AI
 - Shield shows when you go into the portal.
 - Level transition fix: Last screen shows a little before going to the welcome screen on levels 0, 1, 2, and 5.
 
+# Upgrades
+- ghost trap 100,000
+- start with shield
+- clear the room (one time massive bomb does not work on ghost)
 
 # Rooms & Levels
 - All rooms should have a number of switches that have to be stood on for x seconds to open the door, so we can do a pacafist run.
