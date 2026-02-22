@@ -1000,6 +1000,7 @@ export function confirmPortalTransition() {
 
     // Resume processing & Force warp
     Globals.inputDisabled = false;
+    if (Globals.portal) Globals.portal.warningActive = false;
     if (Globals.handleLevelComplete) {
         Globals.handleLevelComplete();
     }

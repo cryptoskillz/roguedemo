@@ -136,6 +136,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         Globals.portal.active = false;
         Globals.portal.finished = false;
         Globals.portal.scrapping = false;
+        Globals.portal.transitioning = false;
     }
 
     // Room debug display setup moved after config load
@@ -1778,6 +1779,7 @@ export function changeRoom(dx, dy) {
             Globals.portal.active = false;
             Globals.portal.finished = false;
             Globals.portal.scrapping = false;
+            Globals.portal.transitioning = false;
             Globals.portal.color = null; // Reset color override
             Globals.portal.x = 0;
             Globals.portal.y = 0;
