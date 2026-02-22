@@ -1675,7 +1675,7 @@ export function changeRoom(dx, dy) {
                         // Max Radius (approximate if stored, else default)
                         const maxR = sb.maxR || 100;
                         if (Math.hypot(sb.x - dX, sb.y - dY) < maxR + 30) {
-                            if (sb.openLockedDoors && door.locked) {
+                            if (sb.openLockedDoors && (door.locked === 1 || door.locked === true)) {
                                 door.locked = 0;
                                 log(`Simulated Explosion: Unlocked ${dir} door`);
                             }

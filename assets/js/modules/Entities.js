@@ -3325,7 +3325,7 @@ export function drawBombs(doors) {
                     if (distCheck < b.maxR + 30) {
                         if (!door.unbombable) {
                             // log("Bomb hit door:", dir, "locked:", door.locked, "hidden:", door.hidden, "openSecretRooms:", b.openSecretRooms); // Debug
-                            if (b.openLockedDoors && door.locked) door.locked = 0; // Unlock standard locks
+                            if (b.openLockedDoors && (door.locked === 1 || door.locked === true)) door.locked = 0; // Unlock standard locks
                             if (b.openRedDoors) {
                                 // Force open even if enemies are present
                                 door.forcedOpen = true;
