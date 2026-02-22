@@ -2478,14 +2478,14 @@ export function drawPortal(overrideColor = null) {
     // Portal shape
     Globals.ctx.fillStyle = mainColor;
     Globals.ctx.beginPath();
-    Globals.ctx.ellipse(0, 0, 30, 50, 0, 0, Math.PI * 2);
+    Globals.ctx.ellipse(0, 0, 50, 70, 0, 0, Math.PI * 2);
     Globals.ctx.fill();
 
     // Swirl effect
     Globals.ctx.strokeStyle = swirlColor;
     Globals.ctx.lineWidth = 3;
     Globals.ctx.beginPath();
-    Globals.ctx.ellipse(0, 0, 20 + Math.sin(time) * 5, 40 + Math.cos(time) * 5, time, 0, Math.PI * 2);
+    Globals.ctx.ellipse(0, 0, 50 + Math.sin(time) * 5, 70 + Math.cos(time) * 5, time, 0, Math.PI * 2);
     Globals.ctx.stroke();
 
     Globals.ctx.restore();

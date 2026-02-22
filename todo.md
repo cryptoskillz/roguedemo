@@ -1,15 +1,18 @@
 DONT DO ANY OF THESE TASKS AI
 133262
 709726
+415303 <--- home room can be bombed intow
 
 # Bugs & Fixes
-- check you start with normal bomb on reload
+- 415303 has 2 trophy rooms, one is ok the other has bombale matrix and home room from the outside.  To confirm 1 trophy room per level this was on level 6
+- Shield shows when you go into the portal.
 - switch is 10% of the cost of the item it should be 10% of your maxRedShards
 - increase font for switch info 
 - if you click escape in portal modal the unlock is gone when you go back
 - unlocks already dropped are being dropped again
 - speedy timer, ghost health unlocks etc not showing instantly
-- [x] You can move bombs into other bombs that are solid.
+- when you pick up the peashooter and the normal bomb when you go to the next level you no longer have the normal bomb.  I spawned 3 bombs and pressing B did nothing.  This happens on a restart as well.
+- You can move bombs into other bombs that are solid.
 - red bomb drops with a large B
 - Bomb goes blue when you leave a room and re-enter.
 - Bomb radius shouldn't hit you instantly; add wave speed so you can run from the blast wave.
@@ -17,7 +20,6 @@ DONT DO ANY OF THESE TASKS AI
 - Chained explosions should blow in sequence, not all at the same time.
 - Golden bomb doesn't stay on the next level if you pick it up (stays if equipped at the start).
 - `max bullet+1`, `pierce`, and other modifiers don't stay on the next level.
-- Shield shows when you go into the portal.
 - Level transition fix: Last screen shows a little before going to the welcome screen on levels 0, 1, 2, and 5.
 - the refresh modal isnt actually refreshing the game, its not the end as this is mainly used for code updates anyway whihch the user will never experience.
 
