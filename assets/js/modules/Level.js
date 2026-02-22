@@ -296,7 +296,17 @@ export function generateLevel(length) {
     }
 
     // Legacy Secret Room Logic (keep for other levels or generic secrets)
-    const secretRoomTemplates = Globals.gameData.secrectrooms || [];
+    // Filter out Trophy/Home/Matrix rooms from being spawned generically,
+    // as they are handled by the cluster logic above.
+    let secretRoomTemplates = Globals.gameData.secrectrooms || [];
+    secretRoomTemplates = secretRoomTemplates.filter(tmplPath => {
+        if (!tmplPath) return false;
+        if (Globals.gameData.trophyRoom && Globals.gameData.trophyRoom.active && tmplPath.includes(Globals.gameData.trophyRoom.room)) return false;
+        if (Globals.gameData.homeRoom && Globals.gameData.homeRoom.active && tmplPath.includes(Globals.gameData.homeRoom.room)) return false;
+        if (Globals.gameData.matrixRoom && Globals.gameData.matrixRoom.active && tmplPath.includes(Globals.gameData.matrixRoom.room)) return false;
+        return true;
+    });
+
     if (secretRoomTemplates.length > 0) {
         secretRoomTemplates.forEach(templatePath => {
             // ... (rest of legacy logic)

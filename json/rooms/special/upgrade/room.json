@@ -30,7 +30,7 @@
         "switch 1": {
             "name": "Max Health +1",
             "shard": "red",
-            "colour": "#008000",
+            "colour": "#FF0000",
             "size": 40,
             "count": 1,
             "defaultCost": 1000,
@@ -119,6 +119,63 @@
             },
             "x": 650,
             "y": 50,
+            "action": "upgrade"
+        },
+        "switch 6": {
+            "name": "Ghost Trap",
+            "shard": "red",
+            "colour": "#FF0000",
+            "size": 40,
+            "count": 1,
+            "defaultCost": 1000000,
+            "amountSpent": 0,
+            "maxAllowed": 1,
+            "item": "/json/rewards/items/inventory/addghosttrap.json",
+            "modify": {
+                "type": "player",
+                "attr": "inventory.ghostrap",
+                "amount": 1
+            },
+            "x": 50,
+            "y": 150,
+            "action": "upgrade"
+        },
+        "switch 7": {
+            "name": "Matrix Key",
+            "shard": "red",
+            "colour": "#FF0000",
+            "size": 40,
+            "count": 1,
+            "defaultCost": 1000000,
+            "amountSpent": 0,
+            "maxAllowed": 1,
+            "item": "/json/rewards/items/inventory/addmatrixkey.json",
+            "modify": {
+                "type": "player",
+                "attr": "inventory.matrixKey",
+                "amount": 1
+            },
+            "x": 200,
+            "y": 150,
+            "action": "upgrade"
+        },
+        "switch 8": {
+            "name": "House Key",
+            "shard": "red",
+            "colour": "#FF0000",
+            "size": 40,
+            "count": 1,
+            "defaultCost": 10000,
+            "amountSpent": 0,
+            "maxAllowed": 1,
+            "item": "/json/rewards/items/inventory/addhousekey.json",
+            "modify": {
+                "type": "player",
+                "attr": "inventory.houseKey",
+                "amount": 1
+            },
+            "x": 350,
+            "y": 150,
             "action": "upgrade"
         }
     },
