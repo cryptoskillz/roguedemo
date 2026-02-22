@@ -40,7 +40,7 @@
     "doors": {
         "openLockedDoors": true,
         "openRedDoors": true,
-        "openSecretRooms": true
+        "openSecretRooms": false
     },
     "remoteDenoate": {
         "active": false,
