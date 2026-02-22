@@ -3051,46 +3051,45 @@ export function drawDoors() {
 
         let color = "#222"; // default open
 
+        let isHidden = false;
+
         if (door.hidden) {
-            // Hidden = Invisible (matches wall)
-            // We simply don't draw it, OR we draw it as a wall if needed. 
-            // But existing logic "continues" loop if !active. 
-            // If active=1 and hidden=1, we skip drawing the door rect?
-            // Actually, if we return, it looks like a gap?
-            // No, walls are drawn by room background. Doors are drawn ON TOP.
-            // So if we RETURN, we see the background/wall. Correct.
-            return;
+            isHidden = true;
         } else if (roomLocked && !door.forcedOpen) {
             color = "#c0392b"; // red if locked by enemies
         } else if (door.locked) {
             color = "#f1c40f"; // yellow if locked by key
         }
 
-        Globals.ctx.fillStyle = color;
         const dx = door.x ?? Globals.canvas.width / 2, dy = door.y ?? Globals.canvas.height / 2;
         const s = Globals.roomShrinkSize || 0;
 
-        if (dir === 'top') Globals.ctx.fillRect(dx - DOOR_SIZE / 2, 0 + s, DOOR_SIZE, DOOR_THICKNESS);
-        if (dir === 'bottom') Globals.ctx.fillRect(dx - DOOR_SIZE / 2, Globals.canvas.height - DOOR_THICKNESS - s, DOOR_SIZE, DOOR_THICKNESS);
-        if (dir === 'left') Globals.ctx.fillRect(0 + s, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
-        if (dir === 'right') Globals.ctx.fillRect(Globals.canvas.width - DOOR_THICKNESS - s, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
+        if (!isHidden) {
+            Globals.ctx.fillStyle = color;
+            if (dir === 'top') Globals.ctx.fillRect(dx - DOOR_SIZE / 2, 0 + s, DOOR_SIZE, DOOR_THICKNESS);
+            if (dir === 'bottom') Globals.ctx.fillRect(dx - DOOR_SIZE / 2, Globals.canvas.height - DOOR_THICKNESS - s, DOOR_SIZE, DOOR_THICKNESS);
+            if (dir === 'left') Globals.ctx.fillRect(0 + s, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
+            if (dir === 'right') Globals.ctx.fillRect(Globals.canvas.width - DOOR_THICKNESS - s, dy - DOOR_SIZE / 2, DOOR_THICKNESS, DOOR_SIZE);
+        }
 
-        // DEBUG: Draw Hitbox Overlay
-        const dit = true; // Enabled per user request
-        if (dit) {
+        // Draw Hitbox Overlay when debug window is active
+        if (DEBUG_FLAGS.WINDOW) {
             Globals.ctx.save();
-            Globals.ctx.strokeStyle = "magenta";
+            // User requested: "how when debug is on we draw paurple line... i want the same for secret doors"
+            // We use purple (#8e44ad) for secret doors and magenta for standard doors
+            Globals.ctx.strokeStyle = isHidden ? "#8e44ad" : "magenta";
+            if (isHidden) {
+                Globals.ctx.setLineDash([5, 5]); // Dashed line to further indicate hidden status in debug mode
+            }
             Globals.ctx.lineWidth = 2;
             const doorRangeW = DOOR_SIZE; // +/- DOOR_SIZE from center = 2*DOOR_SIZE width
             const doorRangeH = 45; // BOUNDARY (20) + TOLERANCE (25)
-            //show if debug is active
 
-            if (DEBUG_FLAGS.WINDOW) {
-                if (dir === 'top') Globals.ctx.strokeRect(dx - doorRangeW, 0, doorRangeW * 2, doorRangeH);
-                if (dir === 'bottom') Globals.ctx.strokeRect(dx - doorRangeW, Globals.canvas.height - doorRangeH, doorRangeW * 2, doorRangeH);
-                if (dir === 'left') Globals.ctx.strokeRect(0, dy - doorRangeW, doorRangeH, doorRangeW * 2);
-                if (dir === 'right') Globals.ctx.strokeRect(Globals.canvas.width - doorRangeH, dy - doorRangeW, doorRangeH, doorRangeW * 2);
-            }
+            if (dir === 'top') Globals.ctx.strokeRect(dx - doorRangeW, 0, doorRangeW * 2, doorRangeH);
+            if (dir === 'bottom') Globals.ctx.strokeRect(dx - doorRangeW, Globals.canvas.height - doorRangeH, doorRangeW * 2, doorRangeH);
+            if (dir === 'left') Globals.ctx.strokeRect(0, dy - doorRangeW, doorRangeH, doorRangeW * 2);
+            if (dir === 'right') Globals.ctx.strokeRect(Globals.canvas.width - doorRangeH, dy - doorRangeW, doorRangeH, doorRangeW * 2);
+
             Globals.ctx.restore();
         }
 
