@@ -966,3 +966,54 @@ export function resetSessionStats() {
     Globals.noDamageStreak = 0;
     Globals.shooterStreak = 0;
 }
+
+// --- PORTAL WARNING MODAL ---
+
+export function showPortalWarningModal(itemCount) {
+    const modal = document.getElementById('portalWarningModal');
+    const shardsSpan = document.getElementById('portalWarningShardsCount');
+
+    if (modal && shardsSpan) {
+        // Calculate bonus: 5 red shards per item left behind
+        const projectedBonus = itemCount * 5;
+        shardsSpan.innerText = projectedBonus;
+
+        modal.style.display = 'flex';
+    }
+}
+
+export function confirmPortalTransition() {
+    const modal = document.getElementById('portalWarningModal');
+    if (modal) modal.style.display = 'none';
+
+    // Tally bonus
+    const itemCount = Globals.groundItems ? Globals.groundItems.length : 0;
+    if (itemCount > 0) {
+        const bonus = itemCount * 5;
+        Globals.player.inventory.redShards = (Globals.player.inventory.redShards || 0) + bonus;
+        // Optionally update UI immediately or let the next frame catch it
+        console.log(`Converted ${itemCount} items into ${bonus} Red Shards.`);
+    }
+
+    // Erase all remaining items
+    Globals.groundItems = [];
+
+    // Resume processing & Force warp
+    Globals.inputDisabled = false;
+    if (Globals.portal) Globals.portal.warningActive = false;
+    if (Globals.handleLevelComplete) {
+        Globals.handleLevelComplete();
+    }
+}
+
+export function cancelPortalTransition() {
+    const modal = document.getElementById('portalWarningModal');
+    if (modal) modal.style.display = 'none';
+
+    // Back the player up slightly so they don't immediately re-collide
+    Globals.player.y += 10;
+
+    // Resume gameplay
+    Globals.inputDisabled = false;
+    if (Globals.portal) Globals.portal.warningActive = false;
+}

@@ -435,9 +435,9 @@ export function spawnEnemies() {
             const inst = JSON.parse(JSON.stringify(template));
             inst.templateId = bossKey;
 
-            // Init Defaults
+            // Init Defaults (Avoid Center so portal doesn't trap them)
             inst.x = (Globals.canvas.width / 2);
-            inst.y = (Globals.canvas.height / 2);
+            inst.y = (Globals.canvas.height / 4);
             if (inst.size) {
                 inst.x -= inst.size / 2;
                 inst.y -= inst.size / 2;
@@ -530,6 +530,15 @@ export function spawnEnemies() {
                     } else {
                         inst.x = Globals.random() * (Globals.canvas.width - 60) + 30;
                         inst.y = Globals.random() * (Globals.canvas.height - 60) + 30;
+
+                        // Guard against bosses spawning in absolute center (portal trap)
+                        if (inst.isBoss || inst.type === 'boss') {
+                            const cx = Globals.canvas.width / 2;
+                            const cy = Globals.canvas.height / 2;
+                            if (Math.hypot(inst.x - cx, inst.y - cy) < 60) {
+                                inst.y = Globals.canvas.height / 4; // Shift up
+                            }
+                        }
                     }
                     inst.frozen = true;
                     inst.freezeEnd = freezeUntil;
@@ -2275,31 +2284,56 @@ export function updatePortal() {
     const dist = Math.hypot(Globals.player.x - Globals.portal.x, Globals.player.y - Globals.portal.y);
     if (dist < 30) {
 
-        // SCRAP MECHANIC
-        if (!Globals.portal.scrapping && !Globals.portal.finished) {
-            Globals.portal.scrapping = true;
-            const scrapped = convertItemsToScrap(Globals.portal.x, Globals.portal.y);
+        let shardsCollected = false;
 
-            if (scrapped > 0) {
-                // Wait for visual effect
-                setTimeout(() => {
-                    Globals.portal.scrapping = false;
-                    Globals.portal.finished = true; // Prevent re-scrap
+        // Check for Warning Feature
+        if (Globals.gameData.portalWarning && Globals.groundItems.length > 0) {
 
-                    // EXPLICITLY TRIGGER COMPLETION (Don't wait for re-collision)
-                    handleLevelComplete();
-                }, 1500);
+            // Auto-collect shards and evaluate if any real items remain
+            const realItems = [];
+            for (let i = Globals.groundItems.length - 1; i >= 0; i--) {
+                const item = Globals.groundItems[i];
+                if (item.data && item.data.type === 'shard') {
+                    // Auto-collect the shard
+                    pickupItem(item, "You");
+                    Globals.groundItems.splice(i, 1);
+                    shardsCollected = true;
+                } else {
+                    realItems.push(item);
+                }
+            }
+
+            // Only fire modal if REAL items (not just shards) are left
+            if (realItems.length > 0) {
+                if (!Globals.portal.warningActive) {
+                    Globals.portal.warningActive = true;
+                    // Pause input manually
+                    Globals.inputDisabled = true;
+
+                    // Pop Modal (via Global window export)
+                    if (window.showPortalWarningModal) {
+                        window.showPortalWarningModal(realItems.length);
+                    }
+                }
                 return;
-            } else {
-                Globals.portal.scrapping = false;
-                Globals.portal.finished = true;
             }
         }
 
-        if (Globals.portal.scrapping) return; // Wait
+        // WIN GAME (Default Transition)
+        if (!Globals.portal.transitioning) {
+            Globals.portal.transitioning = true;
+            Globals.inputDisabled = true; // prevent moving while waiting
 
-        // WIN GAME
-        handleLevelComplete();
+            if (shardsCollected) {
+                setTimeout(() => {
+                    Globals.inputDisabled = false;
+                    handleLevelComplete();
+                }, 1000);
+            } else {
+                Globals.inputDisabled = false;
+                handleLevelComplete();
+            }
+        }
     }
 }
 
@@ -2348,6 +2382,7 @@ export function handleLevelComplete() {
     // GUARD: Prevent multiple triggers
     if (Globals.portal && !Globals.portal.active) return;
     if (Globals.portal) Globals.portal.active = false;
+    Globals.handleLevelComplete = handleLevelComplete; // Expose for UI.js
 
     // 0. Handle Unlocks (First priority as requested)
     const roomUnlocks = Globals.roomData.unlocks || [];
@@ -2384,34 +2419,23 @@ function proceedLevelComplete() {
         localStorage.setItem('rogue_level_splits', JSON.stringify(Globals.levelSplits));
     }
 
-    // 1. Next Level?
-    log("Checking Next Level Transition. Room:", Globals.roomData.name, "Next:", Globals.roomData.nextLevel);
-    if (Globals.roomData.nextLevel && Globals.roomData.nextLevel.trim() !== "") {
-        log("Proceeding to Next Level:", Globals.roomData.nextLevel);
-        if (Globals.introMusic) {
-            Globals.introMusic.pause();
-            Globals.introMusic.currentTime = 0;
-        }
-        localStorage.setItem('rogue_transition', 'true');
-        localStorage.setItem('rogue_current_level', Globals.roomData.nextLevel);
-        localStorage.setItem('rogue_player_state', JSON.stringify(Globals.player));
-        initGame(true, Globals.roomData.nextLevel, true);
-        return;
-    }
+    const { nextLevel, welcomeScreen, completedItMate } = Globals.roomData;
+    const hasNextLevel = nextLevel && nextLevel.trim() !== "";
 
-    // 2. Welcome Screen?
-    if (Globals.roomData.welcomeScreen) {
-        log("Level Complete. Returning to Welcome Screen.");
+    // 1. Always go to welcome screen
+    if (hasNextLevel && welcomeScreen === true && completedItMate === false) {
+        log("Level Complete. Returning to Welcome Screen. Pending Next Level:", nextLevel);
+        localStorage.setItem('rogue_transition', 'true');
+        localStorage.setItem('rogue_current_level', nextLevel);
+        localStorage.setItem('rogue_player_state', JSON.stringify(Globals.player));
         if (Globals.goToWelcome) Globals.goToWelcome();
         return;
     }
 
-    // 3. Credits / Completed It Mate (Last priority)
-    if (Globals.roomData.completedItMate) {
-        // Update Win Stats
+    // 2. Always go to end credits
+    if (hasNextLevel && welcomeScreen === false && completedItMate === true) {
         const endTime = Date.now();
         const duration = endTime - Globals.runStartTime;
-
         Globals.SessionRunTime = duration;
         Globals.NumberOfSessionRuns++;
 
@@ -2419,20 +2443,37 @@ function proceedLevelComplete() {
             Globals.BestRunTime = duration;
             localStorage.setItem('bestRunTime', duration);
         }
-        // Ensure total runs is saved
         localStorage.setItem('numberOfRuns', Globals.NumberOfRuns);
 
         showCredits();
         return;
     }
 
-    // 4. End Game / Victory (Legacy?)
-    if (Globals.roomData.endGame) {
-        Globals.gameState = STATES.WIN;
-        updateUI();
-        if (Globals.gameOver) Globals.gameOver();
+    // 3. Always go to next level
+    if (hasNextLevel && welcomeScreen === false && completedItMate === false) {
+        log("Proceeding to Next Level:", nextLevel);
+        if (Globals.introMusic) {
+            Globals.introMusic.pause();
+            Globals.introMusic.currentTime = 0;
+        }
+        localStorage.setItem('rogue_transition', 'true');
+        localStorage.setItem('rogue_current_level', nextLevel);
+        localStorage.setItem('rogue_player_state', JSON.stringify(Globals.player));
+        initGame(true, nextLevel, true);
         return;
     }
+
+    // 4. Inactive / Tutorial Portals (No transition logic defined)
+    if (!hasNextLevel && !welcomeScreen && !completedItMate) {
+        log("Inactive portal touched. Ignoring logic.");
+        if (Globals.portal) Globals.portal.transitioning = false;
+        Globals.inputDisabled = false;
+        return;
+    }
+
+    // 5. Any other configuration throw an error
+    console.error("INVALID LEVEL TRANSITION CONFIGURATION!", { nextLevel, welcomeScreen, completedItMate });
+    //if (window.alert) alert("INVALID PORTAL CONFIGURATION. Check console errors.");
 }
 
 export function updateGhost() {
@@ -4318,51 +4359,67 @@ export async function spawnUnlockItem(x, y, isBossDrop = false, rarityFilter = n
 
         // 2. Filter Unlocked
         const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
+        Globals.sessionSpawnedUnlocks = Globals.sessionSpawnedUnlocks || [];
+
         const available = allUnlocks.filter(path => {
             // Normalize manifest path to simple ID (filename)
-            // This ensures "inventory/add3bombs" checks against "add3bombs" in storage
             const simpleId = path.split('/').pop().replace(/\.json$/i, '');
-            // Check both simple ID and full path (legacy support)
-            return !unlockedIds.includes(simpleId) && !unlockedIds.includes(path);
+            // Check against permanent storage AND the current session's spawned items
+            return !unlockedIds.includes(simpleId) && !unlockedIds.includes(path) && !Globals.sessionSpawnedUnlocks.includes(path);
         });
 
         log(`SpawnUnlockItem: Found ${allUnlocks.length} total, ${unlockedIds.length} unlocked. Available: ${available.length}`);
 
         if (available.length === 0) {
             log("All items unlocked! Spawning EXTRA Shards!");
+            // Provide Red Shards if no unlocks left
             spawnCurrencyShard(x, y, 'red', 25);
             return;
         }
 
         // 3. Pick Random (Filter Spawnable logic + Rarity)
-        // We need to fetch details to check spawnable property BEFORE picking
-        const candidates = [];
-        const priorityCandidates = []; // for hasItem: false items
+        // Parallelize fetching to eliminate the massive boss kill lag
+        Globals.unlockDetailsCache = Globals.unlockDetailsCache || {};
 
-        for (const id of available) {
+        const fetchPromises = available.map(async id => {
+            if (Globals.unlockDetailsCache[id]) {
+                return { id, d: Globals.unlockDetailsCache[id] };
+            }
             try {
                 const dRes = await fetch(`${JSON_PATHS.ROOT}rewards/unlocks/${id}.json?t=${Date.now()}`);
                 if (dRes.ok) {
                     const d = await dRes.json();
-
-                    // Filter: Spawnable Check (Reverted: Skip if false)
-                    if (d.spawnable === false) continue;
-
-                    // Filter: Rarity Check (if filter provided)
-                    if (rarityFilter) {
-                        const r = d.rarity || 'common'; // Default to common if missing?
-                        if (!rarityFilter[r]) continue; // Skip if rarity not enabled
-                    }
-
-                    // User Request: Prioritize hasItem: false (Meta Unlocks)
-                    if (d.hasItem === false) {
-                        priorityCandidates.push(id);
-                    } else {
-                        // Regular unlock
-                        candidates.push(id);
-                    }
+                    Globals.unlockDetailsCache[id] = d;
+                    return { id, d };
                 }
             } catch (e) { }
+            return null;
+        });
+
+        const results = await Promise.all(fetchPromises);
+
+        const candidates = [];
+        const priorityCandidates = []; // for hasItem: false items
+
+        for (const res of results) {
+            if (!res) continue;
+            const { id, d } = res;
+
+            // Filter: Spawnable Check
+            if (d.spawnable === false) continue;
+
+            // Filter: Rarity Check (if filter provided)
+            if (rarityFilter) {
+                const r = d.rarity || 'common'; // Default to common
+                if (!rarityFilter[r]) continue;
+            }
+
+            // User Request: Prioritize hasItem: false (Meta Unlocks)
+            if (d.hasItem === false) {
+                priorityCandidates.push(id);
+            } else {
+                candidates.push(id);
+            }
         }
 
         // PRIORITIZE "hasItem: false" items first
@@ -4374,24 +4431,20 @@ export async function spawnUnlockItem(x, y, isBossDrop = false, rarityFilter = n
         } else if (candidates.length > 0) {
             nextUnlockId = candidates[Math.floor(Math.random() * candidates.length)];
         } else {
+            // Give red shards if no valid candidate left matching filters
             spawnCurrencyShard(x, y, 'red', 25);
             return;
         }
+
         log("Spawning Unlock Item:", nextUnlockId);
 
-        // Fetch Unlock Details to get Real Name
+        // Flag this item as spawned to prevent concurrent identical boss drops
+        Globals.sessionSpawnedUnlocks.push(nextUnlockId);
+
+        // Details pull from cache safely now
         let unlockName = "Unlock Reward";
-        let unlockDetails = null;
-        try {
-            const detailRes = await fetch(`${JSON_PATHS.ROOT}rewards/unlocks/${nextUnlockId}.json?t=${Date.now()}`);
-            if (detailRes.ok) {
-                const detail = await detailRes.json();
-                unlockDetails = detail;
-                if (detail.name) unlockName = detail.name;
-            }
-        } catch (e) {
-            console.warn("Failed to fetch unlock details for name:", nextUnlockId);
-        }
+        let unlockDetails = Globals.unlockDetailsCache[nextUnlockId] || null;
+        if (unlockDetails && unlockDetails.name) unlockName = unlockDetails.name;
 
         // 4. Spawn Physical Item
 

@@ -4,9 +4,63 @@
 <head>
     <title>JS Dungeon Crawler</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <script>
+        // Auto-Focus Canvas on first key press if not focused
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            const cvs = document.getElementById('gameCanvas');
+            if (cvs && document.activeElement !== cvs && e.target.tagName !== 'INPUT') {
+                cvs.focus();
+            }
+        });
+
+        // Custom Refresh Handler
+        const blockRefresh = (e) => {
+            const modal = document.getElementById('custom-refresh-modal');
+            const isModalActive = modal && modal.style.display === 'flex';
+
+            if (isModalActive) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                if (e.type === 'keydown') {
+                    if (e.key === 'r' || e.key === 'R' || e.key === 'Enter') {
+                        window.location.reload();
+                    } else if (e.key === 'c' || e.key === 'C' || e.key === 'Escape') {
+                        modal.style.display = 'none';
+                    }
+                }
+                return;
+            }
+
+            if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyR' || e.key === 'r')) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                if (e.type === 'keydown') {
+                    if (modal) modal.style.display = 'flex';
+                }
+            }
+        };
+        window.addEventListener('keydown', blockRefresh, { capture: true });
+        window.addEventListener('keyup', blockRefresh, { capture: true });
+        window.addEventListener('keypress', blockRefresh, { capture: true });
+    </script>
 </head>
 
 <body>
+    <!-- Custom Refresh Modal -->
+    <div id="custom-refresh-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; font-family: monospace;">
+        <div style="background: #222; border: 2px solid #555; padding: 20px; text-align: center; color: white;">
+            <h2 style="margin-top: 0;">Refresh Game?</h2>
+            <p>Are you sure you want to refresh? You will lose unsaved progress.</p>
+            <div style="margin-top: 20px;">
+                <button onclick="document.getElementById('custom-refresh-modal').style.display='none'"
+                    style="padding: 10px 20px; margin-right: 10px; cursor: pointer;">Cancel</button>
+                <button onclick="window.location.reload()"
+                    style="padding: 10px 20px; background: #e74c3c; color: white; border: none; cursor: pointer;">Refresh</button>
+            </div>
+        </div>
+    </div>
     <!-- ... body content ... -->
     <div id="loading"
         style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #fff; z-index: 9999; align-items: center; justify-content: center; font-family: monospace; font-size: 24px;">
@@ -167,7 +221,30 @@
         </div>
     </div>
 
-    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <!-- Portal Warning Modal -->
+    <div id="portalWarningModal"
+        style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; flex-direction: column; z-index: 2000;">
+        <h1
+            style="color: #f1c40f; font-family: 'Courier New', monospace; text-shadow: 2px 2px #000; margin-bottom: 20px;">
+            PORTAL WARNING</h1>
+        <p
+            style="color: #ecf0f1; font-family: monospace; text-align: center; max-width: 400px; line-height: 1.5; margin-bottom: 30px;">
+            There are items remaining in this room!<br><br>
+            If you proceed, remaining items will be converted to <span id="portalWarningShardsCount"
+                style="color: #e74c3c; font-weight:bold;">0</span> bonus Red Shards.<br>
+            Are you sure you want to enter the portal?
+        </p>
+        <div class="btn-container" style="gap: 20px;">
+            <button onclick="confirmPortalTransition()"
+                style="padding: 10px 20px; font-size: 18px; cursor: pointer; background: #27ae60; color: white; border: 2px solid #2ecc71; font-family: monospace;">
+                PROCEED (ENTER)</button>
+            <button onclick="cancelPortalTransition()"
+                style="padding: 10px 20px; font-size: 18px; cursor: pointer; background: #666; color: white; border: 2px solid #888; font-family: monospace;">
+                CANCEL (ESC)</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="600" height="400" tabindex="0" style="outline: none;"></canvas>
     <script type="module" src="assets/js/main.js"></script>
 
 </body>

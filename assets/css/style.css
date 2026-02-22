@@ -43,6 +43,8 @@ canvas {
     padding: 10px 15px;
     border: 2px solid #5dade2;
     border-radius: 5px;
+    min-width: 240px;
+    white-space: nowrap;
 }
 
 #minimapCanvas {

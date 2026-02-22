@@ -104,67 +104,78 @@ export function generateLore(enemy) {
     // Skip Bosses - they have their own names defined in JSON
     if (enemy.type === 'boss' || enemy.isBoss) return null;
 
-    // 1. Name Parts
     const prefix = Globals.loreData.prefixes[Math.floor(Globals.random() * Globals.loreData.prefixes.length)];
-    const firstName = Globals.loreData.firstNames[Math.floor(Globals.random() * Globals.loreData.firstNames.length)];
 
-    // 2. Surname by Shape
-    const shape = enemy.shape ? enemy.shape.toLowerCase() : 'default';
-    const surnames = Globals.loreData.surnames[shape] || Globals.loreData.surnames['default'];
-    // Fallback if shape key exists but list empty
-    const surnameList = (surnames && surnames.length > 0) ? surnames : Globals.loreData.surnames['default'];
-    const surname = surnameList[Math.floor(Globals.random() * surnameList.length)];
+    let firstName, surname, nickname, displayName, fullName, title;
+    let isUnique = false;
+    let attempts = 0;
 
-    // 3. Nickname by Stats
-    let nickname = "";
-    // Build pool based on stats
-    let pool = [];
-    if (enemy.speed > 3) pool.push('speed');
-    if (enemy.hp > 5) pool.push('hp');
-    if (enemy.damage > 2) pool.push('damage');
-    if (enemy.size > 30) pool.push('size');
-    if (enemy.size < 20) pool.push('tiny');
-    if (enemy.alwaysAngry) pool.push('angry');
+    while (!isUnique && attempts < 20) {
+        // 1. Name Parts
+        firstName = Globals.loreData.firstNames[Math.floor(Globals.random() * Globals.loreData.firstNames.length)];
 
-    // Fallback pool
-    if (pool.length === 0) pool = ['speed', 'hp'];
+        // 2. Surname by Shape
+        const shape = enemy.shape ? enemy.shape.toLowerCase() : 'default';
+        const surnames = Globals.loreData.surnames[shape] || Globals.loreData.surnames['default'];
+        const surnameList = (surnames && surnames.length > 0) ? surnames : Globals.loreData.surnames['default'];
+        surname = surnameList[Math.floor(Globals.random() * surnameList.length)];
 
-    const cat = pool[Math.floor(Globals.random() * pool.length)];
-    const nicks = Globals.loreData.nicknames[cat] || [];
-    if (nicks.length > 0) {
-        nickname = nicks[Math.floor(Globals.random() * nicks.length)];
+        // 3. Nickname by Stats
+        nickname = "";
+        let pool = [];
+        if (enemy.speed > 3) pool.push('speed');
+        if (enemy.hp > 5) pool.push('hp');
+        if (enemy.damage > 2) pool.push('damage');
+        if (enemy.size > 30) pool.push('size');
+        if (enemy.size < 20) pool.push('tiny');
+        if (enemy.alwaysAngry) pool.push('angry');
+
+        if (pool.length === 0) pool = ['speed', 'hp'];
+
+        const cat = pool[Math.floor(Globals.random() * pool.length)];
+        const nicks = Globals.loreData.nicknames[cat] || [];
+        if (nicks.length > 0) {
+            nickname = nicks[Math.floor(Globals.random() * nicks.length)];
+        }
+
+        // 4. Randomize Display Format
+        let options = [
+            { type: 'first', val: firstName },
+            { type: 'full', val: `${firstName} ${surname}` },
+            { type: 'formal_sur', val: `${prefix} ${surname}` },
+            { type: 'formal_full', val: `${prefix} ${firstName} ${surname}` }
+        ];
+
+        if (nickname) {
+            options.push({ type: 'nick', val: nickname });
+            options.push({ type: 'nick_mid', val: `${firstName} "${nickname}" ${surname}` });
+        }
+
+        const selected = options[Math.floor(Globals.random() * options.length)];
+        displayName = selected.val;
+        fullName = `${prefix} ${firstName} ${surname}`;
+        title = `${nickname} ${firstName}`;
+
+        // Ensure Uniqueness within current room enemies
+        isUnique = true;
+        if (Globals.enemies) {
+            for (let e of Globals.enemies) {
+                if (e !== enemy && e.lore) {
+                    if (e.lore.displayName === displayName || e.lore.fullName === fullName || e.lore.title === title) {
+                        isUnique = false;
+                        break;
+                    }
+                }
+            }
+        }
+        attempts++;
     }
-
-    // 4. Randomize Display Format
-    // Options: 
-    // - Nickname (if exists)
-    // - First Name
-    // - Full Name (First Surname)
-    // - Formal (Prefix Surname)
-    // - Formal Full (Prefix First Surname)
-    // - Nick Mid (First "Nick" Surname) - if exists
-
-    let options = [
-        { type: 'first', val: firstName },
-        { type: 'full', val: `${firstName} ${surname}` },
-        { type: 'formal_sur', val: `${prefix} ${surname}` },
-        { type: 'formal_full', val: `${prefix} ${firstName} ${surname}` }
-    ];
-
-    if (nickname) {
-        options.push({ type: 'nick', val: nickname }); // Just "The Tank"
-        options.push({ type: 'nick_mid', val: `${firstName} "${nickname}" ${surname}` });
-    }
-
-    // Select Random
-    const selected = options[Math.floor(Globals.random() * options.length)];
-    const displayName = selected.val;
 
     return {
-        fullName: `${prefix} ${firstName} ${surname}`,
+        fullName: fullName,
         nickname: nickname,
         displayName: displayName, // Use this for rendering
-        title: `${nickname} ${firstName}`
+        title: title
     };
 }
 

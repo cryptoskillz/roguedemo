@@ -13,6 +13,9 @@ export function setupInput(callbacks) {
         // EXCEPTION: Allow Enter key to trigger start even from input
         if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && e.code !== 'Enter') return;
 
+        // IGNORE BROWSER SHORTCUTS (Prevent Ctrl+R from also triggering game restart)
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+
         // Update Key State
         Globals.keys[e.code] = true;
 
@@ -59,6 +62,18 @@ export function setupInput(callbacks) {
             if (e.code === 'KeyM') callbacks.goToWelcome();
         }
         else if (Globals.gameState === STATES.PLAY) {
+            // Portal Modal Override
+            if (Globals.portal && Globals.portal.warningActive) {
+                if (e.code === 'Enter' || e.code === 'Space') {
+                    if (window.confirmPortalTransition) window.confirmPortalTransition();
+                    return;
+                }
+                if (e.code === 'Escape') {
+                    if (window.cancelPortalTransition) window.cancelPortalTransition();
+                    return;
+                }
+            }
+
             // Pause Game
             if (e.code === 'KeyP' || e.code === 'Escape') {
                 // Prevent pause if Ghost is hunting

@@ -58,7 +58,7 @@
         "unlockChance": 1,
         "rarity": "common"
     },
-    "nextLevel": "",
+    "nextLevel": "json/levels/1.json",
     "welcomeScreen": true,
     "completedItMate": false
 }

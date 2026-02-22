@@ -96,7 +96,9 @@ export function generateLevel(length) {
         }
 
         // 3. Fallback
-        console.warn("No Boss Template found. Using last available.");
+        if (Globals.gameData.bossRoom !== "" && Globals.gameData.bossRoom !== null) {
+            console.warn("No Boss Template found. Using last available.");
+        }
         // keys is already sorted via allKeys if we used it, otherwise sort here
         const keys = Object.keys(templates).sort();
         return templates[keys[keys.length - 1]];

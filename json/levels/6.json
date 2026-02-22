@@ -6,9 +6,24 @@
     "music": "assets/music/level_06.mp3",
     "startRoom": "json/rooms/special/start/room.json",
     "bossRoom": "json/rooms/bosses/boss6/room.json",
+    "trophyRoom": {
+        "active": true,
+        "room": "json/rooms/secret/trophy/room.json"
+    },
+    "homeRoom": {
+        "active": true,
+        "room": "json/rooms/secret/home/room.json"
+    },
+    "matrixRoom": {
+        "active": true,
+        "room": "json/rooms/secret/matrix/room.json"
+    },
     "shop": {
         "active": true,
-        "shopRoom": "rooms/shops/shop_1/room.json"
+        "room": "json/rooms/shops/shop_1/room.json"
+    },
+    "upgradeRoom": {
+        "room": "json/rooms/special/upgrade/room.json"
     },
     "availablerooms": [
         "json/rooms/normal/1_angry_tank/room.json",

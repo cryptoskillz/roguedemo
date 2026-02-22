@@ -29,7 +29,7 @@
     "width": 800,
     "height": 600,
     "unlocks": [
-        "/game/rooms/upgrade"
+        "game/rooms/upgrade"
     ],
     "unlockItem": {
         "active": true,

@@ -142,6 +142,7 @@
     "room": {
         "freezeTimer": 100
     },
+    "portalWarning": true,
     "rewards": {
         "shards": {
             "green": {

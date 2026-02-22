@@ -21,6 +21,7 @@ import { spawnSwitches, updateSwitches, drawSwitches } from './Switches.js';
 // Placeholders for functions to be appended
 // Prevent accidental tab closure
 window.addEventListener('beforeunload', (e) => {
+    Globals.keys = {};
     e.preventDefault();
     e.returnValue = '';
 });
@@ -28,7 +29,10 @@ window.addEventListener('beforeunload', (e) => {
 export async function initGame(isRestart = false, nextLevel = null, keepStats = false) {
 
     // 0. Force Audio Resume (Must be first, to catch user interaction)
-    if (Globals.audioCtx.state === 'suspended') Globals.audioCtx.resume();
+    if (Globals.audioCtx && Globals.audioCtx.state === 'suspended') {
+        Globals.audioCtx.resume().catch(e => console.warn('Audio auto-resume blocked by browser:', e.message));
+        unlockAudio();
+    }
 
     Globals.isRestart = isRestart; // Track global state for startGame logic
     Globals.isLevelTransition = !!nextLevel; // Track level transition
@@ -111,11 +115,18 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     // Initial UI State
     if (Globals.elements.ui) {
         Globals.elements.ui.style.display = 'flex'; // Always keep flex container for layout
+        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
         const statsPanel = document.getElementById('stats-panel');
-        if (statsPanel) statsPanel.style.display = (Globals.gameData && Globals.gameData.showStatsPanel !== false) ? 'block' : 'none';
+        if (statsPanel) {
+            const hasStats = Globals.gameData.showStatsPanel || unlockedIds.includes('statsPanel');
+            statsPanel.style.display = hasStats ? 'block' : 'none';
+        }
 
         const mapCanvas = document.getElementById('minimapCanvas');
-        if (mapCanvas) mapCanvas.style.display = (Globals.gameData && Globals.gameData.showMinimap !== false) ? 'block' : 'none';
+        if (mapCanvas) {
+            const hasMap = Globals.gameData.showMinimap || unlockedIds.includes('minimap');
+            mapCanvas.style.display = hasMap ? 'block' : 'none';
+        }
     }
     Globals.bullets = [];
     Globals.bombs = [];
@@ -126,6 +137,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         Globals.portal.active = false;
         Globals.portal.finished = false;
         Globals.portal.scrapping = false;
+        Globals.portal.transitioning = false;
     }
 
     // Room debug display setup moved after config load
@@ -1197,7 +1209,7 @@ export async function startGame(keepState = false) {
             if (!introMusic.src || !introMusic.src.includes(Globals.levelMusic.split('/').pop())) {
                 introMusic.src = Globals.levelMusic;
                 introMusic.load();
-                introMusic.play();
+                introMusic.play().catch(e => console.warn("Switched Level Music Play Blocked", e));
                 log("Switched to Level Music:", Globals.levelMusic);
             }
         }
@@ -1392,7 +1404,7 @@ export async function startGame(keepState = false) {
                 Globals.elements.overlay.style.display = 'none'; // Ensure Game Over screen is hidden
 
                 // Show Parent UI Container
-                Globals.elements.ui.style.display = 'block';
+                Globals.elements.ui.style.display = 'flex';
 
                 const statsPanel = document.getElementById('stats-panel');
                 if (statsPanel) statsPanel.style.display = (Globals.gameData.showStatsPanel !== false) ? 'block' : 'none';
@@ -1483,7 +1495,7 @@ export function spawnPlayer(dx, dy, data) {
             en.angryUntil = Infinity;
 
             // Apply Angry Stats immediately
-            const angryStats = gameData.enemyConfig?.modeStats?.angry;
+            const angryStats = Globals.gameData.enemyConfig?.modeStats?.angry;
             if (angryStats) {
                 if (angryStats.damage) en.damage = (en.baseStats?.damage || en.damage || 1) * angryStats.damage;
                 if (angryStats.speed) en.speed = (en.baseStats?.speed || en.speed || 1) * angryStats.speed;
@@ -1768,6 +1780,7 @@ export function changeRoom(dx, dy) {
             Globals.portal.active = false;
             Globals.portal.finished = false;
             Globals.portal.scrapping = false;
+            Globals.portal.transitioning = false;
             Globals.portal.color = null; // Reset color override
             Globals.portal.x = 0;
             Globals.portal.y = 0;
@@ -3357,7 +3370,7 @@ Globals.spawnEnemy = (type, x, y, overrides = {}) => {
 
 export async function handleUnlocks(unlockKeys) {
     Globals.handleUnlocks = handleUnlocks; // Expose for Entities
-    if (Globals.isUnlocking) return;
+    if (Globals.isUnlocking) return Promise.resolve();
     Globals.isUnlocking = true;
     Globals.unlockQueue = [...unlockKeys]; // Copy
 
@@ -3375,8 +3388,8 @@ export async function handleUnlocks(unlockKeys) {
         document.body.appendChild(unlockEl);
     }
 
-    // Process first unlock
-    await showNextUnlock();
+    // Process first unlock and return the promise so Entities.js waits
+    return showNextUnlock();
 }
 
 
@@ -3395,7 +3408,9 @@ export async function showNextUnlock() {
             return;
         }
 
-        const key = Globals.unlockQueue.shift();
+        let key = Globals.unlockQueue.shift();
+        if (key.startsWith('/')) key = key.substring(1);
+
         // Try to fetch unlock data
         try {
             // Handle "victory" specially or just ignore if file missing (user deleted it)

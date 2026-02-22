@@ -19,9 +19,16 @@ window.addEventListener('load', () => {
         goPause: () => gameMenu()
     });
 
+    // Ensure window forms keyboard focus
+    window.focus();
+    const cvs = document.getElementById('gameCanvas');
+    if (cvs) cvs.focus();
+
     // Start Game Initialization
     initGame();
 });
+
+import { confirmPortalTransition, cancelPortalTransition, showPortalWarningModal } from './modules/UI.js';
 
 // Expose functions to window for HTML onclick handlers
 window.restartGame = restartGame;
@@ -34,4 +41,7 @@ window.cancelNewGame = cancelNewGame;
 window.bankDeposit = bankDeposit;
 window.bankWithdraw = bankWithdraw;
 window.bankClose = bankClose;
+window.confirmPortalTransition = confirmPortalTransition;
+window.cancelPortalTransition = cancelPortalTransition;
+window.showPortalWarningModal = showPortalWarningModal;
 window.SFX = SFX;

@@ -2,7 +2,7 @@
     "name": "",
     "description": "",
     "music": "",
-    "NoRooms": 1,
+    "NoRooms": 0,
     "startRoom": "json/rooms/bosses/boss0/room.json",
     "bossRoom": "",
     "avalibleroons": [
