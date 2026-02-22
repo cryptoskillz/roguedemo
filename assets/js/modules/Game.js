@@ -28,7 +28,10 @@ window.addEventListener('beforeunload', (e) => {
 export async function initGame(isRestart = false, nextLevel = null, keepStats = false) {
 
     // 0. Force Audio Resume (Must be first, to catch user interaction)
-    if (Globals.audioCtx.state === 'suspended') Globals.audioCtx.resume();
+    if (Globals.audioCtx && Globals.audioCtx.state === 'suspended') {
+        Globals.audioCtx.resume().catch(e => console.warn('Audio auto-resume blocked by browser:', e.message));
+        unlockAudio();
+    }
 
     Globals.isRestart = isRestart; // Track global state for startGame logic
     Globals.isLevelTransition = !!nextLevel; // Track level transition
