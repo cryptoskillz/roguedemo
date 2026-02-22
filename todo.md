@@ -19,6 +19,7 @@ DONT DO ANY OF THESE TASKS AI
 - `max bullet+1`, `pierce`, and other modifiers don't stay on the next level.
 - Shield shows when you go into the portal.
 - Level transition fix: Last screen shows a little before going to the welcome screen on levels 0, 1, 2, and 5.
+- the refresh modal isnt actually refreshing the game, its not the end as this is mainly used for code updates anyway whihch the user will never experience.
 
 # Upgrades
 - start with shield
