@@ -45,7 +45,9 @@ export function spawnSwitches(roomData) {
 
         let scaledDefaultCost = cfg.defaultCost || 1000;
         if (cfg.action === 'upgrade') {
-            const maxShards = Globals.player.inventory['maxRedShards'] || 500;
+            const sType = cfg.shard || 'green';
+            const maxKey = sType === 'red' ? 'maxRedShards' : 'maxGreenShards';
+            const maxShards = Globals.player.inventory[maxKey] || 500;
             scaledDefaultCost = Math.max(1, Math.ceil(maxShards * 0.10));
         }
 
@@ -384,7 +386,7 @@ export function drawSwitches() {
         ctx.strokeRect(x - size / 2, y - size / 2 + offset, size, size);
 
         // Label
-        ctx.font = "10px 'Press Start 2P'";
+        ctx.font = "15px 'Press Start 2P'";
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
 
