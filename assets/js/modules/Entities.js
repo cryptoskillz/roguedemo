@@ -2310,7 +2310,9 @@ export function updateEnemies() {
     // Check for active threats (ignore indestructible/static like turrets)
     const activeThreats = Globals.enemies.filter(en => !en.isDead && !en.indestructible);
 
-    if (Globals.roomData.isBoss && activeThreats.length === 0 && !Globals.portal.active) {
+    const isMatrixRoom = Globals.roomData._type === 'matrix' || Globals.roomData.name === "Guns Lots of Guns";
+
+    if (Globals.roomData.isBoss && activeThreats.length === 0 && !Globals.portal.active && !isMatrixRoom) {
         Globals.portal.active = true;
         Globals.portal.scrapping = false; // Reset flags
         Globals.portal.finished = false;
