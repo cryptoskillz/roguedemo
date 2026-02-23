@@ -4792,7 +4792,7 @@ export function spawnRoomRewards(dropConfig, label = null) {
 }
 
 export function drawPlayer() {
-    if (Globals.portal?.transitioning) return;
+    if (Globals.portal?.transitioning || Globals.portal?.warningActive) return;
     const now = Date.now();
     // 4. --- PLAYER ---
 
