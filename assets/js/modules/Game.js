@@ -2320,15 +2320,9 @@ export async function draw() {
 
     // Global Matrix Effect (Background)
     if (Globals.roomData && Globals.roomData.name === "Guns Lots of Guns") {
-        Globals.portal.active = true;
-        Globals.roomData.isBoss = true;
-        // Fix: Set Coordinates so it draws on screen (center)
-        Globals.portal.x = Globals.canvas.width / 2;
-        Globals.portal.y = Globals.canvas.height / 2;
-        Globals.portal.color = 'green';
+        Globals.roomData.isBoss = true; // Kept to lock the room if that was the intent
 
         drawMatrixRain();
-        // createPortal is drawn at end of loop if active
     }
     // Ghost Trap Effect
     if (Globals.ghostTrapActive) {
