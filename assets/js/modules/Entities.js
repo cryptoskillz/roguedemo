@@ -2332,7 +2332,9 @@ export function updatePortal() {
         let shardsCollected = false;
 
         // Check for Warning Feature
-        const { nextLevel, welcomeScreen, completedItMate } = Globals.gameData;
+        const nextLevel = Globals.roomData.nextLevel !== undefined ? Globals.roomData.nextLevel : Globals.gameData.nextLevel;
+        const welcomeScreen = Globals.roomData.welcomeScreen !== undefined ? Globals.roomData.welcomeScreen : Globals.gameData.welcomeScreen;
+        const completedItMate = Globals.roomData.completedItMate !== undefined ? Globals.roomData.completedItMate : Globals.gameData.completedItMate;
         const hasNextLevel = nextLevel && nextLevel.trim() !== "";
         const isSpecialRoom = ['start', 'matrix', 'home'].includes(Globals.roomData.type) || ['start', 'matrix', 'home'].includes(Globals.roomData._type);
         // A Boss Room portal is NEVER inactive
@@ -2476,7 +2478,9 @@ function proceedLevelComplete() {
         localStorage.setItem('rogue_level_splits', JSON.stringify(Globals.levelSplits));
     }
 
-    const { nextLevel, welcomeScreen, completedItMate } = Globals.gameData;
+    const nextLevel = Globals.roomData.nextLevel !== undefined ? Globals.roomData.nextLevel : Globals.gameData.nextLevel;
+    const welcomeScreen = Globals.roomData.welcomeScreen !== undefined ? Globals.roomData.welcomeScreen : Globals.gameData.welcomeScreen;
+    const completedItMate = Globals.roomData.completedItMate !== undefined ? Globals.roomData.completedItMate : Globals.gameData.completedItMate;
     const hasNextLevel = nextLevel && nextLevel.trim() !== "";
 
     // 1. Always go to welcome screen
