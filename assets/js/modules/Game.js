@@ -2336,7 +2336,7 @@ export async function draw() {
     drawBossSwitch() // Draw switch underneath entities
     drawStartRoomObjects(); // New: Draw start room specific floor items
     drawHomeRoomObjects();
-    drawUpgradeRoomObjects();
+    drawInactiveRoomPortals();
     drawSwitches();
     drawPortal(); // Draw portal on floor
     drawPlayer()
@@ -2516,8 +2516,8 @@ export function drawStartRoomObjects() {
     }
 }
 
-export function drawUpgradeRoomObjects() {
-    if (Globals.roomData.name === "Upgrade Room") {
+export function drawInactiveRoomPortals() {
+    if (Globals.roomData.inactivePortal) {
         drawInactivePortal(Globals.canvas.width / 2, Globals.canvas.height / 2, 'green');
     }
 }

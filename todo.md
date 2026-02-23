@@ -4,11 +4,10 @@ DONT DO ANY OF THESE TASKS AI
 415303 <--- home room can be bombed intow
 
 # Bugs & Fixes
-- [x] switch is 10% of the cost of the item it should be 10% of your maxRedShards
-- [x] increase font for switch info 
-- unlocks already dropped are being dropped again
 - speedy timer, ghost health unlocks etc not showing instantly
 - when you pick up the peashooter and the normal bomb when you go to the next level you no longer have the normal bomb.  I spawned 3 bombs and pressing B did nothing.  This happens on a restart as well.
+- unlocks already dropped are being dropped again
+
 - You can move bombs into other bombs that are solid.
 - red bomb drops with a large B
 - Bomb goes blue when you leave a room and re-enter.

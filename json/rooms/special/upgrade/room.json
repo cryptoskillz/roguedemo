@@ -1,6 +1,7 @@
 {
     "name": "Upgrade Room",
     "description": "Lets get swol!",
+    "inactivePortal": true,
     "type": "shop",
     "showIntro": true,
     "hardness": 0,
