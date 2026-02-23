@@ -1005,7 +1005,19 @@ export function cancelPortalTransition() {
     if (modal) modal.style.display = 'none';
 
     // Back the player up slightly so they don't immediately re-collide
-    Globals.player.y += 10;
+    if (Globals.portal && Globals.player) {
+        const dx = Globals.player.x - Globals.portal.x;
+        const dy = Globals.player.y - Globals.portal.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0) {
+            Globals.player.x += (dx / dist) * 40;
+            Globals.player.y += (dy / dist) * 40;
+        } else {
+            Globals.player.y += 40;
+        }
+    } else {
+        Globals.player.y += 10;
+    }
 
     // Resume gameplay
     Globals.inputDisabled = false;
