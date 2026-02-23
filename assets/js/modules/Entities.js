@@ -2332,7 +2332,11 @@ export function updatePortal() {
         let shardsCollected = false;
 
         // Check for Warning Feature
-        if (Globals.gameData.portalWarning && Globals.groundItems.length > 0) {
+        const { nextLevel, welcomeScreen, completedItMate } = Globals.roomData;
+        const hasNextLevel = nextLevel && nextLevel.trim() !== "";
+        const isInactivePortal = !hasNextLevel && !welcomeScreen && !completedItMate;
+
+        if (Globals.gameData.portalWarning && Globals.groundItems.length > 0 && !isInactivePortal) {
 
             // Auto-collect shards and evaluate if any real items remain
             const realItems = [];
@@ -2362,6 +2366,12 @@ export function updatePortal() {
                 }
                 return;
             }
+        }
+
+        // 4. Inactive / Tutorial Portals
+        if (isInactivePortal) {
+            log("Inactive portal touched. Ignoring logic.");
+            return;
         }
 
         // WIN GAME (Default Transition)

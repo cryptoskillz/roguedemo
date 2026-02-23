@@ -42,8 +42,8 @@
     "inventory": {
         "keys": 0,
         "ghostTrap": false,
-        "houseKey": false,
-        "matrixKey": false,
+        "houseKey": true,
+        "matrixKey": true,
         "bombs": 0,
         "greenShards": 0,
         "redShards": 0,
