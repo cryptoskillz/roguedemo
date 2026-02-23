@@ -2325,16 +2325,17 @@ export function updatePortal() {
     const currentCoord = `${Globals.player.roomX},${Globals.player.roomY}`;
     // Only interact if active
     // if (!Globals.roomData.isBoss) return; // Allow anywhere per user request
-
+    log(Globals.portal);
     const dist = Math.hypot(Globals.player.x - Globals.portal.x, Globals.player.y - Globals.portal.y);
     if (dist < 30) {
 
         let shardsCollected = false;
 
         // Check for Warning Feature
-        const { nextLevel, welcomeScreen, completedItMate } = Globals.roomData;
+        const { nextLevel, welcomeScreen, completedItMate } = Globals.gameData;
         const hasNextLevel = nextLevel && nextLevel.trim() !== "";
-        const isInactivePortal = !hasNextLevel && !welcomeScreen && !completedItMate;
+        const isSpecialRoom = ['start', 'matrix', 'home'].includes(Globals.roomData.type) || ['start', 'matrix', 'home'].includes(Globals.roomData._type);
+        const isInactivePortal = (!hasNextLevel && !welcomeScreen && !completedItMate) || isSpecialRoom;
 
         if (Globals.gameData.portalWarning && Globals.groundItems.length > 0 && !isInactivePortal) {
 
@@ -2474,7 +2475,7 @@ function proceedLevelComplete() {
         localStorage.setItem('rogue_level_splits', JSON.stringify(Globals.levelSplits));
     }
 
-    const { nextLevel, welcomeScreen, completedItMate } = Globals.roomData;
+    const { nextLevel, welcomeScreen, completedItMate } = Globals.gameData;
     const hasNextLevel = nextLevel && nextLevel.trim() !== "";
 
     // 1. Always go to welcome screen
