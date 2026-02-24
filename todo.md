@@ -4,13 +4,11 @@ DONT DO ANY OF THESE TASKS AI
 415303 <--- home room can be bombed intow
 
 # Bugs & Fixes
-- When you defeat the final boss if there are items on the ground it will show the warning dialog and go right to the end credits and when you go back the warning modal is there.  The end credits should not start until you have confirmed the dialog.
-- when you finish the last level you star the game again with the gun you should go back to the welcome screen after the end credits
-- when you start from a new game when you get to level 5 you lose your peashooter but get it back if you restart.
+- [x] When you defeat the final boss if there are items on the ground it will show the warning dialog and go right to the end credits and when you go back the warning modal is there. The end credits should not start until you have confirmed the dialog.u get to level 5 you lose your peashooter but get it back if you restart.
 - music restarts when you go through a portal to the next levelq
 - unlocks already dropped / unlocked are being dropped again
 - speedy timer, ghost health unlocks etc not showing instantly
-- when you pick up the peashooter and the normal bomb when you go to the next level you no longer have the normal bomb.  I spawned 3 bombs and pressing B did nothing.  This happens on a restart as well.
+- when you pick up the peashooter and the normal bomb when you go to the next level you no longer have the normal bomb. I spawned 3 bombs and pressing B did nothing. This happens on a restart as well.
 - You can move bombs into other bombs that are solid.
 - red bomb drops with a large B
 - Bomb goes blue when you leave a room and re-enter.
