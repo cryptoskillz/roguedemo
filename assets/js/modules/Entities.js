@@ -2546,10 +2546,6 @@ function proceedLevelComplete() {
     // 3. Always go to next level
     if (hasNextLevel && welcomeScreen === false && completedItMate === false) {
         log("Proceeding to Next Level:", nextLevel);
-        if (Globals.introMusic) {
-            Globals.introMusic.pause();
-            Globals.introMusic.currentTime = 0;
-        }
         // Force save current weapon config to prevent loss on transition
         if (Globals.gun) {
             localStorage.setItem('current_gun', Globals.player.gunType || 'peashooter');

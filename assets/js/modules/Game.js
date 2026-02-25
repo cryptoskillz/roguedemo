@@ -419,9 +419,11 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         Globals.gameData.music = isMusicEnabled;
 
         if (introMusic && musicSrc) {
-            // Check if we need to change track
-            const currentFile = introMusic.src ? introMusic.src.split('/').pop() : "";
-            const targetFile = musicSrc.split('/').pop();
+            // Check if we need to change track (ignoring query parameters)
+            const currentFile = introMusic.src ? introMusic.src.split('/').pop().split('?')[0] : "";
+            const targetFile = musicSrc.split('/').pop().split('?')[0];
+
+            console.log("MUSIC DEBUG:", { currentSrc: introMusic.src, targetSrc: musicSrc, currentFile, targetFile });
 
             if (currentFile !== targetFile) {
                 log("Switching Music Track:", currentFile, "->", targetFile);
@@ -432,7 +434,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
             }
 
             // Auto-Play (if enabled)
-            if (Globals.gameData.music) {
+            if (Globals.gameData.music && !Globals.musicMuted) {
                 // Force volume and play if paused or if we just switched
                 if (introMusic.paused || currentFile !== targetFile) {
                     if (Globals.audioCtx.state === 'running') {
@@ -442,7 +444,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
                         log("Music waiting for interaction (AudioCtx suspended)");
                     }
                 }
-            } else if (!Globals.gameData.music && !introMusic.paused) {
+            } else if ((!Globals.gameData.music || Globals.musicMuted) && !introMusic.paused) {
                 // Enforce Lock: Stop music if disabled/locked
                 fadeOut(introMusic, 500); // Friendly fade out
                 log("Music Halted (Locked/Disabled)");
@@ -1206,12 +1208,20 @@ export async function startGame(keepState = false) {
         // If we have a specific level track pending
         if (Globals.levelMusic) {
             // Switch track
-            // Check current src to avoid reload if same
-            if (!introMusic.src || !introMusic.src.includes(Globals.levelMusic.split('/').pop())) {
+            // Check current src to avoid reload if same (ignoring query parameters)
+            const targetFileName = Globals.levelMusic.split('/').pop().split('?')[0];
+            const currentFileName = introMusic.src ? introMusic.src.split('/').pop().split('?')[0] : "";
+
+            if (currentFileName !== targetFileName) {
                 introMusic.src = Globals.levelMusic;
                 introMusic.load();
-                introMusic.play().catch(e => console.warn("Switched Level Music Play Blocked", e));
+                if (!Globals.musicMuted) {
+                    introMusic.play().catch(e => console.warn("Switched Level Music Play Blocked", e));
+                }
                 log("Switched to Level Music:", Globals.levelMusic);
+            } else if (introMusic.paused && !Globals.musicMuted) {
+                // If it's the same track but was paused, resume it, ONLY if not muted
+                introMusic.play().catch(e => console.warn("Resume Level Music Play Blocked", e));
             }
         }
         // If no level override, keep playing whatever is playing (Intro)
