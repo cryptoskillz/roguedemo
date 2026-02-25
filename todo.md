@@ -4,8 +4,6 @@ DONT DO ANY OF THESE TASKS AI
 415303 <--- home room can be bombed intow
 
 # Bugs & Fixes
-- end game music plays when you have sound toggle off
-- unlocks already dropped / unlocked are being dropped again
 - speedy timer, ghost health unlocks etc not showing instantly. Some do like timer, stats and minimap
 - when you go into any boos room you get 5 keys and 10 bombs on boss 3 you also get golden bombs
 - you lose the normal bomb on level 3 onwards. I spawned 3 bombs and pressing B did nothing. This happens on a restart as well.

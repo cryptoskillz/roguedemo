@@ -4695,12 +4695,14 @@ export function spawnRoomRewards(dropConfig, label = null) {
         // Roll for drop
         if (Math.random() < (conf.dropChance || 0)) {
             // Find items of this rarity
-            // Fix: Check for null items in template list AND Unlock Status
+            // Fix: Check for null items, ensure Unlock Status, and NEVER drop 'unlock' wrappers from chest logic
             const candidates = window.allItemTemplates.filter(i =>
                 i &&
                 (i.rarity || 'common').toLowerCase() === rarity.toLowerCase() &&
                 i.starter === false &&
                 i.special !== true &&
+                i.type !== 'unlock' &&
+                i.isUnlockWrapper !== true &&
                 (i._isUnlock === true || isUnlocked(i))
             );
 
