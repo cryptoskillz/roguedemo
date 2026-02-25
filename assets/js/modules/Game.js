@@ -768,27 +768,27 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
         let fetchedBomb = null;
 
         try {
-            if (Globals.player.gunType) {
-                // FIRST: Check cache for runtime upgrades during current run
-                const cachedGunData = localStorage.getItem('current_gun_config');
-                if (cachedGunData) {
-                    fetchedGun = JSON.parse(cachedGunData);
-                    log("Loaded Gun from LocalStorage Cache (Preserving Modifiers)");
-                } else {
-                    const gunUrl = `/json/rewards/items/guns/player/${Globals.player.gunType}.json?t=` + Date.now();
-                    const gRes = await fetch(gunUrl);
-                    if (gRes.ok) {
-                        fetchedGun = await gRes.json();
-                        if (fetchedGun.location) {
-                            let loc = fetchedGun.location;
-                            if (loc.startsWith('items/')) loc = 'rewards/' + loc;
-                            const realRes = await fetch(`${JSON_PATHS.ROOT}${loc}?t=` + Date.now());
-                            if (realRes.ok) fetchedGun = await realRes.json();
-                        }
-                    } else console.error("Gun fetch failed:", gRes.status, gRes.statusText);
-                }
+            // FIRST: Always prioritize checking cache for runtime upgrades during current run
+            const cachedGunData = localStorage.getItem('current_gun_config');
+            if (cachedGunData) {
+                fetchedGun = JSON.parse(cachedGunData);
+                log("Loaded Gun from LocalStorage Cache (Preserving Modifiers)");
+                if (!Globals.player.gunType) Globals.player.gunType = localStorage.getItem('current_gun') || "unknown";
+            } else if (Globals.player.gunType) {
+                // SECOND: No cache, so fetch from gunType
+                const gunUrl = `/json/rewards/items/guns/player/${Globals.player.gunType}.json?t=` + Date.now();
+                const gRes = await fetch(gunUrl);
+                if (gRes.ok) {
+                    fetchedGun = await gRes.json();
+                    if (fetchedGun.location) {
+                        let loc = fetchedGun.location;
+                        if (loc.startsWith('items/')) loc = 'rewards/' + loc;
+                        const realRes = await fetch(`${JSON_PATHS.ROOT}${loc}?t=` + Date.now());
+                        if (realRes.ok) fetchedGun = await realRes.json();
+                    }
+                } else console.error("Gun fetch failed:", gRes.status, gRes.statusText);
             } else {
-                log("No player.gunType defined, skipping initial fetch.");
+                log("No cache and no player.gunType defined, skipping initial fetch.");
             }
         } catch (e) { console.error("Gun fetch error:", e); }
 
@@ -1037,6 +1037,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
         // D. Upgrade Room
         if (Globals.isUpgradeUnlocked && Globals.gameData.upgradeRoom && typeof Globals.gameData.upgradeRoom === 'object' && Globals.gameData.upgradeRoom.room) {
+
             roomProtos.push(loadRoomFile(Globals.gameData.upgradeRoom.room, 'upgrade'));
         }
 
@@ -2323,7 +2324,6 @@ export async function draw() {
         Globals.roomData.isBoss = true; // Kept to lock the room if that was the intent
 
         drawMatrixRain();
-        drawInactivePortal(Globals.canvas.width / 2, Globals.canvas.height / 2, 'green');
     }
     // Ghost Trap Effect
     if (Globals.ghostTrapActive) {
@@ -2335,6 +2335,7 @@ export async function draw() {
     drawBossSwitch() // Draw switch underneath entities
     drawStartRoomObjects(); // New: Draw start room specific floor items
     drawHomeRoomObjects();
+    drawInactiveRoomPortals();
     drawSwitches();
     drawPortal(); // Draw portal on floor
     drawPlayer()
@@ -2514,6 +2515,12 @@ export function drawStartRoomObjects() {
     }
 }
 
+export function drawInactiveRoomPortals() {
+    if (Globals.roomData.inactivePortal) {
+        drawInactivePortal(Globals.canvas.width / 2, Globals.canvas.height / 2, 'green');
+    }
+}
+
 export function drawHomeRoomObjects() {
     if (Globals.roomData.type !== 'home' && Globals.roomData._type !== 'home') return;
 
@@ -2593,9 +2600,6 @@ export function drawHomeRoomObjects() {
     Globals.ctx.beginPath();
     Globals.ctx.arc(px - 25, py - 5, 4, 0, Math.PI);
     Globals.ctx.stroke();
-
-    // Draw Used Portal (Center)
-    drawInactivePortal(Globals.canvas.width / 2, Globals.canvas.height / 2, 'green');
 
     // Proximity Prompts
     const pbDist = Math.hypot(Globals.player.x - px, Globals.player.y - py);
@@ -3305,12 +3309,20 @@ Globals.newRun = newRun;
 
 export function goToWelcome() {
     saveGameStats();
+    localStorage.removeItem('rogue_current_level');
     initGame(false);
 }
 Globals.goToWelcome = goToWelcome;
 
 export function beginPlay() {
     log("TRACER: beginPlay Called. GameState=", Globals.gameState);
+
+    // Prevent immediate start if we just arrived at the welcome screen (e.g. from closing credits)
+    if (Date.now() - (Globals.welcomeScreenStartTime || 0) < 500) {
+        log("TRACER: beginPlay blocked by debounce.");
+        return;
+    }
+
     // Check if we are in START state, then call startGame
     if (Globals.gameState === STATES.START) {
         startGame(false); // Fresh start from welcome screen

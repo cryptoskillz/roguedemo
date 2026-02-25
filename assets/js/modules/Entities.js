@@ -2338,7 +2338,7 @@ export function updatePortal() {
         const welcomeScreen = Globals.roomData.welcomeScreen !== undefined ? Globals.roomData.welcomeScreen : Globals.gameData.welcomeScreen;
         const completedItMate = Globals.roomData.completedItMate !== undefined ? Globals.roomData.completedItMate : Globals.gameData.completedItMate;
         const hasNextLevel = nextLevel && nextLevel.trim() !== "";
-        const isSpecialRoom = ['start', 'matrix', 'home'].includes(Globals.roomData.type) || ['start', 'matrix', 'home'].includes(Globals.roomData._type);
+        const isSpecialRoom = ['start', 'matrix', 'home', 'upgrade'].includes(Globals.roomData.type) || ['start', 'matrix', 'home', 'upgrade'].includes(Globals.roomData._type) || Globals.roomData.inactivePortal;
         // A Boss Room portal is NEVER inactive
         const isInactivePortal = !Globals.roomData.isBoss && ((!hasNextLevel && !welcomeScreen && !completedItMate) || isSpecialRoom);
 
@@ -2358,8 +2358,8 @@ export function updatePortal() {
                 }
             }
 
-            // Only fire modal if REAL items (not just shards) are left and its an active portal
-            if (realItems.length > 0) {
+            // Only fire modal if REAL items (not just shards) are left, its an active portal, and not the final boss
+            if (realItems.length > 0 && !completedItMate) {
                 if (!Globals.portal.warningActive) {
                     Globals.portal.warningActive = true;
                     // Pause input manually
@@ -2488,6 +2488,15 @@ function proceedLevelComplete() {
     // 1. Always go to welcome screen
     if (hasNextLevel && welcomeScreen === true && completedItMate === false) {
         log("Level Complete. Returning to Welcome Screen. Pending Next Level:", nextLevel);
+        // Force save current weapon config to prevent loss on transition
+        if (Globals.gun) {
+            localStorage.setItem('current_gun', Globals.player.gunType || 'peashooter');
+            localStorage.setItem('current_gun_config', JSON.stringify(Globals.gun));
+        }
+        if (Globals.bomb) {
+            localStorage.setItem('current_bomb', Globals.player.bombType || 'normal');
+            localStorage.setItem('current_bomb_config', JSON.stringify(Globals.bomb));
+        }
         localStorage.setItem('rogue_transition', 'true');
         localStorage.setItem('rogue_current_level', nextLevel);
         localStorage.setItem('rogue_player_state', JSON.stringify(Globals.player));
@@ -2518,6 +2527,15 @@ function proceedLevelComplete() {
         if (Globals.introMusic) {
             Globals.introMusic.pause();
             Globals.introMusic.currentTime = 0;
+        }
+        // Force save current weapon config to prevent loss on transition
+        if (Globals.gun) {
+            localStorage.setItem('current_gun', Globals.player.gunType || 'peashooter');
+            localStorage.setItem('current_gun_config', JSON.stringify(Globals.gun));
+        }
+        if (Globals.bomb) {
+            localStorage.setItem('current_bomb', Globals.player.bombType || 'normal');
+            localStorage.setItem('current_bomb_config', JSON.stringify(Globals.bomb));
         }
         localStorage.setItem('rogue_transition', 'true');
         localStorage.setItem('rogue_current_level', nextLevel);
@@ -4792,7 +4810,7 @@ export function spawnRoomRewards(dropConfig, label = null) {
 }
 
 export function drawPlayer() {
-    if (Globals.portal?.transitioning) return;
+    if (Globals.portal?.transitioning || Globals.portal?.warningActive) return;
     const now = Date.now();
     // 4. --- PLAYER ---
 

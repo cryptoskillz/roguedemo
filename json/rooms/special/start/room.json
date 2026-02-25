@@ -1,6 +1,7 @@
 {
     "name": "The Beginning",
     "description": "",
+    "inactivePortal": true,
     "hardness": 0,
     "keyBonus": 1.0,
     "speedGoal": 0,

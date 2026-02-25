@@ -162,6 +162,9 @@ export function updateWelcomeScreen() {
         <p style="font-size: 0.8em; color: #555; margin-top: 40px;">v0.94/p>
     `;
     }
+
+    // Record timestamp so we can debounce instant start bypass
+    Globals.welcomeScreenStartTime = Date.now();
 }
 
 export async function updateUI() {
@@ -383,12 +386,8 @@ export function drawTutorial() {
     if (Globals.roomData.name == "The Beginning" && Globals.player.roomX === 0 && Globals.player.roomY === 0 && !Globals.roomData.isBoss && !STATES.DEBUG_START_BOSS && !STATES.DEBUG_TEST_ROOM) {
         Globals.ctx.save();
 
-        //uodate start room name in the UI
+        //update start room name in the UI
         if (Globals.elements.roomName) Globals.elements.roomName.innerText = Globals.roomData.name;
-
-        // Force Portal Active & Centered for Start Room
-        Globals.portal.active = false;
-        drawInactivePortal(Globals.canvas.width / 2, Globals.canvas.height / 2, 'green');
 
         // Internal helper for keycaps
         const drawKey = (text, x, y) => {
@@ -805,19 +804,26 @@ export function showCredits() {
     Globals.creditsStartTime = Date.now();
 
     // Cleanup old listener just in case
-    if (Globals.creditsListener) document.removeEventListener('keydown', Globals.creditsListener);
+    if (Globals.creditsListener) document.removeEventListener('keyup', Globals.creditsListener);
 
     const closeCredits = (e) => {
         // Debounce slightly to prevent immediate skip if key held
         if (Date.now() - (Globals.creditsStartTime || 0) < 1500) return;
 
-        document.removeEventListener('keydown', closeCredits);
+        document.removeEventListener('keyup', closeCredits);
         Globals.creditsListener = null;
         creditsEl.style.display = 'none';
 
         // Return to Welcome
         // Clear SESSION DATA (Level, Inventory) but KEEP UNLOCKS
         STORAGE_KEYS.SESSION_WIPE.forEach(key => localStorage.removeItem(key));
+
+        // Ensure the player doesn't restart with weapons from the completed run
+        const runWipeKeys = [
+            'current_gun', 'current_bomb', 'current_gun_config', 'current_bomb_config',
+            'base_gun', 'base_bomb', 'base_gun_config', 'base_bomb_config'
+        ];
+        runWipeKeys.forEach(k => localStorage.removeItem(k));
 
         // Use Global Helper to Reset State & Go to Welcome
         if (Globals.goToWelcome) {
@@ -829,7 +835,7 @@ export function showCredits() {
     };
 
     Globals.creditsListener = closeCredits;
-    document.addEventListener('keydown', closeCredits);
+    document.addEventListener('keyup', closeCredits);
 }
 
 export function updateGameStats(statType, data) {
@@ -1009,7 +1015,19 @@ export function cancelPortalTransition() {
     if (modal) modal.style.display = 'none';
 
     // Back the player up slightly so they don't immediately re-collide
-    Globals.player.y += 10;
+    if (Globals.portal && Globals.player) {
+        const dx = Globals.player.x - Globals.portal.x;
+        const dy = Globals.player.y - Globals.portal.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0) {
+            Globals.player.x += (dx / dist) * 40;
+            Globals.player.y += (dy / dist) * 40;
+        } else {
+            Globals.player.y += 40;
+        }
+    } else {
+        Globals.player.y += 10;
+    }
 
     // Resume gameplay
     Globals.inputDisabled = false;
