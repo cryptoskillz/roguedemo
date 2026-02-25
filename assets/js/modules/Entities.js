@@ -455,6 +455,28 @@ export function spawnEnemies() {
             // Ensure ID/Key is set for uniqueness/logic
             inst.isBoss = true;
 
+            // Apply Always Angry stats for explicit bosses
+            if (inst.alwaysAngry) {
+                inst.mode = 'angry';
+                inst.angryUntil = Infinity;
+                if (!inst.baseStats) {
+                    inst.baseStats = {
+                        speed: inst.speed,
+                        hp: inst.hp,
+                        damage: inst.damage,
+                        color: inst.color,
+                        size: inst.size
+                    };
+                }
+                const angryStats = Globals.gameData.enemyConfig?.modeStats?.angry;
+                if (angryStats) {
+                    if (angryStats.hp) inst.hp = (inst.baseStats?.hp || inst.hp || 10) * angryStats.hp;
+                    if (angryStats.damage) inst.damage = (inst.baseStats?.damage || inst.damage || 1) * angryStats.damage;
+                    if (angryStats.speed) inst.speed = (inst.baseStats?.speed || inst.speed || 1) * angryStats.speed;
+                    if (angryStats.color) inst.color = angryStats.color;
+                }
+            }
+
             Globals.enemies.push(inst);
         } else {
             console.error("Boss Template Not Found for key:", bossKey);

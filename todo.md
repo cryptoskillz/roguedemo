@@ -4,11 +4,10 @@ DONT DO ANY OF THESE TASKS AI
 415303 <--- home room can be bombed intow
 
 # Bugs & Fixes
-- when a boss is set to alwaysAngry true it would appear the dont start angry as they are not fast or have any of the other attrs.
-- When you complete the game an go to the welcome screen and the start a new game by pressing a key you do not have the default gun and bomb.
+- music restarts when you go through a portal to the next level
+- When you complete the game an go to the welcome screen and the start a new game by pressing a key you do not have the default gun and bomb.  If you restart you get them so the are still in local storage.
 - unlocks already dropped / unlocked are being dropped again
 - speedy timer, ghost health unlocks etc not showing instantly. Some do like timer, stats and minimap
-- music restarts when you go through a portal to the next level
 - when you go into any boos room you get 5 keys and 10 bombs on boss 3 you also get golden bombs
 - you lose the normal bomb on level 3 onwards. I spawned 3 bombs and pressing B did nothing. This happens on a restart as well.
 - You can move bombs into other bombs that are solid.
