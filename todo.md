@@ -4,13 +4,16 @@ DONT DO ANY OF THESE TASKS AI
 415303 <--- home room can be bombed intow
 
 # Bugs & Fixes
-- You can move bombs into other bombs that are solid.
-- red bomb drops with a large B
-- Bomb goes blue when you leave a room and re-enter.
+
 - Bomb radius shouldn't hit you instantly; add wave speed so you can run from the blast wave.
-- Bomb drop icon has a big 'B'.
-- Chained explosions should blow in sequence, not all at the same time.
-- Golden bomb doesn't stay on the next level if you pick it up (stays if equipped at the start).
+- remote bomb Chained explosions should blow in sequence, not all at the same time.
+  "remoteDenoate": {
+        "active": true,
+        "detonateAll": false,
+        "key": "space"
+    },
+    a
+
 
 # Upgrades
 - start with shield

@@ -5454,13 +5454,11 @@ export function drawItems() {
             Globals.ctx.textAlign = 'center';
             Globals.ctx.fillText("G", 0, 4);
         } else if (itemType === 'bomb') {
-            Globals.ctx.fillStyle = '#f1c40f'; // Yellow
+            const bombColor = (item.data && (item.data.colour || item.data.color)) ? (item.data.colour || item.data.color) : '#f1c40f';
+            Globals.ctx.fillStyle = bombColor;
             Globals.ctx.beginPath();
             Globals.ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
             Globals.ctx.fill();
-            Globals.ctx.fillStyle = 'black';
-            Globals.ctx.textAlign = 'center';
-            Globals.ctx.fillText("B", 0, 4);
         } else if (itemType === 'health' || itemType === 'heart') {
             Globals.ctx.fillStyle = '#e74c3c';
             Globals.ctx.beginPath();
