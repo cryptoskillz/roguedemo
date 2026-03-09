@@ -2814,7 +2814,7 @@ export function takeDamage(amount) {
     const iFrameDuration = Globals.player.invulHitTimer || 1000;
     Globals.player.invulnUntil = Date.now() + iFrameDuration;
 
-    if (gameState === STATES.PLAY) updateUI();
+    updateUI();
 }
 
 export function updateShield() {
@@ -4864,6 +4864,7 @@ export function drawPlayer() {
     if (Globals.portal?.transitioning || Globals.portal?.warningActive) return;
     const now = Date.now();
     // 4. --- PLAYER ---
+    log(Globals.player.gun)
     // Gun Rendering (Barrels)
     if (Globals.gun && Globals.gun.Bullet && !Globals.gun.Bullet.NoBullets) {
         // Helper to draw a single barrel at a given angle

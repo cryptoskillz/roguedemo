@@ -243,19 +243,20 @@ export async function updateUI() {
     }
 
 
-    // game timers
+    // game timer
     if (Globals.gameData.showTimer == true) {
+        const timer = document.getElementById('timer');
         //show element
-        if (Globals.elements.timer.style.display == 'none') Globals.elements.timer.style.display = 'block';
+        if (timer.style.display == 'none') timer.style.display = 'block';
         //do the math
         const elapsed = Globals.runElapsedTime || 0;
         const minutes = Math.floor(elapsed / 60000);
         const seconds = Math.floor((elapsed % 60000) / 1000);
         const ms = Math.floor((elapsed % 1000) / 10);
-        // Direct Span Update (No layout thrashing of container)
-        if (Globals.elements.tMin) Globals.elements.tMin.textContent = minutes.toString().padStart(2, '0');
-        if (Globals.elements.tSec) Globals.elements.tSec.textContent = seconds.toString().padStart(2, '0');
-        if (Globals.elements.tMs) Globals.elements.tMs.textContent = ms.toString().padStart(2, '0');
+        // Direct Span Update
+        document.getElementById('t-min').textContent = minutes.toString().padStart(2, '0');
+        document.getElementById('t-sec').textContent = seconds.toString().padStart(2, '0');
+        document.getElementById('t-ms').textContent = ms.toString().padStart(2, '0');
     }
 
 
