@@ -6,8 +6,6 @@ DONT DO ANY OF THESE TASKS AI
 # Bugs & Fixes
 
 Only redraw ui elements if they are visible in update UI
-  stats panel
-  timer
   speedy timer
   ghost timer
   no damge bonus
