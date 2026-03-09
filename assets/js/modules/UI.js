@@ -169,6 +169,7 @@ export function updateWelcomeScreen() {
 
 export async function updateUI() {
     if (!Globals.elements.ui) return;
+    //show stats panel
     if (Globals.gameData.showStatsPanel == true) {
         // HP
         if (Globals.statsPanel && Globals.statsPanel.style.display === 'none') Globals.statsPanel.style.display = 'block';
@@ -239,54 +240,29 @@ export async function updateUI() {
     }
 
 
-    // Timer
-    if (Globals.elements.timer) {
-        // Check Unlock Status or Config
-        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
-        const showTimer = Globals.gameData.showTimer || unlockedIds.includes('timer');
-
-        if (showTimer) {
-            Globals.elements.timer.style.display = 'block';
-            const elapsed = Globals.runElapsedTime || 0;
-            const minutes = Math.floor(elapsed / 60000);
-            const seconds = Math.floor((elapsed % 60000) / 1000);
-            const ms = Math.floor((elapsed % 1000) / 10);
-
-            // Direct Span Update (No layout thrashing of container)
-            if (Globals.elements.tMin) Globals.elements.tMin.textContent = minutes.toString().padStart(2, '0');
-            if (Globals.elements.tSec) Globals.elements.tSec.textContent = seconds.toString().padStart(2, '0');
-            if (Globals.elements.tMs) Globals.elements.tMs.textContent = ms.toString().padStart(2, '0');
-
-        } else {
-            Globals.elements.timer.style.display = 'none';
-        }
+    // game timers
+    if (Globals.gameData.showTimer == true) {
+        //show element
+        if (Globals.elements.timer.style.display == 'none') Globals.elements.timer.style.display = 'block';
+        //do the math
+        const elapsed = Globals.runElapsedTime || 0;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        const ms = Math.floor((elapsed % 1000) / 10);
+        // Direct Span Update (No layout thrashing of container)
+        if (Globals.elements.tMin) Globals.elements.tMin.textContent = minutes.toString().padStart(2, '0');
+        if (Globals.elements.tSec) Globals.elements.tSec.textContent = seconds.toString().padStart(2, '0');
+        if (Globals.elements.tMs) Globals.elements.tMs.textContent = ms.toString().padStart(2, '0');
     }
 
-    // --- SEED DISPLAY (Independent of Timer) ---
-    if (Globals.gameData.showSeed && Globals.seed) {
-        let seedEl = document.getElementById('seed-display');
-        if (!seedEl) {
-            seedEl = document.createElement('div');
-            seedEl.id = 'seed-display';
-            seedEl.style.position = 'fixed';
-            seedEl.style.top = '48px';
-            seedEl.style.left = '50%';
-            seedEl.style.transform = 'translateX(-50%)';
-            seedEl.style.fontFamily = "'Orbitron', monospace";
-            seedEl.style.fontSize = '12px';
-            seedEl.style.fontWeight = 'bold';
-            seedEl.style.color = '#888';
-            seedEl.style.textShadow = '2px 2px 0 #000';
-            seedEl.style.textAlign = 'center';
-            seedEl.style.zIndex = '1000';
-            seedEl.style.pointerEvents = 'none';
-            document.body.appendChild(seedEl);
-        }
-        seedEl.style.display = 'block';
-        seedEl.innerText = `${Globals.seed}`;
-    } else {
-        let seedEl = document.getElementById('seed-display');
-        if (seedEl) seedEl.style.display = 'none';
+
+    // --- SEED DISPLAY  ---
+    if (Globals.gameData.showSeed == true) {
+        const seedUI = document.getElementById('seedUI');
+        //check element is visible
+        if (seedUI.style.display == 'none') seedUI.style.display = 'block';
+        //update seed if changed
+        if (seedUI.innerText != Globals.seed) seedUI.innerText = Globals.seed;
     }
 
     // --- SPEEDY TIMER ---

@@ -30,6 +30,7 @@ export const Globals = {
         debugPanel: null,
         debugLog: null,
         timer: null,
+        seed: null,
         tMin: null, tSec: null, tMs: null,
         bankModal: null,
         bankInvVal: null,
@@ -209,6 +210,8 @@ export const Globals = {
         this.ctx = this.canvas.getContext('2d');
         this.mapCanvas = document.getElementById('minimapCanvas');
         this.statsPanel = document.getElementById('stats-panel');
+
+        this.seed = document.getElementById('seed');
         this.mctx = this.mapCanvas ? this.mapCanvas.getContext('2d') : null;
 
         // Initialize AudioContext
