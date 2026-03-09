@@ -209,7 +209,7 @@ export const Globals = {
         ids.forEach(id => {
             // camelCase conversion for property name
             let prop = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-
+            //leave this for debugging but its a bumch of naughty hacks once it is been refactored we can remove.
             // Manual overrides for specific counters to match Game.js expectation
             //if (id === 'nodamage-count') prop = 'nodamage';
             //if (id === 'shooter-count') prop = 'shooter';
@@ -219,8 +219,6 @@ export const Globals = {
                     prop === 'debugPanel' ? 'debugPanel' :
                         prop === 'debugLog' ? 'debugLog' : prop;
             */
-
-
             this.elements[prop] = document.getElementById(id);
         });
 

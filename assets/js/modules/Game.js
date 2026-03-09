@@ -25,7 +25,7 @@ window.addEventListener('beforeunload', (e) => {
     e.preventDefault();
     e.returnValue = '';
 });
-
+const perfectEl = document.getElementById("perfect-count")
 export async function initGame(isRestart = false, nextLevel = null, keepStats = false) {
 
     // 0. Force Audio Resume (Must be first, to catch user interaction)
@@ -213,7 +213,8 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
     Globals.player.inventory.greenShards = 0; // Always reset on run start
 
     Globals.perfectStreak = 0;
-    if (Globals.elements.perfect) Globals.elements.perfect.style.display = 'none';
+
+    if (perfectEl) perfectEl.style = 'none';
     Globals.roomStartTime = Date.now();
     Globals.ghostSpawned = false; // Reset Ghost
     Globals.ghostKilled = false;
@@ -1422,18 +1423,14 @@ export async function startGame(keepState = false) {
             if (Globals.elements.ui) {
                 // Manage UI Components Independently
                 Globals.elements.overlay.style.display = 'none'; // Ensure Game Over screen is hidden
-
                 // Show Parent UI Container
                 Globals.elements.ui.style.display = 'flex';
-
                 const statsPanel = document.getElementById('stats-panel');
                 if (statsPanel) statsPanel.style.display = (Globals.gameData.showStatsPanel !== false) ? 'block' : 'none';
-
-                // FORCE UI UPDATE for Room Name
-                if (Globals.elements.roomName) {
-                    Globals.elements.roomName.innerText = Globals.roomData.name || "Unknown Room";
-                }
-            }     // Show Level Title
+                // FORCE UI UPDATE for Room Namem why? NOTE: not sure this is required
+                //document.getElementById("roomName").innerText = Globals.roomData.name || "Unknown Room";
+            }
+            // Show Level Title
             if (Globals.gameData.description || Globals.gameData.name) {
                 showLevelTitle(Globals.gameData.description || Globals.gameData.name);
             }
@@ -1789,7 +1786,7 @@ export function changeRoom(dx, dy) {
     Globals.ghostSpawned = false; // Reset Ghost flag (will respawn via timer hack if following)
     Globals.bulletsInRoom = 0;
     Globals.hitsInRoom = 0;
-    Globals.elements.perfect.style.display = 'none';
+    perfectEl.style.display = 'none';
 
     // Transition to the pre-generated room
     const nextEntry = Globals.levelMap[nextCoord];
@@ -1835,8 +1832,7 @@ export function changeRoom(dx, dy) {
             Globals.roomIntroEndTime = Globals.roomData.showIntro ? (Date.now() + 2000) : 0;
         }
         Globals.visitedRooms[nextCoord] = nextEntry; // Add to visited for minimap
-
-        Globals.elements.roomName.innerText = Globals.roomData.name || "Unknown Room";
+        if (document.getElementById('roomName')) document.getElementById("roomName").innerText = Globals.roomData.name || "Unknown Room";
         Globals.canvas.width = Globals.roomData.width || 800;
         Globals.canvas.height = Globals.roomData.height || 600;
 
