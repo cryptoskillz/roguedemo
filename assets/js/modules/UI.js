@@ -170,7 +170,7 @@ export function updateWelcomeScreen() {
 export async function updateUI() {
     //check the game has started
     if (Globals.gameState != 1) return;
-
+    const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
 
     //show stats panel
     if (Globals.gameData.showStatsPanel == true) {
@@ -244,7 +244,7 @@ export async function updateUI() {
 
 
     // game timer
-    if (Globals.gameData.showTimer == true) {
+    if (Globals.gameData.showTimer == true || unlockedIds.includes('timer')) {
         const timer = document.getElementById('timer');
         //show element
         if (timer.style.display == 'none') timer.style.display = 'block';
@@ -270,7 +270,7 @@ export async function updateUI() {
     }
 
     // --- SPEEDY TIMER ---
-    if (Globals.gameData.showSpeedyTimer == true) {
+    if (Globals.gameData.showSpeedyTimer == true || unlockedIds.includes('speedytimer')) {
         const speedyTimer = document.getElementById('speedy-timer');
         //check element is visible
         if (speedyTimer.style.display == 'none') speedyTimer.style.display = 'block';
@@ -292,80 +292,60 @@ export async function updateUI() {
 
 
     // --- GHOST TIMER ---
-    const ghostEl = document.getElementById('ghost-timer');
-    if (ghostEl) {
-        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
-        // Note: User property is "showGhostimer" (one T) but unlocking creates "showGhostTimer"
-        if (Globals.gameData.showGhostimer || Globals.gameData.showGhostTimer || unlockedIds.includes('ghosttimer')) {
-            ghostEl.style.display = 'block';
 
-            // Time is accumulated in Globals.ghostTime (ms)
-            const remaining = Globals.ghostTime || 0;
+    if (Globals.gameData.showGhostimer || Globals.gameData.showGhostTimer || unlockedIds.includes('ghosttimer')) {
+        const ghostEl = document.getElementById('ghost-timer');
+        //check element is visible
+        if (ghostEl.style.display == 'none') ghostEl.style.display = 'block';
+        // Time is accumulated in Globals.ghostTime (ms)
+        const remaining = Globals.ghostTime || 0;
 
-            const sec = Math.floor(remaining / 1000);
-            const ms = Math.floor((remaining % 1000) / 10);
+        const sec = Math.floor(remaining / 1000);
+        const ms = Math.floor((remaining % 1000) / 10);
 
-            const valEl = document.getElementById('gt-val');
-            if (valEl) valEl.innerText = `${sec.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+        const valEl = document.getElementById('gt-val');
+        if (valEl) valEl.innerText = `${sec.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
 
-            // Style: Grey if Inactive, Red if Active
-            if (Globals.ghostTimerActive) {
-                ghostEl.style.color = '#e74c3c'; // Active Red (matches CSS)
-                ghostEl.style.opacity = '1.0';
-            } else {
-                ghostEl.style.color = '#555'; // Inactive Grey
-                ghostEl.style.opacity = '0.5'; // Ghosted out
-            }
-
+        // Style: Grey if Inactive, Red if Active
+        if (Globals.ghostTimerActive) {
+            ghostEl.style.color = '#e74c3c'; // Active Red (matches CSS)
+            ghostEl.style.opacity = '1.0';
         } else {
-            ghostEl.style.display = 'none';
+            ghostEl.style.color = '#555'; // Inactive Grey
+            ghostEl.style.opacity = '0.5'; // Ghosted out
         }
     }
 
-    // --- PERFECT COUNT ---
-    const perfectCountEl = document.getElementById('perfect-count');
-    if (perfectCountEl) {
-        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
-        if (Globals.gameData.showPerfectCount || unlockedIds.includes('perfectcount')) {
-            perfectCountEl.style.display = 'block';
-            const valEl = document.getElementById('pc-val');
-            const streak = Globals.perfectStreak || 0;
-            const goal = Globals.gameData.perfectGoal || 3;
-            if (valEl) valEl.innerText = `${streak} / ${goal}`;
-        } else {
-            perfectCountEl.style.display = 'none';
-        }
+    if (Globals.gameData.showPerfectCount == true || unlockedIds.includes('perfectcount')) {
+        const perfectCountEl = document.getElementById('perfect-count');
+        //show element
+        if (perfectCountEl.style.display == 'none') perfectCountEl.style.display = 'block';
+        const valEl = document.getElementById('pc-val');
+        const streak = Globals.perfectStreak || 0;
+        const goal = Globals.gameData.perfectGoal || 3;
+        if (valEl) valEl.innerText = `${streak} / ${goal}`;
     }
 
-    // --- NO DAMAGE COUNT ---
-    const noDamageEl = document.getElementById('nodamage-count');
-    if (noDamageEl) {
-        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
-        if (Globals.gameData.showNoDamageCount || unlockedIds.includes('nodamagecount')) {
-            noDamageEl.style.display = 'block';
-            const valEl = document.getElementById('nd-val');
-            const streak = Globals.noDamageStreak || 0;
-            const goal = Globals.gameData.noDamageGoal || 3;
-            if (valEl) valEl.innerText = `${streak} / ${goal}`;
-        } else {
-            noDamageEl.style.display = 'none';
-        }
+    if (Globals.gameData.showNoDamageCount || unlockedIds.includes('nodamagecount')) {
+        const noDamageEl = document.getElementById('nodamage-count');
+        //show element
+        if (noDamageEl.style.display == 'none') noDamageEl.style.display = 'block';
+        const valEl = document.getElementById('nd-val');
+        const streak = Globals.noDamageStreak || 0;
+        const goal = Globals.gameData.noDamageGoal || 3;
+        if (valEl) valEl.innerText = `${streak} / ${goal}`;
     }
 
-    // --- SHOOTER COUNT ---
-    const shooterEl = document.getElementById('shooter-count');
-    if (shooterEl) {
-        const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
-        if (Globals.gameData.showShooterCount || unlockedIds.includes('shootercount')) {
-            shooterEl.style.display = 'block';
-            const valEl = document.getElementById('sc-val');
-            const streak = Globals.shooterStreak || 0;
-            const goal = Globals.gameData.shooterGoal || 3;
-            if (valEl) valEl.innerText = `${streak} / ${goal}`;
-        } else {
-            shooterEl.style.display = 'none';
-        }
+    if (Globals.gameData.showShooterCount || unlockedIds.includes('shootercount')) {
+        const shooterEl = document.getElementById('shooter-count');
+        //show element
+        if (shooterEl.style.display == 'none') shooterEl.style.display = 'block';
+        const valEl = document.getElementById('sc-val');
+        const streak = Globals.shooterStreak || 0;
+        const goal = Globals.gameData.shooterGoal || 3;
+        if (valEl) valEl.innerText = `${streak} / ${goal}`;
     }
+
 }
 
 // ... DEBUG EDITOR ...

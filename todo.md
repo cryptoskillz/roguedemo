@@ -4,8 +4,7 @@ DONT DO ANY OF THESE TASKS AI
 415303 <--- home room can be bombed intow
 
 # Bugs & Fixes
-
-
+remove speedy timer on special rooms (upgrades etc)
 some levels cannot be completed as the shop renders requiring a key, might leave this to annoy the user but may fix it
 check the key required on each door 
   left door: ey required has to be a few pixeels from the door to the right 

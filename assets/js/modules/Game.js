@@ -25,7 +25,6 @@ window.addEventListener('beforeunload', (e) => {
     e.preventDefault();
     e.returnValue = '';
 });
-const perfectEl = document.getElementById("perfect-count")
 export async function initGame(isRestart = false, nextLevel = null, keepStats = false) {
 
     // 0. Force Audio Resume (Must be first, to catch user interaction)
@@ -217,7 +216,7 @@ export async function initGame(isRestart = false, nextLevel = null, keepStats = 
 
     Globals.perfectStreak = 0;
 
-    if (perfectEl) perfectEl.style = 'none';
+    //if (perfectEl) perfectEl.style = 'none';
     Globals.roomStartTime = Date.now();
     Globals.ghostSpawned = false; // Reset Ghost
     Globals.ghostKilled = false;
@@ -1791,8 +1790,6 @@ export function changeRoom(dx, dy) {
     Globals.ghostSpawned = false; // Reset Ghost flag (will respawn via timer hack if following)
     Globals.bulletsInRoom = 0;
     Globals.hitsInRoom = 0;
-    perfectEl.style.display = 'none';
-
     // Transition to the pre-generated room
     const nextEntry = Globals.levelMap[nextCoord];
     if (nextEntry) {
@@ -1934,6 +1931,7 @@ export function changeRoom(dx, dy) {
             nextEntry.goldenBonusAwarded = true;
             log("GOLDEN PATH BONUS AWARDED!");
             let perfectEl = document.getElementById('perfect');
+
             perfectEl.innerText = "GOLDEN PATH BONUS!";
             perfectEl.style.color = "gold";
             perfectEl.style.display = 'block';
