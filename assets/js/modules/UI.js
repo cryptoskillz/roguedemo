@@ -173,40 +173,41 @@ export async function updateUI() {
     const unlockedIds = JSON.parse(localStorage.getItem('game_unlocked_ids') || '[]');
 
     //show stats panel
-    if (Globals.gameData.showStatsPanel == true) {
+    if (Globals.gameData.showStatsPanel == true || unlockedIds.includes("statsPanel")) {
         // HP
         if (Globals.statsPanel && Globals.statsPanel.style.display === 'none') Globals.statsPanel.style.display = 'block';
-        if (Globals.elements.hp) Globals.elements.hp.innerText = `HP: ${Math.ceil(Globals.player.hp)} / ${Globals.player.maxHp}`;
-
-        // Room Name (Ensure it persists)
-        if (Globals.elements.roomName && Globals.roomData) Globals.elements.roomName.innerText = Globals.roomData.name || "Unknown Room";
+        const hpEl = document.getElementById('hp')
+        hpEl.innerText = `HP: ${Math.ceil(Globals.player.hp)} / ${Globals.player.maxHp}`;
+        hpEl.style.color = Globals.player.hp < 3 ? "red" : "white";
+        document.getElementById('roomName').innerText = Globals.roomData.name || "Unknown Room";
 
         // Keys
-        if (Globals.elements.keys) {
-            const keyCount = Globals.player.inventory.keys || 0;
-            const maxKeys = Globals.player.inventory.maxKeys || 5;
-            Globals.elements.keys.innerText = `${keyCount}/${maxKeys}`;
-        }
+        const keyCount = Globals.player.inventory.keys || 0;
+        const maxKeys = Globals.player.inventory.maxKeys || 5;
+        document.getElementById('keys').innerText = `${keyCount}/${maxKeys}`;
 
         // Bombs
-        if (Globals.elements.bombs) {
-            const bombCount = Globals.player.inventory.bombs || 0;
-            const maxBombs = Globals.player.inventory.maxBombs || 10;
-            const bombColor = (Globals.player.bombType || 'normal') === 'normal' ? '#fff' : '#e74c3c'; // Red for special?
-            Globals.elements.bombs.style.color = ""; // Reset parent color
-            Globals.elements.bombs.innerHTML = `BOMBS: <span style="color: ${bombColor}">${bombCount}/${maxBombs}</span>`;
+        const bombEl = document.getElementById('bombs')
+        const bombCount = Globals.player.inventory.bombs || 0;
+        const maxBombs = Globals.player.inventory.maxBombs || 10;
+        if (Globals.player.bombType != "") {
+            //white for normal, red for red, and yellow for golden
+            const bombColor = (Globals.player.bombType || 'normal') === 'normal' ? '#fff' : (Globals.player.bombType === 'red' ? '#e74c3c' : '#f1c40f');
+            bombEl.innerText = `${bombCount}/${maxBombs}`;
+            bombEl.style.color = bombColor;
+        } else {
+            bombEl.innerText = `0/${maxBombs}`;
+            bombEl.style.color = "#fff";
         }
-
-        // Gun & Ammo
-
+        // Gun
+        const gunEl = document.getElementById('gun')
         let ammoText = "INF";
         //check if user has a gun
         if (Globals.gun.name) {
-            if (Globals.elements.gun) Globals.elements.gun.innerText = Globals.gun.name;
+            gunEl.innerText = Globals.gun.name;
             // Check Player State (Dynamic) vs Gun Config (Static)
             // Finite / Recharge / Reload modes are stored on player
             const mode = Globals.player.ammoMode;
-
             if (Globals.player.reloading) {
                 ammoText = "RELOADING...";
             } else if (!mode || mode === 'infinite') {
@@ -218,18 +219,14 @@ export async function updateUI() {
                 // Show Current / Reserve
                 ammoText = `${Math.floor(Globals.player.ammo)} / ${Globals.player.reserveAmmo}`;
             }
-
-
         }
         else {
-            if (Globals.elements.gun) Globals.elements.gun.innerText = '-';
+            gunEl.innerText = "-";
             ammoText = "-";
         }
-
-        if (Globals.elements.ammo) Globals.elements.ammo.innerText = ammoText;
-
-
-
+        //ammo
+        const ammoEl = document.getElementById('ammo')
+        ammoEl.innerText = ammoText;
         // Shards
         const redShards = Globals.player.inventory.redShards || 0;
         const maxRed = Globals.player.inventory.maxRedShards || 500;
